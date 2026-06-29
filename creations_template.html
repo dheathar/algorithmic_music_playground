@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Lab — Creations Library</title>
+<meta name="description" content="The Signal Lab creations library: every piece as a connected hub — source material, ingredients, SuperCollider, visuals, the story, and how it grew.">
+<style>
+  :root{
+    --bg:#0A0C18; --panel:#12152A; --panel2:#0E1124; --line:#272C4C; --line2:#1B1F3A;
+    --text:#E7E9F3; --muted:#9298B8; --faint:#5A6088;
+    --amber:#F4A659; --phosphor:#57E3C2; --phosphor-dim:#2E8C77; --violet:#9B8CFF; --rose:#E3859B;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --body:-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI",sans-serif;
+    --maxw:920px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:
+      radial-gradient(1100px 560px at 82% -10%,rgba(155,140,255,.08),transparent 60%),
+      radial-gradient(900px 460px at -10% 8%,rgba(87,227,194,.06),transparent 55%),
+      var(--bg);
+    color:var(--text);font-family:var(--body);line-height:1.6;font-size:16px;
+    -webkit-font-smoothing:antialiased;padding-bottom:120px}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  a{color:var(--phosphor)}
+
+  .top{position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);
+    background:linear-gradient(180deg,rgba(10,12,24,.92),rgba(10,12,24,.6));border-bottom:1px solid var(--line2)}
+  .top .wrap{display:flex;align-items:center;gap:16px;padding:12px 22px}
+  .top a.home{font-family:var(--mono);font-size:12px;color:var(--faint);text-decoration:none}
+  .top a.home:hover{color:var(--phosphor)} .top .spacer{flex:1}
+  .top nav{display:flex;gap:14px;flex-wrap:wrap}
+  .top nav a{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);text-decoration:none;text-transform:uppercase}
+  .top nav a:hover{color:var(--amber)}
+
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--phosphor-dim)}
+  h1{font-size:clamp(30px,5.4vw,52px);line-height:1.04;letter-spacing:-.02em;margin:.32em 0 .28em;font-weight:800;text-wrap:balance}
+  h1 .em{color:var(--amber)}
+  .lede{font-size:clamp(16px,2.2vw,19px);color:var(--muted);max-width:62ch;text-wrap:pretty}
+
+  /* stage badge */
+  .stage{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    padding:3px 9px;border-radius:999px;border:1px solid;white-space:nowrap}
+  .stage.seedling{color:var(--phosphor);border-color:var(--phosphor-dim);background:rgba(87,227,194,.07)}
+  .stage.growing{color:var(--amber);border-color:#7a5526;background:rgba(244,166,89,.07)}
+  .stage.mature{color:var(--violet);border-color:#4d4385;background:rgba(155,140,255,.08)}
+
+  /* index gallery */
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px;margin:30px 0}
+  .card{display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit;
+    border:1px solid var(--line);border-radius:16px;padding:20px;background:linear-gradient(180deg,var(--panel),var(--panel2));
+    transition:border-color .2s,transform .2s}
+  .card:hover{border-color:var(--phosphor-dim);transform:translateY(-2px)}
+  .card .row{display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .card .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--faint);text-transform:uppercase}
+  .card .ttl{font-size:20px;font-weight:750;letter-spacing:-.01em}
+  .card .tl{color:var(--muted);font-size:14px}
+  .card .meta{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:auto;padding-top:6px}
+
+  /* detail */
+  .back{display:inline-block;font-family:var(--mono);font-size:12px;color:var(--faint);text-decoration:none;margin:6px 0 2px}
+  .back:hover{color:var(--phosphor)}
+  .dhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:4px}
+  .dhead .tag{font-family:var(--mono);font-size:11px;color:var(--bg);background:var(--phosphor);padding:3px 9px;border-radius:999px;font-weight:600}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--faint);margin:8px 0 0}
+  .meta b{color:var(--muted);font-weight:600}
+  audio{width:100%;margin:18px 0 6px;border-radius:10px}
+
+  h2{font-size:13px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);
+    margin:34px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
+  h3{font-size:17px;margin:18px 0 6px;font-weight:700}
+  p{max-width:70ch} .src{color:var(--text)} .muted{color:var(--muted)}
+
+  .scroll{overflow-x:auto;margin:8px 0;border:1px solid var(--line2);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line2);vertical-align:top}
+  thead th{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--panel2)}
+  tbody tr:hover{background:rgba(87,227,194,.03)}
+  td code{font-family:var(--mono);font-size:12.5px;color:var(--phosphor);background:rgba(87,227,194,.07);padding:1px 5px;border-radius:5px}
+  td.k{font-family:var(--mono);font-size:12.5px;color:var(--phosphor);white-space:nowrap}
+
+  /* creation-path timeline */
+  .timeline{border-left:2px solid var(--line);margin:8px 0 8px 8px;padding-left:0}
+  .ev{position:relative;padding:10px 0 14px 22px}
+  .ev::before{content:"";position:absolute;left:-7px;top:15px;width:11px;height:11px;border-radius:50%;
+    background:var(--bg);border:2px solid var(--faint)}
+  .ev.panos::before{border-color:var(--phosphor)} .ev.jarre::before{border-color:var(--amber)}
+  .ev .who{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+  .ev.panos .who{color:var(--phosphor)} .ev.jarre .who{color:var(--amber)}
+  .ev .kind{font-family:var(--mono);font-size:10px;color:var(--faint);border:1px solid var(--line);border-radius:999px;padding:1px 7px;margin-left:8px;text-transform:uppercase}
+  .ev .txt{margin-top:5px;color:var(--text);max-width:72ch}
+
+  .pills{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
+  .pill{font-family:var(--mono);font-size:12px;color:var(--text);text-decoration:none;border:1px solid var(--line);
+    border-radius:999px;padding:7px 13px;background:var(--panel2)}
+  .pill:hover{border-color:var(--phosphor-dim);color:var(--phosphor)}
+  .pill.go{border-color:var(--phosphor-dim);color:var(--phosphor)}
+
+  .edition{font-size:14px;color:var(--muted);padding:8px 0;border-bottom:1px solid var(--line2)}
+  .edition b{color:var(--text);font-family:var(--mono);font-size:12.5px}
+
+  .prevnext{display:flex;justify-content:space-between;gap:12px;margin-top:36px;border-top:1px solid var(--line2);padding-top:18px}
+  .prevnext a{font-family:var(--mono);font-size:12px;text-decoration:none;color:var(--muted)}
+  .prevnext a:hover{color:var(--phosphor)}
+  footer{padding:40px 0;color:var(--faint);font-family:var(--mono);font-size:12px;border-top:1px solid var(--line2);margin-top:30px}
+  footer a{color:var(--muted)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <a class="home" href="index.html">← Signal Lab</a>
+  <span class="spacer"></span>
+  <nav>
+    <a href="#/">Library</a>
+    <a href="process.html">Engine &amp; method</a>
+    <a href="visualizer.html">Visualizer</a>
+  </nav>
+</div></div>
+
+<!-- INDEX -->
+<main id="index" class="wrap">
+  <header style="padding:60px 0 6px">
+    <div class="eyebrow">Signal Lab · the collection</div>
+    <h1>Creations <span class="em">Library</span></h1>
+    <p class="lede">Every piece as a connected hub — its source material, the ingredients and
+    transformations, the SuperCollider voices, the visuals, the story, and the dialogue that grew it.
+    One content model; many views.</p>
+  </header>
+  <div id="gallery" class="gallery"></div>
+  <footer>
+    Single source of truth: <a href="creations.json">creations.json</a> → built by
+    <code>build_creations.py</code>. Shared engine reference: <a href="process.html">process.html</a>.
+  </footer>
+</main>
+
+<!-- DETAIL -->
+<main id="detail" class="wrap hidden"></main>
+
+<script id="data" type="application/json">__CREATIONS_JSON__</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const WORKS = DATA.creations;
+const byId = id => WORKS.find(w => w.id === id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function inspirationBlock(o){
+  if(!o) return '';
+  const img = o.thumb ? `<img src="${esc(o.thumb)}" alt="" style="max-width:100%;border-radius:12px;border:1px solid var(--line);margin:10px 0;display:block" onerror="this.style.display='none'">` : '';
+  const link = o.source_url ? ` · <a href="${esc(o.source_url)}">source</a>` : '';
+  return `<h2>Inspiration · the visual seed</h2>${img}<p>${esc(o.mood||'')}</p>
+    <p class="muted">${esc(o.title||'')}${o.credit?` — ${esc(o.credit)}`:''}${link}</p>`;
+}
+
+function metaLine(w){
+  return `<span class="meta"><b>key</b> ${esc(w.key)} · <b>tempo</b> ${esc(w.tempo)} · <b>${esc(w.duration)}</b> · <code>${esc(w.score)}</code></span>`;
+}
+
+function renderIndex(){
+  document.getElementById('gallery').innerHTML = WORKS.map(w => `
+    <a class="card" href="#/${w.id}">
+      <div class="row"><span class="tag">${esc(w.tag)}</span><span class="stage ${w.stage}">${w.stage}</span></div>
+      <div class="ttl">${esc(w.title)}</div>
+      <div class="tl">${esc(w.tagline)}</div>
+      <div class="meta">${esc(w.key)} · ${esc(w.tempo)} · ${esc(w.duration)}</div>
+    </a>`).join('');
+}
+
+function table(head, rows){
+  if(!rows || !rows.length) return '';
+  return `<div class="scroll"><table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${rows.join('')}</tbody></table></div>`;
+}
+
+function renderDetail(w){
+  const i = WORKS.indexOf(w);
+  const prev = WORKS[(i - 1 + WORKS.length) % WORKS.length];
+  const next = WORKS[(i + 1) % WORKS.length];
+  const story = (w.story||[]).map(s => `<h3>${esc(s.h)}</h3><p>${esc(s.body)}</p>`).join('');
+  const ingredients = table(['Ingredient','Role'], (w.ingredients||[]).map(x =>
+    `<tr><td class="k">${esc(x.name)}</td><td>${esc(x.role)}</td></tr>`));
+  const sc = table(['Voice','Role'], (w.supercollider||[]).map(x =>
+    `<tr><td class="k">${esc(x.name)}</td><td>${esc(x.role)}</td></tr>`));
+  const xf = table(['Transformation','The feeling'], (w.transformations||[]).map(x =>
+    `<tr><td class="k">${esc(x.verb)}</td><td>${esc(x.feeling)}</td></tr>`));
+  const path = (w.path||[]).map(e =>
+    `<div class="ev ${e.who}"><span class="who">${e.who==='panos'?'Panos':'Jarre'}</span><span class="kind">${esc(e.kind)}</span><div class="txt">${esc(e.text)}</div></div>`).join('');
+  const editions = (w.editions||[]).map(e =>
+    `<div class="edition"><b>${esc(e.version)}</b> — ${esc(e.note)} <span class="muted">· ${esc(e.dir)}</span></div>`).join('');
+  const links = (w.links||[]).map(l => `<a class="pill" href="${esc(l.href)}">${esc(l.label)}</a>`).join('');
+
+  document.getElementById('detail').innerHTML = `
+    <a class="back" href="#/">← all creations</a>
+    <div class="dhead"><h1 style="margin:0">${esc(w.title)}</h1><span class="tag">${esc(w.tag)}</span><span class="stage ${w.stage}">${w.stage}</span></div>
+    <p class="lede" style="margin-top:10px">${esc(w.tagline)}</p>
+    ${metaLine(w)}
+    ${w.audio ? `<audio controls preload="none" src="${esc(w.audio)}"></audio>` : ''}
+    <div class="pills"><a class="pill go" href="${esc((w.visualization&&w.visualization.page)||'visualizer.html')}">▶ See it in the visualizer</a></div>
+
+    <h2>Source material</h2><p class="src">${esc(w.source_material)}</p>
+    ${inspirationBlock(w.inspiration)}
+    ${story ? `<h2>The story</h2>${story}` : ''}
+    <h2>Ingredients · the engine</h2>${ingredients}
+    ${(w.supercollider&&w.supercollider.length) ? `<h2>SuperCollider · realtime voices</h2>${sc}` : ''}
+    ${xf ? `<h2>Transformations, as feelings</h2>${xf}` : ''}
+    ${path ? `<h2>Creation path · how it grew</h2><div class="timeline">${path}</div>` : ''}
+    ${w.visualization ? `<h2>Visualization</h2><p class="muted">Track <code>${esc(w.visualization.track)}</code> on the Milkdrop wall — <a href="${esc(w.visualization.page)}">open the visualizer</a> and pick <b>${esc(w.title)}</b>.</p>` : ''}
+    ${editions ? `<h2>Editions</h2>${editions}` : ''}
+    ${links ? `<h2>Related</h2><div class="pills">${links}</div>` : ''}
+
+    <div class="prevnext">
+      <a href="#/${prev.id}">← ${esc(prev.title)}</a>
+      <a href="#/${next.id}">${esc(next.title)} →</a>
+    </div>
+    <footer>Part of the <a href="#/">Creations Library</a> · shared engine reference: <a href="process.html">process.html</a></footer>`;
+}
+
+function route(){
+  const id = (location.hash.replace(/^#\//,'') || '').trim();
+  const idx = document.getElementById('index'), det = document.getElementById('detail');
+  const w = id && byId(id);
+  if(w){ renderDetail(w); idx.classList.add('hidden'); det.classList.remove('hidden'); window.scrollTo(0,0); }
+  else { idx.classList.remove('hidden'); det.classList.add('hidden'); }
+}
+renderIndex();
+addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 # secrets
 .env
+.mcp.json
 
 # python envs
 .venv/
@@ -12,6 +13,12 @@ __pycache__/
 
 # third-party copyrighted MIDIs used only for private study — do not redistribute
 midi/
+
+# visual inspiration seeds (others' images) — kept local, credited in creations.json
+inspiration/
+
+# bundled MCP tools (clone locally; not part of this repo)
+tools/
 
 # os / scratch
 .DS_Store
