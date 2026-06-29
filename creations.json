@@ -117,7 +117,8 @@
       ],
       "visualization": {"track": "theater_sc.mp3", "page": "visualizer.html"},
       "editions": [
-        {"version": "v004 (current)", "dir": "versions/v004/", "note": "space & volume — a 6.5 s hall behind everything, a wider field, and a deeper dynamic swell (II nearly doubles I)"},
+        {"version": "v005 (current)", "dir": "versions/v005/", "note": "the child's earthy flute becomes an uncanny formant 'vox' — a synthetic almost-voice singing morphing vowels (mirror & stumble follow it)"},
+        {"version": "v004", "dir": "versions/v004/", "note": "space & volume — a 6.5 s hall behind everything, a wider field, and a deeper dynamic swell (II nearly doubles I)"},
         {"version": "v003", "dir": "versions/v003/", "note": "expanded with three organs seeded from real DreamBank dreams: veil, stumble, mirror"},
         {"version": "dream v002", "dir": "versions/", "note": "the original stereo render (six organs)"},
         {"version": "theater-sc v001", "dir": "versions/theater-sc-v001/", "note": "re-voiced through SuperCollider via the full AI pipeline"}

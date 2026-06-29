@@ -247,19 +247,20 @@ def main():
         (244.0, 0.85,  3,10,  2400,  2000, 0.070, 0.22, 0.90),   # P5  ...keep going
     ]
 
-    master = np.zeros((N, 2))
+    # build as named STEMS (the simultaneous layers = Vitrine's "organs"), then sum.
+    stems = {k: np.zeros((N, 2)) for k in ('converter', 'clock', 'glitch', 'seam', 'stardust')}
     print('vitrine: converting, pass by pass...')
     for i, (t, w, bits, srd, aa, rec, hs, wd, g) in enumerate(PASSES):
         src = source(w)
         deg = src if bits >= 16 else degrade(src, bits, srd, aa, rec, hs, wd, seed=i)
-        place(master, deg, t, gain=g)
+        place(stems['converter'], deg, t, gain=g)
         print(f'  pass {i}: t={t:5.0f}s  w={w:.2f}  {bits}bit  /{srd}  -> placed')
 
     # the ADC waking up: an anti-alias sweep + the clock fading in under P0->P1
     print('vitrine: digital layers (clock, glitch field, seam)...')
-    master += grid_clock(44.0, 300.0, 0.05, 0.5) * 1.0
-    master += ikeda_field(96.0, 200.0, density=0.6, seed=3)
-    master += ikeda_field(186.0, 250.0, density=1.6, seed=4)
+    stems['clock'] += grid_clock(44.0, 300.0, 0.05, 0.5) * 1.0
+    stems['glitch'] += ikeda_field(96.0, 200.0, density=0.6, seed=3)
+    stems['glitch'] += ikeda_field(186.0, 250.0, density=1.6, seed=4)
 
     # the seam — the split middle mannequin, held bright-L / dark-R through the
     # mannequin region and kept ringing to the very end (the seam is never closed)
@@ -268,32 +269,37 @@ def main():
     for f, t0 in [(snap(S.note_to_hz('C5')), 0.0), (snap(S.note_to_hz('E5')), 30.0)]:
         seam_tone = S.mix_at(seam_tone, S.sine(f, 70.0) *
                              S.adsr(70.0, a=6, d=4, s=0.8, r=20), t0, gain=0.5)
-    place(master, seam_split(seam_tone), 168.0, gain=0.22)
+    place(stems['seam'], seam_split(seam_tone), 168.0, gain=0.22)
 
     # stardust — the conserved matter, under everything, indifferent to the loss;
     # faint throughout, then shining through once the soul is gridded to nothing.
     print('vitrine: stardust (the matter that does not quantize)...')
-    master += stardust_layer(0.0, 300.0, density=1.1, gmax=0.20, seed=11)
-    master += stardust_layer(248.0, 300.0, density=3.2, gmax=0.42, seed=12)
+    stems['stardust'] += stardust_layer(0.0, 300.0, density=1.1, gmax=0.20, seed=11)
+    stems['stardust'] += stardust_layer(248.0, 300.0, density=3.2, gmax=0.42, seed=12)
 
     # spin-down: the snake eating its tail — quick alternations of bloom and crush
     for k, t in enumerate(np.arange(270.0, 285.0, 3.0)):
         w = 1.0 if k % 2 else 0.4
         snippet = degrade(source(w), bits=3 if k % 2 else 6, sr_div=8, aa_cut=3000,
                           recon_cut=2500, hiss=0.05, width=0.4, seed=20 + k)
-        place(master, snippet[:int(3.0 * S.SR)], t, gain=0.6)
+        place(stems['converter'], snippet[:int(3.0 * S.SR)], t, gain=0.6)
 
     # ending — UNRESOLVED: clock alone, then one held D (soul, lightly crushed)
     # against a whole-tone glass cluster. No cadence. We keep going.
     held = S.additive(S.note_to_hz('D3'), 14.0, [1, 0.5, 0.25, 0.1]) * \
         S.adsr(14.0, a=0.3, d=2, s=0.6, r=9)
     held = S.bitcrush(held, bits=6, rate=S.SR / 3)
-    place(master, S.stereo_width(held, 0.6), 286.0, gain=0.5)
+    place(stems['converter'], S.stereo_width(held, 0.6), 286.0, gain=0.5)
     cluster = np.zeros(int(14.0 * S.SR))
     for note in ['C4', 'E4', 'G#4']:
         cluster = S.mix_at(cluster, S.fm2(snap(S.note_to_hz(note)), 14.0, ratio=3.0,
                            index=3.0) * S.adsr(14.0, a=1, d=3, s=0.5, r=9), 0.0, gain=0.4)
-    place(master, seam_split(S.bitcrush(cluster, bits=3).mean(1)), 286.0, gain=0.16)
+    place(stems['seam'], seam_split(S.bitcrush(cluster, bits=3).mean(1)), 286.0, gain=0.16)
+
+    master = sum(stems.values())                      # same sum as before -> identical master
+    for nm, sig in stems.items():                     # per-organ stems for the visualizer
+        S.write_wav(f'vit_{nm}.wav', sig)
+        print(f'  vit_{nm}.wav')
 
     # master bus: gentle reverb glue + tanh ceiling
     print('vitrine: master bus (reverb + limit)...')

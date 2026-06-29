@@ -158,13 +158,19 @@ def render_offline(voices, outname="theater_sc"):
     total = max(t + dur for (t, org, note, dur, amp) in SCORE) + 4
     N = int(total * S.SR)
     canvas = np.zeros((N, 2))
+    stems = {o: np.zeros((N, 2)) for o in sorted(set(org for (_, org, _, _, _) in SCORE))}
     for (t, org, note, dur, amp) in SCORE:
         sig = render_patch(copy.deepcopy(voices[org]), dur=dur, note=note)
         start = int(t * S.SR)
         end = min(start + len(sig), N)
-        canvas[start:end] += amp * sig[:end - start]
+        seg = amp * sig[:end - start]
+        canvas[start:end] += seg
+        stems[org][start:end] += seg
     mix = S.soft_clip(canvas * 0.9, drive=1.0)
     S.write_wav(outname + ".wav", mix)
+    for o, sig in stems.items():                      # per-organ stems for the visualizer
+        S.write_wav(f"tsc_{o}.wav", sig)
+        print(f"  tsc_{o}.wav")
     vd = os.path.join("versions", "theater-sc-v001")
     os.makedirs(vd, exist_ok=True)
     shutil.copy(outname + ".wav", vd)

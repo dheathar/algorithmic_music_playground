@@ -189,6 +189,12 @@ Always `node --check` the inlined `<script>` after regenerating a page.
 
 ## 7. Backlog / open threads
 
+- **Ring-mod "spectre" voice (Dalek lineage)** — a future eerie organ: a tone ×
+  an inharmonic ring-mod carrier for a metallic, inhuman presence. Considered for
+  the v005 child but set aside in favour of the formant vox; keep for a later piece.
+- **Per-organ visualization mode** (requested) — a pickable visualizer layout where
+  cells = a creation's organs, each stem driving its own visual. Needs per-organ
+  stem mp3s (dream/icarus/oxygène have stems; Vitrine would need them exported).
 - MIDI export of melodic organs → GarageBand instruments (planned, not built).
 - v003-of-Black-Theater: optionally weave space-library textures into its organs.
 - "Stars" for the library: real stellar audio is hard to source cleanly; option

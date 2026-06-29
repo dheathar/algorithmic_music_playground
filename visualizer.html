@@ -38,6 +38,38 @@
   #cue.hide{opacity:0!important}
   #cue .cue-h{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber)}
   #cue .cue-n{color:var(--text);font-size:13.5px;line-height:1.45;margin-top:4px}
+  /* per-cell control */
+  #grid > .cellwrap{position:relative;min-width:0;min-height:0;overflow:hidden}
+  .cellwrap canvas{width:100%;height:100%;display:block;background:#000}
+  .cellbar{position:absolute;left:0;right:0;top:0;z-index:8;display:flex;align-items:center;gap:6px;
+    padding:7px 9px;opacity:0;transition:opacity .15s;pointer-events:none;
+    background:linear-gradient(180deg,rgba(5,6,12,.92),transparent)}
+  .cellwrap:hover .cellbar{opacity:1;pointer-events:auto}
+  .cellbar button{font-family:var(--mono);font-size:12px;background:rgba(18,21,42,.9);color:var(--text);
+    border:1px solid var(--line);border-radius:6px;padding:3px 8px;cursor:pointer;line-height:1}
+  .cellbar button:hover{border-color:var(--phosphor-dim);color:var(--phosphor)}
+  .cellbar .pname{flex:1;min-width:0;font-family:var(--mono);font-size:10.5px;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+  .cellbar .pname:hover{color:var(--phosphor)}
+  .cellbar .lk{color:var(--amber);font-size:10px}
+  .cellwrap .organ{position:absolute;bottom:7px;left:9px;z-index:3;font-family:var(--mono);font-size:10.5px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--phosphor);
+    background:rgba(5,6,12,.55);padding:2px 8px;border-radius:999px;pointer-events:none}
+  #picker{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(5,6,12,.62)}
+  #picker.on{display:flex}
+  .pk{width:min(560px,92vw);max-height:78vh;display:flex;flex-direction:column;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .pk .pkh{display:flex;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .pk input{flex:1;font-family:var(--mono);font-size:13px;background:#0b0e1c;color:var(--text);
+    border:1px solid var(--line);border-radius:8px;padding:9px 11px;outline:none}
+  .pk input:focus{border-color:var(--phosphor-dim)}
+  .pk .pkx{cursor:pointer;color:var(--faint);font-family:var(--mono);font-size:12px}
+  .pk .pkx:hover{color:var(--amber)}
+  .pk .pkcount{font-family:var(--mono);font-size:10.5px;color:var(--faint);padding:6px 14px}
+  .pk .pklist{overflow-y:auto;padding:0 6px 8px}
+  .pk .pkitem{display:block;width:100%;text-align:left;font-family:var(--mono);font-size:12px;color:var(--text);
+    background:none;border:none;border-radius:6px;padding:7px 9px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pk .pkitem:hover{background:rgba(87,227,194,.08);color:var(--phosphor)}
 </style>
 
 <div id="grid"></div>
@@ -47,11 +79,27 @@
 <div class="bar dim" id="bar">
   <span class="lab">track</span>
   <select id="track">
-    <option value="vitrine_mix.mp3">Vitrine</option>
-    <option value="theater_sc.mp3">The Black Theater</option>
-    <option value="dream_mix.mp3">The Black Theater — v004 (space &amp; volume)</option>
-    <option value="icarus_mix.mp3">Icarus</option>
-    <option value="oxygene_mix.mp3">Homage to Oxygène</option>
+    <optgroup label="Vitrine">
+      <option value="vitrine_mix.mp3">v001 — the converter loop</option>
+    </optgroup>
+    <optgroup label="The Black Theater · organs">
+      <option value="dream_mix.mp3">v005 — vox child (current)</option>
+      <option value="versions/v004/dream_mix.mp3">v004 — space &amp; volume</option>
+      <option value="versions/v003/dream_mix.mp3">v003 — dream-seeded organs</option>
+      <option value="versions/v002-stereo-organs/dream_mix.mp3">v002 — stereo organs</option>
+      <option value="versions/v001-mono-3movements/dream_mix.mp3">v001 — mono</option>
+    </optgroup>
+    <optgroup label="The Black Theater · SuperCollider">
+      <option value="theater_sc.mp3">v001 — AI / SC re-voicing</option>
+    </optgroup>
+    <optgroup label="Icarus">
+      <option value="icarus_mix.mp3">v003 — dramatic arc (current)</option>
+      <option value="versions/icarus-v002/icarus_mix.mp3">v002</option>
+      <option value="versions/icarus-v001/icarus_mix.mp3">v001</option>
+    </optgroup>
+    <optgroup label="Homage to Oxygène">
+      <option value="oxygene_mix.mp3">v001</option>
+    </optgroup>
   </select>
   <span class="lab">layout</span>
   <select id="layout">
@@ -62,6 +110,7 @@
     <option value="2x3">2 × 3</option>
     <option value="3x3">3 × 3</option>
     <option value="4x4">4 × 4</option>
+    <option value="stems">▦ per-organ (stems)</option>
   </select>
   <button id="shuffle">⇄ shuffle all</button>
   <label class="chk"><input type="checkbox" id="cycle" checked> auto-cycle</label>
@@ -76,6 +125,12 @@
   <div class="err" id="err"></div>
 </div>
 
+<div id="picker"><div class="pk">
+  <div class="pkh"><input id="pkq" placeholder="search presets…" autocomplete="off"><span class="pkx" id="pkClose">esc ✕</span></div>
+  <div class="pkcount" id="pkCount"></div>
+  <div class="pklist" id="pkList"></div>
+</div></div>
+
 <script src="vendor/butterchurn.min.js"></script>
 <script src="vendor/butterchurnPresets.min.js"></script>
 <script>
@@ -87,7 +142,7 @@ let AC, BC, presetList = [], names = [], cells = [], src = null, buffers = {}, c
 const CUES = {
   'dream_mix.mp3': [
     {t:0,  h:'I · Kind eyes', n:'A child alone on a dark stage. The pedal is the floor; the audience, a watching drone. Footsteps, and the first soundings into the void.'},
-    {t:8,  h:'The child sings', n:'A breathy flute voice — small, exposed, human above the dark.'},
+    {t:8,  h:'The child sings', n:'An uncanny almost-voice — a synthetic child shaping half-words from morphing formant vowels, exposed above the dark.'},
     {t:12, h:'The veil enters', n:'Two drones an A/B♭ apart, anti-correlated: as one swells the other thins. They cannot both be fully real.'},
     {t:30, h:'II · Adoration & envy', n:'The eyes swell — a bright shimmer, and beneath it a dissonant envy cluster, B♭ grinding on A.'},
     {t:52, h:'The stumble', n:'The child falters under the gaze: the pitch sags to a wrong note, a breath is caught, then corrected. Exposure.'},
@@ -124,11 +179,39 @@ const CUES = {
   ],
 };
 let curFile = null, trackStart = 0, trackDur = 1, lastCueIdx = -1;
+let stemMode = false, stemSrcs = [], stemGains = [];
+
+// per-organ stems: each cell plays AND visualizes one organ (keyed by mix filename)
+const STEMS = {
+  'dream_mix.mp3': [
+    ['audience','stem_audience.mp3'],['child','stem_child.mp3'],['veil','stem_veil.mp3'],
+    ['fishing','stem_fishing.mp3'],['pedal','stem_pedal.mp3'],['pulse','stem_pulse.mp3'],
+    ['glint','stem_glint.mp3'],['mirror','stem_mirror.mp3'],['stumble','stem_stumble.mp3'],
+  ],
+  'icarus_mix.mp3': [
+    ['tension','ic_tension.mp3'],['clap','ic_clap.mp3'],['riser','ic_riser.mp3'],
+    ['pad','ic_pad.mp3'],['bass','ic_bass.mp3'],['lead','ic_lead.mp3'],
+    ['void','ic_void.mp3'],['flutes','ic_flutes.mp3'],['wind','ic_wind.mp3'],
+  ],
+  'oxygene_mix.mp3': [
+    ['pads','ox_pads.mp3'],['arp','ox_arp.mp3'],['bass','ox_bass.mp3'],
+    ['lead','ox_lead.mp3'],['perc','ox_perc.mp3'],
+  ],
+  'vitrine_mix.mp3': [
+    ['converter','vit_converter.mp3'],['clock','vit_clock.mp3'],['glitch','vit_glitch.mp3'],
+    ['seam','vit_seam.mp3'],['stardust','vit_stardust.mp3'],
+  ],
+  'theater_sc.mp3': [
+    ['audience','tsc_audience.mp3'],['child','tsc_child.mp3'],['pedal','tsc_pedal.mp3'],
+    ['fishing','tsc_fishing.mp3'],['footsteps','tsc_footsteps.mp3'],['stardust','tsc_stardust.mp3'],
+    ['adore','tsc_adore.mp3'],['envy','tsc_envy.mp3'],['glint','tsc_glint.mp3'],
+  ],
+};
 
 function updateCue(){
   const box = document.getElementById('cue');
   if(!curFile || !document.getElementById('guide').checked){ box.classList.add('hide'); return; }
-  const cues = CUES[curFile];
+  const cues = CUES[curFile.split('/').pop()];   // match any edition by filename
   if(!cues || !cues.length){ box.classList.add('hide'); return; }
   const pos = trackDur ? ((AC.currentTime - trackStart) % trackDur) : 0;
   let idx = 0;
@@ -156,6 +239,15 @@ async function playTrack(file){
   cells.forEach(c => { try{ c.viz.connectAudio(src); }catch(e){} });   // every window hears the same source
 }
 
+function setPreset(cell, idx, blend, lock){
+  if(!cell.viz) return;
+  cell.pi = ((idx % names.length) + names.length) % names.length;
+  try{ cell.viz.loadPreset(presetList[cell.pi], blend); }catch(e){}
+  if(lock) cell.locked = true;
+  if(cell.nameEl) cell.nameEl.textContent = names[cell.pi];
+  if(cell.lkEl) cell.lkEl.style.display = cell.locked ? '' : 'none';
+}
+
 function buildGrid(key){
   const [rows, cols] = LAYOUTS[key];
   $('warn').textContent = (rows*cols > 12) ? 'note: many WebGL windows — some may not draw' : '';
@@ -163,8 +255,24 @@ function buildGrid(key){
   grid.innerHTML = '';
   grid.style.gridTemplateRows = `repeat(${rows},1fr)`;
   grid.style.gridTemplateColumns = `repeat(${cols},1fr)`;
-  for(let i=0;i<rows*cols;i++){ const c=document.createElement('canvas'); grid.appendChild(c); cells.push({canvas:c, viz:null, pi:rand()}); }
-  // after layout settles, size + create a visualizer per cell
+  for(let i=0;i<rows*cols;i++){
+    const wrap = document.createElement('div'); wrap.className = 'cellwrap';
+    const cv = document.createElement('canvas'); wrap.appendChild(cv);
+    const bar = document.createElement('div'); bar.className = 'cellbar';
+    bar.innerHTML = '<button data-a="prev" title="previous preset">◀</button>'+
+      '<button data-a="rand" title="random">🎲</button>'+
+      '<span class="pname" title="pick a preset"></span><span class="lk" title="hand-picked">🔒</span>'+
+      '<button data-a="next" title="next preset">▶</button>';
+    wrap.appendChild(bar); grid.appendChild(wrap);
+    const cell = {wrap, canvas:cv, viz:null, pi:rand(), locked:false,
+      nameEl:bar.querySelector('.pname'), lkEl:bar.querySelector('.lk')};
+    cell.lkEl.style.display = 'none';
+    bar.querySelector('[data-a=prev]').onclick = () => setPreset(cell, cell.pi-1, 1.0, true);
+    bar.querySelector('[data-a=next]').onclick = () => setPreset(cell, cell.pi+1, 1.0, true);
+    bar.querySelector('[data-a=rand]').onclick = () => setPreset(cell, rand(), 1.0, true);
+    cell.nameEl.onclick = () => openPicker(cell);
+    cells.push(cell);
+  }
   requestAnimationFrame(()=>{
     const dpr = Math.min(devicePixelRatio||1, 1.5);
     cells.forEach(cell=>{
@@ -175,6 +283,7 @@ function buildGrid(key){
         cell.viz.setRendererSize(w, h);
         if(src) cell.viz.connectAudio(src);
         cell.viz.loadPreset(presetList[cell.pi], 0.0);
+        if(cell.nameEl) cell.nameEl.textContent = names[cell.pi];
       }catch(e){ /* WebGL context limit — leave this cell dark */ }
     });
   });
@@ -186,13 +295,118 @@ function resizeAll(){
 }
 addEventListener('resize', ()=> requestAnimationFrame(resizeAll));
 
-function shuffleAll(){ cells.forEach(c=>{ if(c.viz){ c.pi=rand(); c.viz.loadPreset(presetList[c.pi], 1.5); } }); }
+function shuffleAll(){ cells.forEach(c=>{ if(c.viz){ c.locked=false; setPreset(c, rand(), 1.5, false); } }); }
 function startCycle(){ clearInterval(cycler);
   if($('cycle').checked) cycler = setInterval(()=>{
-    // cycle one random cell at a time so the wall stays lively but not chaotic
-    const c = cells[Math.floor(Math.random()*cells.length)];
-    if(c && c.viz){ c.pi=rand(); c.viz.loadPreset(presetList[c.pi], 2.0); }
+    const pool = cells.filter(c=>c.viz && !c.locked);   // leave hand-picked cells alone
+    if(!pool.length) return;
+    setPreset(pool[Math.floor(Math.random()*pool.length)], rand(), 2.0, false);
   }, 4000);
+}
+
+// per-cell preset picker (searchable)
+let activeCell = null, pkBuilt = false;
+function escp(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function buildPickerList(){
+  if(pkBuilt) return; pkBuilt = true;
+  $('pkList').innerHTML = names.map((n,i)=>`<button class="pkitem" data-i="${i}">${escp(n)}</button>`).join('');
+  $('pkList').onclick = e => { const b=e.target.closest('.pkitem'); if(!b||!activeCell) return;
+    setPreset(activeCell, +b.dataset.i, 1.5, true); closePicker(); };
+  $('pkq').oninput = filterPicker;
+}
+function filterPicker(){
+  const q = $('pkq').value.toLowerCase(); let shown=0;
+  [...$('pkList').children].forEach(b=>{ const m=b.textContent.toLowerCase().includes(q);
+    b.style.display = m ? '' : 'none'; if(m) shown++; });
+  $('pkCount').textContent = shown + ' of ' + names.length + ' presets';
+}
+function openPicker(cell){ activeCell=cell; buildPickerList(); $('picker').classList.add('on'); $('pkq').value=''; filterPicker(); $('pkq').focus(); }
+function closePicker(){ $('picker').classList.remove('on'); activeCell=null; }
+$('pkClose').onclick = closePicker;
+$('picker').onclick = e => { if(e.target.id==='picker') closePicker(); };
+addEventListener('keydown', e => { if(e.key==='Escape') closePicker(); });
+
+// ---- per-organ (stems) mode ----
+function makeCell(label){
+  const wrap = document.createElement('div'); wrap.className = 'cellwrap';
+  const cv = document.createElement('canvas'); wrap.appendChild(cv);
+  if(label){ const org = document.createElement('div'); org.className = 'organ'; org.textContent = label; wrap.appendChild(org); }
+  const bar = document.createElement('div'); bar.className = 'cellbar';
+  bar.innerHTML = '<button data-a="prev" title="previous preset">◀</button>'+
+    '<button data-a="rand" title="random">🎲</button>'+
+    '<span class="pname" title="pick a preset"></span><span class="lk" title="hand-picked">🔒</span>'+
+    '<button data-a="next" title="next preset">▶</button>'+
+    '<button data-a="mute" title="mute / unmute this organ">🔊</button>';
+  wrap.appendChild(bar); grid.appendChild(wrap);
+  const cell = {wrap, canvas:cv, viz:null, pi:rand(), locked:false,
+    nameEl:bar.querySelector('.pname'), lkEl:bar.querySelector('.lk')};
+  cell.lkEl.style.display = 'none';
+  bar.querySelector('[data-a=prev]').onclick = () => setPreset(cell, cell.pi-1, 1.0, true);
+  bar.querySelector('[data-a=next]').onclick = () => setPreset(cell, cell.pi+1, 1.0, true);
+  bar.querySelector('[data-a=rand]').onclick = () => setPreset(cell, rand(), 1.0, true);
+  cell.nameEl.onclick = () => openPicker(cell);
+  cell.gain = null; cell.muted = false;
+  bar.querySelector('[data-a=mute]').onclick = (e) => {        // mute this organ's audio (visual stays)
+    if(!cell.gain) return;
+    cell.muted = !cell.muted;
+    cell.gain.gain.value = cell.muted ? 0 : 1;
+    e.currentTarget.textContent = cell.muted ? '🔇' : '🔊';
+    e.currentTarget.style.color = cell.muted ? 'var(--amber)' : '';
+  };
+  return cell;
+}
+
+function buildStemGrid(list){
+  const n = list.length, cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n/cols);
+  $('warn').textContent = (n > 12) ? 'note: many WebGL windows — some may not draw' : '';
+  cells = []; grid.innerHTML = '';
+  grid.style.gridTemplateRows = `repeat(${rows},1fr)`;
+  grid.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+  for(let i=0;i<n;i++) cells.push(makeCell(list[i][0]));
+  requestAnimationFrame(()=>{
+    const dpr = Math.min(devicePixelRatio||1, 1.5);
+    cells.forEach((cell,i)=>{
+      const r = cell.canvas.getBoundingClientRect();
+      const w = Math.max(2, r.width|0), h = Math.max(2, r.height|0);
+      try{
+        cell.viz = BC.createVisualizer(AC, cell.canvas, {width:w, height:h, pixelRatio:dpr, textureRatio:1});
+        cell.viz.setRendererSize(w, h);
+        cell.gain = stemGains[i] || null;
+        if(stemSrcs[i]) cell.viz.connectAudio(stemSrcs[i]);   // each cell hears ONE organ
+        cell.viz.loadPreset(presetList[cell.pi], 0.0);
+        if(cell.nameEl) cell.nameEl.textContent = names[cell.pi];
+      }catch(e){ /* WebGL context limit — leave dark */ }
+    });
+  });
+}
+
+async function enterStemMode(file){
+  let base = file.split('/').pop();
+  if(!STEMS[base]){                                   // this piece has no stems → jump to one that does
+    base = Object.keys(STEMS)[0]; file = base;        // 'dream_mix.mp3' (The Black Theater)
+    $('track').value = base;
+    $('warn').textContent = 'that piece has no stems — showing The Black Theater';
+  }
+  const set = STEMS[base];
+  let bufs;
+  try{ bufs = await Promise.all(set.map(s => loadBuf(s[1]))); }
+  catch(e){ $('warn').textContent = 'stems not found ('+e.message+') — render the piece first'; $('layout').value = '2x2'; return; }
+  if(src){ try{ src.stop(); }catch(e){} } src = null;
+  stemSrcs.forEach(s => { try{ s.stop(); }catch(e){} });
+  stemMode = true;
+  const T = AC.currentTime + 0.12;                                  // start all organs together
+  stemGains = [];
+  stemSrcs = bufs.map(b => {
+    const s = AC.createBufferSource(); s.buffer = b; s.loop = true;
+    const g = AC.createGain(); s.connect(g); g.connect(AC.destination);   // per-organ gain (for mute)
+    s.start(T); stemGains.push(g); return s;
+  });
+  curFile = file; trackStart = T; trackDur = bufs[0].duration; lastCueIdx = -1;
+  buildStemGrid(set);
+}
+function exitStemMode(){
+  stemMode = false;
+  stemSrcs.forEach(s => { try{ s.stop(); }catch(e){} }); stemSrcs = [];
 }
 
 function loop(){ requestAnimationFrame(loop); updateCue(); cells.forEach(c=>{ if(c.viz) try{ c.viz.render(); }catch(e){} }); }
@@ -212,8 +426,16 @@ async function begin(){
 }
 
 $('play').onclick = begin;
-$('layout').onchange = e => { if(started) buildGrid(e.target.value); };
-$('track').onchange = e => { playTrack(e.target.value).catch(()=>{}); };
+$('layout').onchange = async e => {
+  if(!started) return;
+  if(e.target.value === 'stems'){ await enterStemMode($('track').value); return; }
+  if(stemMode){ exitStemMode(); await playTrack($('track').value); }
+  buildGrid(e.target.value);
+};
+$('track').onchange = async e => {
+  if(stemMode) await enterStemMode(e.target.value);          // reload that piece's organs
+  else playTrack(e.target.value).catch(()=>{});
+};
 $('shuffle').onclick = shuffleAll;
 $('cycle').onchange = startCycle;
 $('guide').onchange = () => { if($('guide').checked) lastCueIdx = -1; };

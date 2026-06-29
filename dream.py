@@ -22,7 +22,7 @@ import shutil
 import numpy as np
 import synth as S
 
-VERSION = 'v004'
+VERSION = 'v005'
 DUR = 96.0
 N = int(DUR * S.SR)
 
@@ -113,6 +113,35 @@ def wind_note(freq, dur, seed=0):
     return (tone * env) + (breath * chiff * 0.5) + (air * env)
 
 
+VOWELS = {                       # formant triples (F1, F2, F3) in Hz
+    'ooh': (320, 870, 2240),
+    'oh':  (500, 1000, 2400),
+    'aah': (700, 1180, 2600),
+    'eh':  (530, 1840, 2480),
+    'eee': (300, 2300, 3000),
+}
+
+
+def vox_note(freq, dur, va='ooh', vb='aah', seed=0, bend=None):
+    """v005 — the child as an uncanny almost-voice. A buzzy glottal source (saw)
+    shaped by three resonant formants that MORPH from vowel `va` to `vb` across the
+    note, so it nearly sings a word. Synthetic, alive, and wrong."""
+    n = int(dur * S.SR); t = np.arange(n) / S.SR
+    d = S.drift(dur, 0.004, 0.8, seed)
+    vib = 1.0 + 0.012 * np.clip((t - 0.4) / 0.8, 0, 1) * np.sin(2 * np.pi * 5.2 * t)
+    f = freq * d * vib * (bend if bend is not None else 1.0)
+    src = S.saw(f, dur)                                   # glottal buzz (rich harmonics)
+    fa, fb = VOWELS[va], VOWELS[vb]
+    m = np.clip((t - 0.2) / (dur * 0.7), 0, 1)            # vowel morph fraction
+    out = np.zeros(n)
+    for k, g in enumerate((1.0, 0.7, 0.42)):
+        cf = fa[k] * (1 - m) + fb[k] * m                 # per-sample formant center
+        out += g * S.resonant_bpf(src, cf, q=7)
+    breath = S.resonant_bpf(S.noise(dur, seed=seed + 5), freq * 3, q=3) * 0.10
+    env = S.adsr(dur, a=0.18, d=0.25, s=0.7, r=0.6)[:n]
+    return (out / 2.0 + breath) * env
+
+
 def child():
     out = np.zeros(N)
     phrases = [
@@ -123,9 +152,11 @@ def child():
         (50, 'F4', 1.1), (51.3, 'A4', 1.0), (52.5, 'A#4', 1.6), (56, 'E5', 2.6),
         (72, 'C4', 2.4), (75, 'A3', 2.2), (78, 'E3', 3.0), (84, 'A3', 4.5),
     ]
+    vw = [('ooh', 'aah'), ('aah', 'eee'), ('oh', 'ooh'), ('eh', 'aah')]
     for i, (t, note, d) in enumerate(phrases):
         g = 0.5 if t < 66 else 0.42
-        out = S.mix_at(out, wind_note(S.note_to_hz(note), d, seed=i + 1), t, gain=g)
+        va, vb = vw[i % len(vw)]
+        out = S.mix_at(out, vox_note(S.note_to_hz(note), d, va=va, vb=vb, seed=i + 1), t, gain=g)
     return S.reverb_st(out[:N], decay=3.0, mix=0.36, seed=20)   # center dry, stereo tail
 
 
@@ -246,12 +277,10 @@ def veil():
 # dips to a wrong note, a breath is caught (a gap), then it corrects. In II, where
 # the child strains under the gaze.
 def falter_note(freq, dur=2.2):
-    n = int(dur * S.SR); t = np.arange(n) / S.SR
+    t = np.arange(int(dur * S.SR)) / S.SR
     bend = np.interp(t, [0, 0.5, 0.62, 0.95, 1.05, dur], [1, 1, 0.94, 0.94, 1.0, 1.0])
-    tone = S.sine(freq * bend, dur) + 0.14 * S.sine(3 * freq * bend, dur)
-    amp = S.adsr(dur, a=0.15, d=0.2, s=0.7, r=0.6)[:n]
     catch = np.interp(t, [0, 0.6, 0.7, 0.86, 0.96, dur], [1, 1, 0.12, 0.18, 1, 1])  # caught breath
-    return tone * amp * catch
+    return vox_note(freq, dur, va='aah', vb='eh', bend=bend) * catch                # the vox falters
 
 
 def stumble():
@@ -270,11 +299,11 @@ def mirror():
     t0, step = 59.0, 0.85
     call, ans = np.zeros(N), np.zeros(N)
     for i, note in enumerate(phrase):
-        call = S.mix_at(call, wind_note(S.note_to_hz(note), 1.1, seed=50 + i), t0 + i * step, gain=0.5)
+        call = S.mix_at(call, vox_note(S.note_to_hz(note), 1.1, va='ooh', vb='aah', seed=50 + i), t0 + i * step, gain=0.5)
     t1 = t0 + 0.45                                           # the answer follows close (a canon)
     for i, note in enumerate(phrase):
         fi = center * center / S.note_to_hz(note)            # inversion around A4
-        ans = S.mix_at(ans, wind_note(fi, 1.1, seed=70 + i), t1 + i * step, gain=0.42)
+        ans = S.mix_at(ans, vox_note(fi, 1.1, va='aah', vb='ooh', seed=70 + i), t1 + i * step, gain=0.42)
     st = np.stack([call[:N], ans[:N]], axis=1)              # call left, mirror right
     return S.reverb_st(st, decay=4.2, mix=0.45, seed=44)
 
