@@ -22,7 +22,7 @@ import shutil
 import numpy as np
 import synth as S
 
-VERSION = 'v004'
+VERSION = 'v003'
 DUR = 96.0
 N = int(DUR * S.SR)
 
@@ -299,18 +299,7 @@ if __name__ == '__main__':
         S.write_wav(f'stem_{name}.wav', sig)
         mix += lvl * sig[:N]
         print(f'  stem_{name}.wav  (stereo)')
-    # v004 — give the theater SPACE and VOLUME.
-    # space: a long hall behind everything (depth) + a wider stereo field.
-    hall = S.reverb_st(mix, decay=6.5, mix=1.0, seed=200)        # the full wet tail
-    mix = mix + 0.20 * hall
-    mix = S.stereo_width(mix, 1.2)
-    # volume: a master swell that breathes with the three movements — louder in the
-    # adoration peak, deeper into the closing silence (wider dynamic range).
-    vol = S.curve([(0, 0.80), (20, 0.88), (40, 1.00), (52, 1.08), (60, 1.12),
-                   (66, 0.95), (80, 0.66), (96, 0.42)], DUR)
-    mix = mix * vol[:, None]
-    # louder but safe: gentle saturation lifts the body, then the file normalizes.
-    mix = S.soft_clip(mix * 0.9, drive=1.08)
+    mix = S.soft_clip(mix * 0.7, drive=1.0)
     S.write_wav('dream_mix.wav', mix)
     print('  dream_mix.wav', round(DUR, 1), 's  (stereo)')
 

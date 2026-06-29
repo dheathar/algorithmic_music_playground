@@ -99,6 +99,9 @@
         {"name": "resonant_lpf + LFO", "role": "dark, slowly-breathing drone filtering"},
         {"name": "ping (struck pitch-drop)", "role": "the fishing — a sounding into the void"},
         {"name": "stardust", "role": "analog cosmic glitter woven through all three movements"},
+        {"name": "veil (v003)", "role": "two drones a Phrygian ♭2 apart, anti-correlated — as one swells the other thins (gone in III)"},
+        {"name": "stumble (v003)", "role": "the child falters: pitch dips to a wrong note, a breath caught, then corrected — exposure under the gaze"},
+        {"name": "mirror (v003)", "role": "the child's phrase answered by its inversion, panned opposite — the hinge before the eyes close"},
         {"name": "reverb_st", "role": "the cavernous theatre space"}
       ],
       "supercollider": [
@@ -114,6 +117,8 @@
       ],
       "visualization": {"track": "theater_sc.mp3", "page": "visualizer.html"},
       "editions": [
+        {"version": "v004 (current)", "dir": "versions/v004/", "note": "space & volume — a 6.5 s hall behind everything, a wider field, and a deeper dynamic swell (II nearly doubles I)"},
+        {"version": "v003", "dir": "versions/v003/", "note": "expanded with three organs seeded from real DreamBank dreams: veil, stumble, mirror"},
         {"version": "dream v002", "dir": "versions/", "note": "the original stereo render (six organs)"},
         {"version": "theater-sc v001", "dir": "versions/theater-sc-v001/", "note": "re-voiced through SuperCollider via the full AI pipeline"}
       ],
@@ -124,7 +129,9 @@
         {"who": "panos", "kind": "feedback", "text": "'Was this noise? … it was like white noise … I think some patch had clipped.'"},
         {"who": "jarre", "kind": "fix", "text": "Adds a master limiter, a reciprocal-Q clamp, an FM index cap, and per-voice tanh — the blow-ups stop."},
         {"who": "panos", "kind": "feedback", "text": "'Now it's like a mosquito.' / 'one note like a sine, intrusive.' / 'sounds out of concept, like melodica notes.'"},
-        {"who": "jarre", "kind": "fix", "text": "Replaces the sustained bell with soft stardust; turns the naked sine into the struck fishing ping; makes the footsteps intentional and beautified."}
+        {"who": "jarre", "kind": "fix", "text": "Replaces the sustained bell with soft stardust; turns the naked sine into the struck fishing ping; makes the footsteps intentional and beautified."},
+        {"who": "panos", "kind": "idea", "text": "Mines the 'Watched & the crowd' DreamBank dreams to expand the theater. Likes the stumble (#8), the mirror before closure (#10), and the veil as an ambient bed except the final movement (#6); rejects the glow/crooked-jerk (#4) as too cheap — 'cleverness is the trap.'"},
+        {"who": "jarre", "kind": "fix", "text": "Builds v003: the veil (anti-correlated ♭2 drones, gone in III), the stumble (the child falters in II), the mirror (the child answered by its inversion at the hinge). Re-rendered; the strain peaks at 52–66s, then III falls to silence."}
       ],
       "links": [
         {"label": "The score — theater_sc.py", "href": "theater_sc.py"},
