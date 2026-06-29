@@ -23,6 +23,36 @@ the pioneering spirit of electronic music. Treats the user as a gifted student.
   literally hear; it judges via numbers (RMS, peak, spectrum). The user's ears
   are the authority.
 
+## ✦ The way of a creation — the rite (constitutional)
+
+Every piece is made the same way, so the lab stays coherent and nothing drifts
+back into a mess. The nine steps:
+
+1. **Seed** — begin from a feeling, dream, memory, or image; never "pick a chord."
+   Visual seeds live on the **Inspiration board** (`inspiration.html`, fed by
+   `unsplash_search.py`, grouped **by theme**). Record the seed in the model's
+   `source_material` / `inspiration`.
+2. **Concept** — translate the feeling into a thesis and an arc. Decide what the
+   *structure itself* means (e.g. *Vitrine*'s ADC→DAC loss-loop). Bridge feeling↔DSP aloud.
+3. **Lineage** — search who has mined this seam before; map each technique to an
+   engine function; cite the sources.
+4. **Recipe (ingredients)** — choose oscillators / filters / fx / space, and
+   crucially **keys & scales that encode the meaning** (whole-tone = no cadence,
+   Phrygian = dark, Lydian = soaring). Keep the DSP-verb→feeling honest.
+5. **Build** — write it in the **organs pattern**; drive structure with
+   **automation lanes**; render offline via `synth.py`, optionally realtime via
+   SuperCollider. Randomness always seeded.
+6. **Validate** — render, check the numbers (RMS/peak, no clip, no noise floor),
+   then the **listen → react → converge** loop. The user's ears are the authority.
+7. **Story** — write the meaning (liner notes, e.g. `VITRINE.md`) and keep the
+   **creation path** — the dialogue, how it grew.
+8. **Catalog** — add the piece to **`creations.json`** and run
+   `build_creations.py`. It then appears in the **Library** (`creations.html`),
+   the portal Creations tab, and the visualizer. *One model, many views — never
+   duplicate creation content across pages.*
+9. **Archive** — every render auto-saves to `versions/<id>-vNNN/` with its exact
+   code; mp3 for playback; WAV gitignored.
+
 ## 1. The studio (project layout)
 
 ```
@@ -48,6 +78,13 @@ jarre-synth/
   engine.scd          # SuperCollider voice (\labvoice SynthDef) — the realtime engine
   sc_bridge.py        # drives scsynth over OSC from our patch format (python-osc)
   space_library/      # 12 real cosmic recordings (CC BY 4.0)
+  vitrine.py          # creation 4 — "Vitrine" (the ADC→DAC converter loop)
+  creations.json      # SINGLE SOURCE OF TRUTH for creations (the content model)
+  creations.html      # GENERATED Creations Library (build_creations.py ← creations.json)
+  process.html        # the engine & method reference (how pieces are made)
+  inspiration.json    # moodboard data; inspiration.html GENERATED (build_inspiration.py)
+  unsplash_search.py  # Unsplash search → moodboard (key read from .mcp.json, server-side)
+  tools/ .mcp.json    # local MCP servers (Unsplash) + config — gitignored, never commit
   versions/           # every edition archived with the exact code that made it
   .venv/              # python 3.14 · numpy · scipy
 ```
@@ -65,6 +102,11 @@ jarre-synth/
 4. **First principles.** No presets, no third-party samples — except real,
    clearly-licensed recordings (e.g. NASA/Univ. of Iowa space audio, CC BY 4.0,
    attributed).
+5. **One source of truth for creations.** `creations.json` is the model; the
+   Library, the portal Creations tab, and the visualizer are *views*. Add a piece
+   there and rebuild — never hand-duplicate creation content across pages.
+6. **Never commit secrets or others' media.** `.env`, `.mcp.json`, `inspiration/`,
+   `midi/`, `tools/`, and `*.wav` masters stay local (gitignored).
 
 ## 3. Conventions
 
@@ -98,6 +140,12 @@ jarre-synth/
   horror on the **Jupiter ion-acoustic** sample. **A → A Lydian, 128 BPM**, 180 s.
   Arc: struggle → breakthrough (a breath, then burst) → keep-the-pace, with
   **flap/glide** waves. 9 organs. Editions v001→**v003 (current)**.
+- **Vitrine** (`vitrine.py`) — the **ADC→DAC converter loop**, from a photograph of
+  shop-window mannequins. **D minor vs C whole-tone**, ~100 BPM grid, 300 s. One warm
+  phrase re-quantized worse each pass (16→2 bit); the lead migrates to the grid; a
+  **stardust substrate never converts** (conserved matter). Ends unresolved. Story in
+  `VITRINE.md`. Edition **v001 (current)**.
+- *Catalogued in `creations.json` → Library (`creations.html`); engine/method in `process.html`.*
 
 ## 6. How to work (commands)
 

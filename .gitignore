@@ -17,6 +17,11 @@ midi/
 # visual inspiration seeds (others' images) — kept local, credited in creations.json
 inspiration/
 
+# DreamBank corpus text (research-licensed) — inspiration only, never redistributed
+dreams.json
+dreams.html
+dreams_all.jsonl
+
 # bundled MCP tools (clone locally; not part of this repo)
 tools/
 

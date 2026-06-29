@@ -293,12 +293,12 @@
   <div class="hero-in">
     <div class="eyebrow"><span class="dot"></span><span class="label">Signal Lab · an electronic-music studio, in the spirit of Jean-Michel Jarre</span></div>
     <h1><span class="em">Signal</span> Lab</h1>
-    <p class="sub">What began as a childhood dream — synthesized from first principles in numpy, in the spirit of Jarre's <em>Oxygène</em> — has grown into a full studio: a from-scratch DSP engine <em>and</em> a realtime SuperCollider voice, an AI that turns words into patches, real recordings from space woven into the sound, and visuals that breathe with the music. Two finished pieces, and the tools to make more.</p>
+    <p class="sub">What began as a childhood dream — synthesized from first principles in numpy, in the spirit of Jarre's <em>Oxygène</em> — has grown into a full studio: a from-scratch DSP engine <em>and</em> a realtime SuperCollider voice, an AI that turns words into patches, real recordings from space woven into the sound, and visuals that breathe with the music. Four pieces — from The Black Theater to Vitrine — and the tools to make more.</p>
     <div class="readout">
       <div>ENGINES <span>numpy · SuperCollider</span></div>
       <div>VOICES <span>subtractive · additive · FM · granular</span></div>
       <div>AI <span>text → patch</span></div>
-      <div>CREATIONS <span>2 + studies</span></div>
+      <div>CREATIONS <span>4 · incl. Vitrine</span></div>
       <div>STATUS <span>evolving</span></div>
     </div>
     <div class="panelrow" aria-hidden="true">
@@ -314,14 +314,14 @@
 
 <nav class="tabbar"><div class="tabbar-in" role="tablist" id="tabs">
   <button class="tab" role="tab" data-tab="creations">Creations</button>
-  <button class="tab" role="tab" data-tab="theater">The Black Theater</button>
-  <button class="tab" role="tab" data-tab="icarus">✦ Icarus</button>
   <button class="tab" role="tab" data-tab="method">Method</button>
   <button class="tab" role="tab" data-tab="history">History</button>
   <span class="navspace"></span>
   <a class="navlink live" href="studio.html">▶ Studio ↗</a>
   <a class="navlink live" href="live.html">▶ Live ↗</a>
   <a class="navlink live" href="creations.html">✦ Creations ↗</a>
+  <a class="navlink" href="inspiration.html">Inspiration ↗</a>
+  <a class="navlink" href="dreams.html">Dreams ↗</a>
   <a class="navlink" href="library.html">Library ↗</a>
   <a class="navlink" href="toolkit.html">Toolkit ↗</a>
   <a class="navlink" href="visualizer.html">Visualizer ↗</a>
@@ -334,8 +334,31 @@
   <!-- ============ CREATIONS HUB ============ -->
   <section class="panel" id="tab-gallery" data-group="creations" role="tabpanel">
     <h2 class="phead">Creations</h2>
-    <p class="lead">The lab's finished pieces. Each is a complete world built from first-principles synthesis — no presets, no samples (except where noted). Open one to see its dream, its organs, and the exact build sheets.</p>
-    <div class="rack" id="gallery"></div>
+    <p class="lead">The lab's pieces, each a complete world built from first-principles synthesis. Open any to its full hub — source, ingredients, SuperCollider, the story, and how it grew.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin:6px 0 16px">
+      <a href="creations.html#/vitrine" style="display:block;text-decoration:none;color:#E7E9F3;border:1px solid #272C4C;border-radius:14px;padding:18px;background:linear-gradient(180deg,#12152A,#0E1124)">
+        <div style="font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;color:#F4A659;text-transform:uppercase">converter loop · growing</div>
+        <div style="font-size:19px;font-weight:750;margin:6px 0 4px">Vitrine</div>
+        <div style="color:#9298B8;font-size:14px">The soul put through an ADC, and never fully recovered.</div>
+      </a>
+      <a href="creations.html#/black-theater" style="display:block;text-decoration:none;color:#E7E9F3;border:1px solid #272C4C;border-radius:14px;padding:18px;background:linear-gradient(180deg,#12152A,#0E1124)">
+        <div style="font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;color:#9B8CFF;text-transform:uppercase">dream · mature</div>
+        <div style="font-size:19px;font-weight:750;margin:6px 0 4px">The Black Theater</div>
+        <div style="color:#9298B8;font-size:14px">A childhood dream: a child alone on a dark stage, watched by an audience of eyes.</div>
+      </a>
+      <a href="creations.html#/icarus" style="display:block;text-decoration:none;color:#E7E9F3;border:1px solid #272C4C;border-radius:14px;padding:18px;background:linear-gradient(180deg,#12152A,#0E1124)">
+        <div style="font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;color:#9B8CFF;text-transform:uppercase">flight · mature</div>
+        <div style="font-size:19px;font-weight:750;margin:6px 0 4px">Icarus</div>
+        <div style="color:#9298B8;font-size:14px">A flying dream fused with cosmic horror, built on the sound of Jupiter.</div>
+      </a>
+      <a href="creations.html#/oxygene" style="display:block;text-decoration:none;color:#E7E9F3;border:1px solid #272C4C;border-radius:14px;padding:18px;background:linear-gradient(180deg,#12152A,#0E1124)">
+        <div style="font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;color:#57E3C2;text-transform:uppercase">study · seedling</div>
+        <div style="font-size:19px;font-weight:750;margin:6px 0 4px">Homage to Oxygène</div>
+        <div style="color:#9298B8;font-size:14px">The Jarre signature, rebuilt from scratch in the real engine.</div>
+      </a>
+    </div>
+    <p style="margin:2px 0 0"><a href="creations.html" style="font-family:ui-monospace,monospace;font-size:13px;color:#57E3C2;text-decoration:none">✦ Open the full Creations Library ↗</a></p>
+    <div id="gallery" style="display:none"></div>
   </section>
 
   <!-- ============ THE BLACK THEATER (dream + field + organs) ============ -->

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Lab — Inspiration</title>
+<meta name="description" content="A visual moodboard for the lab: image search results (Unsplash) to browse and turn into creation seeds.">
+<style>
+  :root{
+    --bg:#0A0C18;--panel:#12152A;--panel2:#0E1124;--line:#272C4C;--line2:#1B1F3A;
+    --text:#E7E9F3;--muted:#9298B8;--faint:#5A6088;--amber:#F4A659;--phosphor:#57E3C2;--phosphor-dim:#2E8C77;--violet:#9B8CFF;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--body:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.6;padding-bottom:100px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+  a{color:var(--phosphor)}
+  .top{position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);background:linear-gradient(180deg,rgba(10,12,24,.92),rgba(10,12,24,.6));border-bottom:1px solid var(--line2)}
+  .top .wrap{display:flex;align-items:center;gap:16px;padding:12px 22px}
+  .top a.home{font-family:var(--mono);font-size:12px;color:var(--faint);text-decoration:none}
+  .top a.home:hover{color:var(--phosphor)} .top .spacer{flex:1}
+  .top nav{display:flex;gap:14px;flex-wrap:wrap}
+  .top nav a{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);text-decoration:none;text-transform:uppercase}
+  .top nav a:hover{color:var(--amber)}
+
+  header.hero{padding:54px 0 10px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--phosphor-dim)}
+  h1{font-size:clamp(30px,5vw,48px);letter-spacing:-.02em;margin:.3em 0 .25em;font-weight:800}
+  h1 .em{color:var(--amber)}
+  .lede{color:var(--muted);max-width:64ch}
+  .lede code{font-family:var(--mono);font-size:13px;color:var(--phosphor);background:rgba(87,227,194,.08);padding:1px 6px;border-radius:5px}
+
+  .board{padding:30px 0 6px;border-top:1px solid var(--line2);margin-top:26px}
+  .board:first-of-type{border-top:none}
+  .bhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .bhead h2{font-size:23px;margin:0;font-weight:750;text-transform:capitalize}
+  .bhead .count{font-family:var(--mono);font-size:12px;color:var(--faint)}
+
+  .grid{columns:4 240px;column-gap:14px}
+  .cell{break-inside:avoid;margin:0 0 14px;border-radius:12px;overflow:hidden;position:relative;
+    border:1px solid var(--line);background:var(--panel)}
+  .cell img{width:100%;display:block;background:var(--panel2)}
+  .cell .ov{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;
+    padding:10px 11px;gap:3px;opacity:0;transition:opacity .18s;
+    background:linear-gradient(0deg,rgba(5,6,12,.92),rgba(5,6,12,.1) 55%,transparent)}
+  .cell:hover .ov{opacity:1}
+  .cell .desc{font-size:12.5px;line-height:1.35;color:#fff}
+  .cell .by{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+  .cell .by a{color:var(--phosphor);text-decoration:none}
+  .cell .id{position:absolute;top:8px;left:9px;font-family:var(--mono);font-size:10px;color:#cfd3ee;
+    background:rgba(5,6,12,.6);padding:2px 7px;border-radius:999px;opacity:0;transition:opacity .18s}
+  .cell:hover .id{opacity:1}
+  .cell .links{display:flex;gap:8px;margin-top:3px}
+  .cell .links a{font-family:var(--mono);font-size:10.5px;color:var(--amber);text-decoration:none}
+
+  .seednote{border-left:3px solid var(--violet);background:rgba(155,140,255,.06);padding:10px 16px;border-radius:0 10px 10px 0;color:var(--muted);font-size:14px;margin:18px 0 6px}
+  .seednote code{font-family:var(--mono);color:var(--phosphor)}
+  footer{padding:40px 0;color:var(--faint);font-family:var(--mono);font-size:12px;border-top:1px solid var(--line2);margin-top:30px}
+  footer a{color:var(--muted)}
+  .theme{padding:34px 0 6px;border-top:1px solid var(--line2);margin-top:30px}
+  .theme:first-of-type{border-top:none;margin-top:4px}
+  .theme > h2{font-size:27px;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
+  .theme .blurb{color:var(--muted);max-width:66ch;margin:0 0 4px}
+  .subboard{margin:18px 0 2px}
+  .subboard .sh{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);margin:0 0 10px}
+  .subboard .sh .c{color:var(--faint);text-transform:none;letter-spacing:0}
+  .empty{color:var(--faint);font-family:var(--mono);font-size:13px;padding:40px 0}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <a class="home" href="index.html">← Signal Lab</a>
+  <span class="spacer"></span>
+  <nav>
+    <a href="creations.html">Creations</a>
+    <a href="process.html">Method</a>
+    <a href="visualizer.html">Visualizer</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Signal Lab · the moodboard</div>
+  <h1>Inspiration <span class="em">board</span></h1>
+  <p class="lede">Visual seeds for the next creation — image searches, gathered here to browse. Hover for the
+  description and credit; open any on Unsplash. Tell Jarre <code>seed a creation from &lt;id&gt;</code> and
+  it becomes the source of a new piece. To add a search, ask — or run
+  <code>unsplash_search.py "your query"</code> then <code>build_inspiration.py</code>.</p>
+</div></header>
+
+<main class="wrap" id="boards"></main>
+
+<footer><div class="wrap">
+  Images hotlinked from <a href="https://unsplash.com">Unsplash</a> under the Unsplash license (credit shown per image).
+  Source: <a href="inspiration.json">inspiration.json</a> → built by <code>build_inspiration.py</code>.
+</div></footer>
+
+<script id="data" type="application/json">__BOARDS_JSON__</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const esc = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function cell(p){
+  const ratio = (p.h && p.w) ? (p.h/p.w*100) : 66;
+  const desc = p.desc ? `<div class="desc">${esc(p.desc)}</div>` : '';
+  return `<div class="cell" style="background:${esc(p.color)}">
+    <img loading="lazy" src="${esc(p.small)}" alt="${esc(p.desc)}" style="aspect-ratio:${p.w||4}/${p.h||3}">
+    <span class="id">${esc(p.id)}</span>
+    <div class="ov">${desc}
+      <div class="by">Photo by <a href="${esc(p.author_url)}" target="_blank" rel="noopener">${esc(p.author)}</a> on Unsplash</div>
+      <div class="links"><a href="${esc(p.page)}" target="_blank" rel="noopener">open ↗</a></div>
+    </div>
+  </div>`;
+}
+
+function subboard(b){
+  if(!b) return '';
+  return `<div class="subboard">
+    <div class="sh">${esc(b.query)} <span class="c">· ${(b.results||[]).length} of ${b.total} on Unsplash</span></div>
+    <div class="grid">${(b.results||[]).map(cell).join('')}</div></div>`;
+}
+
+function render(){
+  const byq = {}; (DATA.boards||[]).forEach(b => byq[b.query] = b);
+  const used = new Set();
+  let html = (DATA.themes||[]).map(t => {
+    const subs = (t.queries||[]).map(q => { used.add(q); return subboard(byq[q]); }).join('');
+    return `<section class="theme"><h2>${esc(t.name)}</h2>${t.blurb?`<p class="blurb">${esc(t.blurb)}</p>`:''}${subs}</section>`;
+  }).join('');
+  const orphans = (DATA.boards||[]).filter(b => !used.has(b.query));
+  if(orphans.length){
+    html += `<section class="theme"><h2>Unsorted</h2><p class="blurb">Searches not yet grouped into a theme.</p>${orphans.map(subboard).join('')}</section>`;
+  }
+  document.getElementById('boards').innerHTML = html || '<p class="empty">No boards yet. Run unsplash_search.py to add some.</p>';
+}
+render();
+</script>
+</body>
+</html>
