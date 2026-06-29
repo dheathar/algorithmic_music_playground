@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "name": "phrygian-phrase",
+  "tempo": 96,
+  "root": "A",
+  "scale": "phrygian",
+  "osc": { "type": "wave", "wave": "square", "voices": 1 },
+  "filter": { "type": "lowpass", "cutoff": 2200, "q": 6, "env_amt": 0.5 },
+  "env": { "a": 0.01, "d": 0.12, "s": 0.3, "r": 0.15 },
+  "lfo": { "target": "none", "rate": 5, "depth": 0 },
+  "fx": { "reverb": 0.35, "delay": 0.3, "delay_time": 0.33, "width": 0.5, "drive": 1.0 },
+  "sequence": [
+    {"step": 0, "deg": 0}, {"step": 2, "deg": 2}, {"step": 4, "deg": 4},
+    {"step": 6, "deg": 3}, {"step": 8, "deg": 5}, {"step": 10, "deg": 4},
+    {"step": 12, "deg": 6}, {"step": 14, "deg": 7}
+  ]
+}

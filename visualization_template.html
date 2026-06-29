@@ -1,0 +1,123 @@
+<title>The Black Theater — Visualization</title>
+<meta name="description" content="A generative visualization that breathes with The Black Theater: a field of eyes, the child as a wandering light, soundings as ripples into the dark.">
+<style>
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%;background:#05060c;overflow:hidden;font-family:ui-monospace,Menlo,monospace;color:#9aa0c0}
+  #stage{position:fixed;inset:0;width:100%;height:100%;display:block}
+  .overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:22px;background:radial-gradient(circle at 50% 45%, rgba(20,16,40,.4), #05060c 70%);z-index:5;transition:opacity 1.2s}
+  .overlay.hide{opacity:0;pointer-events:none}
+  .ttl{font-family:-apple-system,system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;
+    font-size:clamp(30px,6vw,64px);color:#E7E9F3;text-align:center;line-height:1}
+  .ttl em{font-style:normal;color:#F4A659}
+  .sub{max-width:46ch;text-align:center;color:#8C92B2;font-family:-apple-system,system-ui,sans-serif;font-size:16px;line-height:1.5}
+  .play{margin-top:8px;width:74px;height:74px;border-radius:50%;border:1px solid #2E8C77;background:rgba(18,21,42,.7);
+    color:#57E3C2;cursor:pointer;display:grid;place-items:center;transition:.2s}
+  .play:hover{background:#57E3C2;color:#05060c;box-shadow:0 0 40px rgba(87,227,194,.5)}
+  .play svg{width:30px;height:30px}
+  .cap{position:fixed;left:0;right:0;bottom:26px;text-align:center;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:#3a4060;z-index:4;transition:opacity .8s;pointer-events:none}
+  .back{position:fixed;top:18px;left:20px;z-index:6;font-size:12px;letter-spacing:.08em;color:#5A6088;text-decoration:none}
+  .back:hover{color:#57E3C2}
+</style>
+
+<canvas id="stage"></canvas>
+<a class="back" href="index.html">← The Black Theater</a>
+<div class="cap" id="cap"></div>
+<div class="overlay" id="overlay">
+  <div class="ttl">The <em>Black</em> Theater</div>
+  <div class="sub">A child alone on a dark stage, fishing into a void full of eyes. Headphones, and the lights down low.</div>
+  <button class="play" id="play" aria-label="Begin">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+  </button>
+</div>
+
+<script>
+const AUDIO_B64 = "__AUDIO_B64__";
+const cv = document.getElementById('stage'), x = cv.getContext('2d');
+let W, H, DPR;
+function size(){ DPR = Math.min(devicePixelRatio||1, 2); W = innerWidth; H = innerHeight; cv.width = W*DPR; cv.height = H*DPR; x.setTransform(DPR,0,0,DPR,0,0); makeEyes(); }
+addEventListener('resize', size);
+
+let eyes = [];
+function rnd(i){ const s = Math.sin(i*127.1)*43758.5; return s - Math.floor(s); }
+function makeEyes(){
+  eyes = [];
+  const n = Math.round(Math.min(90, W*H/16000));
+  for(let i=0;i<n;i++){
+    eyes.push({ x:(0.06+0.88*rnd(i*3.1))*W, y:(0.05+0.66*rnd(i*7.7))*H,
+      r:1.4+2.6*rnd(i*5.3), ph:rnd(i*2.2)*6.28, rate:0.15+rnd(i*9.1)*0.5 });
+  }
+}
+
+let ripples = [], dust = [];
+let AC, an, freq, td, playing = false, t = 0, emaBass = 0, child = {x:0,y:0};
+
+function start(){
+  AC = new (window.AudioContext||window.webkitAudioContext)();
+  an = AC.createAnalyser(); an.fftSize = 2048; an.smoothingTimeConstant = 0.8;
+  freq = new Uint8Array(an.frequencyBinCount); td = new Uint8Array(an.fftSize);
+  an.connect(AC.destination);
+  const bytes = Uint8Array.from(atob(AUDIO_B64), c => c.charCodeAt(0));
+  AC.decodeAudioData(bytes.buffer, function(buf){
+    const s = AC.createBufferSource(); s.buffer = buf; s.connect(an); s.start();
+    s.onended = ()=>{ document.getElementById('cap').textContent = '…the eyes close.'; };
+  }, function(){ document.getElementById('cap').textContent = 'audio decode failed'; });
+  AC.resume(); playing = true;
+  document.getElementById('overlay').classList.add('hide');
+  size(); loop();
+}
+document.getElementById('play').onclick = start;
+
+const band = (a,b)=>{ let s=0; for(let i=a;i<b;i++) s+=freq[i]; return s/((b-a)*255); };
+const CAPS = ['','I · kind eyes','I · kind eyes','II · adoration & envy','II · adoration & envy','III · the eyes close'];
+
+function loop(){
+  if(!playing) return;
+  requestAnimationFrame(loop); t += 1/60;
+  an.getByteFrequencyData(freq); an.getByteTimeDomainData(td);
+  const bass = band(1,6), lowmid = band(6,28), mid = band(28,90), high = band(150,440);
+
+  emaBass = emaBass*0.9 + bass*0.1;
+  if(bass > emaBass + 0.16 && bass > 0.22) ripples.push({x:child.x, y:child.y, r:8, a:0.5});
+  if(high > 0.12 && Math.random() < high*1.4) dust.push({x:Math.random()*W, y:Math.random()*H*0.5, r:0.5+Math.random()*1.8, a:0.9});
+
+  x.globalCompositeOperation = 'source-over';
+  x.fillStyle = 'rgba(5,6,12,0.34)'; x.fillRect(0,0,W,H);
+  x.globalCompositeOperation = 'lighter';
+
+  for(const e of eyes){
+    const blink = 0.5 + 0.5*Math.sin(t*e.rate + e.ph);
+    const g = Math.min(1, (0.06 + lowmid*1.4) * (0.4 + 0.6*blink));
+    const R = e.r*(1 + lowmid*1.6);
+    const grd = x.createRadialGradient(e.x,e.y,0,e.x,e.y,R*5);
+    grd.addColorStop(0, 'rgba('+Math.round(150+80*high)+',150,255,'+(g*0.9)+')');
+    grd.addColorStop(1, 'rgba(120,120,255,0)');
+    x.fillStyle = grd; x.beginPath(); x.arc(e.x,e.y,R*5,0,6.28); x.fill();
+    x.fillStyle = 'rgba(200,210,255,'+g+')'; x.beginPath(); x.arc(e.x,e.y,R*0.9,0,6.28); x.fill();
+  }
+
+  child.x = W*0.5 + Math.sin(t*0.13)*W*0.16 + Math.sin(t*0.41)*W*0.04;
+  child.y = H*0.66 + Math.sin(t*0.19)*H*0.05;
+  const cg = 0.18 + mid*2.2;
+  const cgr = x.createRadialGradient(child.x,child.y,0,child.x,child.y,120*(0.5+mid*2));
+  cgr.addColorStop(0,'rgba(255,225,180,'+Math.min(0.9,cg)+')'); cgr.addColorStop(1,'rgba(244,166,89,0)');
+  x.fillStyle = cgr; x.beginPath(); x.arc(child.x,child.y,120*(0.5+mid*2),0,6.28); x.fill();
+
+  for(let i=ripples.length-1;i>=0;i--){ const r=ripples[i]; r.r+=2.4; r.a*=0.975;
+    x.strokeStyle='rgba(87,227,194,'+r.a+')'; x.lineWidth=1.5; x.beginPath(); x.arc(r.x,r.y,r.r,0,6.28); x.stroke();
+    if(r.a<0.02) ripples.splice(i,1); }
+
+  for(let i=dust.length-1;i>=0;i--){ const d=dust[i]; d.a*=0.94;
+    x.fillStyle='rgba(190,255,235,'+d.a+')'; x.beginPath(); x.arc(d.x,d.y,d.r,0,6.28); x.fill();
+    if(d.a<0.04) dust.splice(i,1); }
+
+  if(bass>0.18){ const fg=x.createRadialGradient(child.x,H,0,child.x,H,260*bass);
+    fg.addColorStop(0,'rgba(120,90,160,'+(bass*0.25)+')'); fg.addColorStop(1,'rgba(0,0,0,0)');
+    x.fillStyle=fg; x.fillRect(0,H-300,W,300); }
+
+  const seg = Math.min(5, Math.floor(t/18)+1);
+  document.getElementById('cap').textContent = CAPS[seg] || '';
+}
+size();
+</script>

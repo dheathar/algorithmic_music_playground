@@ -1,0 +1,367 @@
+<title>Signal Lab — Studio</title>
+<meta name="description" content="A multi-track browser synth studio: pad, arp, bass and a portamento lead, with Jarre & Vangelis presets and WAV export.">
+<style>
+  :root{
+    --bg:#0A0C18;--panel:#12152A;--panel-2:#181C36;--line:#272C4C;
+    --text:#E7E9F3;--muted:#8C92B2;--faint:#5A6088;
+    --amber:#F4A659;--phosphor:#57E3C2;--phosphor-dim:#2E8C77;--violet:#9B8CFF;--rose:#E78AA8;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--body:-apple-system,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+  a{color:var(--phosphor);text-decoration:none}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  header{border-bottom:1px solid var(--line);padding:24px 0 20px}
+  .back{font-family:var(--mono);font-size:12px;color:var(--muted)}.back:hover{color:var(--phosphor)}
+  h1{font-weight:800;letter-spacing:-.03em;margin:12px 0 0;font-size:clamp(26px,4.5vw,40px)}
+  h1 .em{color:var(--amber)}
+  .sub{color:var(--muted);margin:8px 0 0;font-size:14px}
+
+  .scope-wrap{border:1px solid var(--line);border-radius:12px;background:#0B0E1C;margin:18px 0;overflow:hidden}
+  #scope{width:100%;height:90px;display:block}
+
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .big{font-family:var(--mono);font-size:13px;letter-spacing:.05em;border:1px solid var(--phosphor-dim);
+    background:var(--panel-2);color:var(--phosphor);border-radius:9px;padding:11px 18px;cursor:pointer;transition:.15s}
+  .big:hover{background:var(--phosphor);color:#0A0C18}
+  .big.alt{border-color:var(--line);color:var(--muted)}.big.alt:hover{background:var(--panel-2);color:var(--text)}
+  .big.amber{border-color:var(--amber);color:var(--amber)}.big.amber:hover{background:var(--amber);color:#0A0C18}
+  select,input[type=number]{font-family:var(--mono);font-size:13px;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+
+  .cols{display:grid;grid-template-columns:300px 1fr;gap:16px}
+  @media(max-width:820px){.cols{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .card h3{margin:0 0 14px;font-size:12px;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--violet)}
+
+  .track{display:grid;grid-template-columns:18px 58px 1fr;gap:10px;align-items:center;margin-bottom:12px}
+  .track .dot{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);cursor:pointer}
+  .track .dot.on{background:var(--phosphor);border-color:var(--phosphor);box-shadow:0 0 8px var(--phosphor)}
+  .track .nm{font-family:var(--mono);font-size:12px;color:var(--text)}
+  .glob{display:flex;flex-direction:column;gap:11px}
+  .ctl{display:flex;flex-direction:column;gap:5px}
+  .ctl label{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .ctl .v{color:var(--phosphor)}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:4px;background:var(--line);border-radius:3px;width:100%}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--amber);cursor:pointer}
+
+  .prog{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .prog select{flex:1;min-width:64px}
+
+  .grid-wrap{overflow-x:auto}
+  .grid{display:grid;gap:3px;min-width:620px}
+  .row{display:grid;grid-template-columns:40px repeat(16,1fr);gap:3px;align-items:center}
+  .rl{font-family:var(--mono);font-size:9px;color:var(--faint);text-align:right;padding-right:3px}
+  .cell{height:20px;border-radius:3px;background:var(--panel-2);border:1px solid var(--line);cursor:pointer}
+  .cell.beat{background:#1E2340}
+  .cell.on{background:var(--amber);border-color:var(--amber);box-shadow:0 0 8px rgba(244,166,89,.4)}
+  .cell.playhead{outline:2px solid var(--phosphor)}
+  .hint{color:var(--faint);font-size:12px;margin:14px 0 50px}
+  .hint b{color:var(--amber)}
+</style>
+
+<header class="wrap">
+  <a class="back" href="index.html">← The Black Theater</a>
+  <div class="label" style="margin-top:12px">Signal Lab</div>
+  <h1>Signal Lab <span class="em">Studio</span></h1>
+  <p class="sub">Four tracks at once — pad · arp · bass · a portamento lead. Load Jarre or Vangelis, perform, and <b>export a WAV</b>. The enhanced instrument.</p>
+</header>
+
+<main class="wrap">
+  <div class="scope-wrap"><canvas id="scope"></canvas></div>
+
+  <div class="bar">
+    <button class="big" id="play">▶ Play</button>
+    <button class="big amber" id="export">⬇ Export WAV</button>
+    <label class="big alt" style="cursor:pointer">⬁ Load MIDI<input type="file" id="midifile" accept=".mid,.midi" style="display:none"></label>
+    <button class="big alt" id="midiplay" disabled>▶ Play MIDI</button>
+    <button class="big alt" id="exp">⬇ Lead patch</button>
+    <button class="big alt" id="eng">▶ Lead in engine</button>
+    <select id="preset">
+      <option value="">⊕ Presets…</option>
+      <optgroup label="Jarre">
+        <option value="oxygene">Oxygène</option>
+        <option value="equinoxe">Équinoxe (arp)</option>
+      </optgroup>
+      <optgroup label="Vangelis">
+        <option value="blade">Blade Runner — brass</option>
+        <option value="chariots">Chariots — anthem</option>
+      </optgroup>
+      <optgroup label="Our pieces">
+        <option value="theater">The Black Theater</option>
+        <option value="icarus">Icarus</option>
+      </optgroup>
+    </select>
+    <span id="status" class="label"></span>
+  </div>
+
+  <div class="cols">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card"><h3>Tracks</h3><div id="tracks"></div></div>
+      <div class="card"><h3>Global</h3>
+        <div class="glob">
+          <div class="ctl"><label>Key root</label><select id="root">
+            <option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option><option>F#</option><option>G</option><option>G#</option><option selected>A</option><option>A#</option><option>B</option>
+          </select></div>
+          <div class="ctl"><label>Scale</label><select id="scale">
+            <option value="minor">minor</option><option value="major">major</option>
+            <option value="phrygian">phrygian</option><option value="lydian">lydian</option><option value="dorian">dorian</option>
+          </select></div>
+          <div class="ctl"><label>Tempo <span class="v" id="vT">104</span> BPM</label><input type="range" id="tempo" min="50" max="160" value="104"></div>
+          <div class="ctl"><label>Reverb <span class="v" id="vR">42</span>%</label><input type="range" id="rev" min="0" max="85" value="42"></div>
+        </div>
+      </div>
+      <div class="card"><h3>Progression (4 chords)</h3>
+        <div class="prog" id="prog"></div>
+        <div class="label" style="color:var(--faint)">drives pad · arp · bass</div>
+      </div>
+    </div>
+
+    <div class="card"><h3>Lead — melody (portamento)</h3>
+      <div class="grid-wrap"><div class="grid" id="grid"></div></div>
+    </div>
+  </div>
+
+  <p class="hint"><b>Play</b> runs all tracks · click cells for the lead (it <b>glides</b> between notes) · choose a <b>preset</b> then make it yours · <b>Export WAV</b> renders it to a file. More: <a href="index.html">studio</a> · <a href="live.html">Live</a> · <a href="music.html">theory</a>.</p>
+</main>
+
+<script>
+const SCALES={minor:[0,2,3,5,7,8,10],major:[0,2,4,5,7,9,11],phrygian:[0,1,3,5,7,8,10],lydian:[0,2,4,6,7,9,11],dorian:[0,2,3,5,7,9,10]};
+const NOTE=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const STEPS=16, ROWS=12;
+const $=id=>document.getElementById(id);
+
+const comp={
+  tempo:104, rootName:'A', scale:'minor', rev:0.42,
+  prog:[0,5,2,6],                 // scale-degree of each chord root
+  tracks:{
+    pad:{on:true, level:0.6, wave:'sawtooth', attack:0.4},
+    arp:{on:true, level:0.5, wave:'square', attack:0.005},
+    bass:{on:true, level:0.6, wave:'sawtooth', attack:0.005},
+    lead:{on:true, level:0.6, wave:'sawtooth', attack:0.03, glide:0.06},
+  },
+  lead:Array.from({length:ROWS},()=>Array(STEPS).fill(false)),
+};
+
+function rootMidi(){return 57 + NOTE.indexOf(comp.rootName) - 9;}  // around A3
+function scaleDeg(d){const ints=SCALES[comp.scale];const o=Math.floor(d/ints.length);return rootMidi()+ints[((d%ints.length)+ints.length)%ints.length]+12*o;}
+function leadMidi(row){return scaleDeg(ROWS-1-row);}              // top row = high
+function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
+function chordMidis(slot){const d=comp.prog[slot];return [d,d+2,d+4].map(scaleDeg);} // triad in scale
+
+/* ---------- audio ---------- */
+let AC=null,master,analyser,conv,revGain,playing=false,timer=null,step=0,nextT=0,bar=0;
+function makeIR(ctx,dur){const b=ctx.createBuffer(2,Math.floor(ctx.sampleRate*dur),ctx.sampleRate);
+  for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.6);}return b;}
+function chain(ctx){const m=ctx.createGain();m.gain.value=0.7;const cv=ctx.createConvolver();cv.buffer=makeIR(ctx,2.8);
+  const rg=ctx.createGain();rg.gain.value=comp.rev;cv.connect(rg);rg.connect(m);return {m,cv,rg};}
+function note(ctx,dest,cv,freq,t,dur,o){
+  const g=ctx.createGain(),f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=o.cutoff||2600;f.Q.value=o.q||3;
+  const oscs=[];const det=o.detune||0;
+  (o.voices||1)>1 ? [-det,0,det].forEach(c=>oscs.push(c)) : oscs.push(0);
+  const made=oscs.map(c=>{const osc=ctx.createOscillator();osc.type=o.wave;osc.connect(f);return {osc,c};});
+  made.forEach(({osc,c})=>{
+    if(o.glideFrom){osc.frequency.setValueAtTime(o.glideFrom*Math.pow(2,c/1200),t);osc.frequency.exponentialRampToValueAtTime(freq*Math.pow(2,c/1200),t+o.glide);}
+    else osc.frequency.setValueAtTime(freq*Math.pow(2,c/1200),t);
+  });
+  if(o.vib){const lfo=ctx.createOscillator(),la=ctx.createGain();lfo.frequency.value=5.5;la.gain.value=o.vib;lfo.connect(la);made.forEach(({osc})=>la.connect(osc.detune));lfo.start(t);lfo.stop(t+dur+0.1);}
+  const a=o.attack||0.005;
+  g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(o.amp||0.2,t+a);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  f.connect(g);g.connect(dest);if(cv)g.connect(cv);
+  made.forEach(({osc})=>{osc.start(t);osc.stop(t+dur+0.1);});
+}
+
+/* schedule one bar-cycle's worth of events starting at time t0 (used live & offline) */
+function scheduleBar(ctx,dest,cv,barIdx,t0){
+  const beat=60/comp.tempo, six=beat/4, T=comp.tracks, slot=barIdx%4;
+  const chord=chordMidis(slot);
+  if(T.pad.on){chord.forEach(m=>note(ctx,dest,cv,midiToFreq(m),t0,beat*4*1.01,{wave:T.pad.wave,attack:T.pad.attack,cutoff:2200,q:0.8,voices:3,detune:8,amp:0.12*T.pad.level/0.6}));}
+  if(T.arp.on){const seq=[chord[0],chord[1],chord[2],chord[1]];for(let i=0;i<16;i++){const m=seq[i%4]+12;note(ctx,dest,cv,midiToFreq(m),t0+i*six,six*1.3,{wave:T.arp.wave,attack:T.arp.attack,cutoff:2600,q:4,amp:0.13*T.arp.level/0.5});}}
+  if(T.bass.on){const r=chord[0]-12;for(let b=0;b<4;b++)for(let h=0;h<2;h++){note(ctx,dest,cv,midiToFreq(r+(h?12:0)),t0+b*beat+h*beat/2,beat/2*0.9,{wave:T.bass.wave,attack:T.bass.attack,cutoff:700,q:1.4,amp:0.2*T.bass.level/0.6});}}
+  if(T.lead.on){
+    // monophonic with portamento between consecutive active steps
+    let prevFreq=null;
+    for(let s=0;s<16;s++){let row=-1;for(let r=0;r<ROWS;r++)if(comp.lead[r][s]){row=r;break;}
+      if(row>=0){const fr=midiToFreq(leadMidi(row));
+        note(ctx,dest,cv,fr,t0+s*six,six*1.6,{wave:T.lead.wave,attack:T.lead.attack,cutoff:3200,q:1.2,amp:0.18*T.lead.level/0.6,vib:6,glideFrom:prevFreq,glide:comp.tracks.lead.glide});
+        prevFreq=fr;}
+    }
+  }
+}
+
+/* ---------- live transport ---------- */
+function scheduler(){const barLen=60/comp.tempo*4;
+  while(nextT<AC.currentTime+0.2){scheduleBar(AC,master,conv,bar,nextT);const b=bar;requestAnimationFrame(()=>highlightBar());nextT+=barLen;bar++;}
+}
+function ensureAudio(){if(!AC){AC=new(window.AudioContext||webkitAudioContext)();const c=chain(AC);master=c.m;conv=c.cv;revGain=c.rg;
+    analyser=AC.createAnalyser();analyser.fftSize=2048;master.connect(analyser);analyser.connect(AC.destination);}
+  if(AC.state==='suspended')AC.resume();}
+function play(){ensureAudio();playing=true;bar=0;nextT=AC.currentTime+0.06;timer=setInterval(scheduler,30);$('play').textContent='⏸ Stop';scope();}
+function stop(){playing=false;clearInterval(timer);$('play').textContent='▶ Play';}
+$('play').onclick=()=>playing?stop():play();
+function highlightBar(){/* light playhead on the lead grid by step */
+  const six=60/comp.tempo/4;if(!AC)return;const t=(AC.currentTime-0.06)%(six*16);const s=Math.floor(t/six);
+  document.querySelectorAll('.cell.playhead').forEach(c=>c.classList.remove('playhead'));
+  document.querySelectorAll('.row').forEach(r=>{const c=r.children[s+1];if(c)c.classList.add('playhead');});}
+setInterval(()=>{if(playing)highlightBar();},60);
+
+/* ---------- export WAV (offline render) ---------- */
+$('export').onclick=async()=>{
+  $('status').textContent='rendering…';
+  const sr=44100, bars=16, dur=60/comp.tempo*4*bars+3;
+  const ctx=new OfflineAudioContext(2,Math.ceil(sr*dur),sr);
+  const c=chain(ctx);c.m.connect(ctx.destination);
+  const barLen=60/comp.tempo*4;
+  for(let b=0;b<bars;b++)scheduleBar(ctx,c.m,c.cv,b,0.05+b*barLen);
+  const buf=await ctx.startRendering();
+  const wav=encodeWAV(buf);const url=URL.createObjectURL(new Blob([wav],{type:'audio/wav'}));
+  const a=document.createElement('a');a.href=url;a.download='signal-lab-studio.wav';a.click();
+  $('status').textContent='exported ✓';setTimeout(()=>$('status').textContent='',2500);
+};
+function encodeWAV(buf){const n=buf.length,ch=2,sr=buf.sampleRate;const out=new DataView(new ArrayBuffer(44+n*ch*2));
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)out.setUint8(o+i,s.charCodeAt(i));};
+  w(0,'RIFF');out.setUint32(4,36+n*ch*2,true);w(8,'WAVE');w(12,'fmt ');out.setUint32(16,16,true);out.setUint16(20,1,true);
+  out.setUint16(22,ch,true);out.setUint32(24,sr,true);out.setUint32(28,sr*ch*2,true);out.setUint16(32,ch*2,true);out.setUint16(34,16,true);
+  w(36,'data');out.setUint32(40,n*ch*2,true);
+  const L=buf.getChannelData(0),R=buf.getChannelData(1);let o=44;
+  for(let i=0;i<n;i++){for(const d of [L[i],R[i]]){const v=Math.max(-1,Math.min(1,d));out.setInt16(o,v*32767,true);o+=2;}}
+  return out.buffer;}
+
+/* ---------- UI ---------- */
+function buildTracks(){const host=$('tracks');host.innerHTML='';
+  [['pad','Pad'],['arp','Arp'],['bass','Bass'],['lead','Lead']].forEach(([k,nm])=>{
+    const t=comp.tracks[k];const row=document.createElement('div');row.className='track';
+    row.innerHTML=`<div class="dot${t.on?' on':''}"></div><div class="nm">${nm}</div>
+      <input type="range" min="0" max="100" value="${Math.round(t.level*100)}">`;
+    row.querySelector('.dot').onclick=e=>{t.on=!t.on;e.target.classList.toggle('on',t.on);};
+    row.querySelector('input').oninput=e=>{t.level=e.target.value/100;};
+    host.appendChild(row);});
+}
+function buildProg(){const host=$('prog');host.innerHTML='';comp.prog.forEach((d,i)=>{
+  const sel=document.createElement('select');const ints=SCALES[comp.scale];
+  for(let deg=0;deg<7;deg++){const o=document.createElement('option');o.value=deg;
+    o.textContent=NOTE[(scaleDeg(deg))%12];if(deg===d)o.selected=true;sel.appendChild(o);}
+  sel.onchange=e=>{comp.prog[i]=+e.target.value;buildProg();};host.appendChild(sel);});
+}
+function buildGrid(){const g=$('grid');g.innerHTML='';
+  for(let r=0;r<ROWS;r++){const row=document.createElement('div');row.className='row';
+    const lab=document.createElement('div');lab.className='rl';lab.textContent=NOTE[leadMidi(r)%12];row.appendChild(lab);
+    for(let s=0;s<STEPS;s++){const cell=document.createElement('div');cell.className='cell'+(s%4===0?' beat':'');
+      if(comp.lead[r][s])cell.classList.add('on');
+      cell.onclick=()=>{const wasOn=comp.lead[r][s];for(let rr=0;rr<ROWS;rr++)comp.lead[rr][s]=false;comp.lead[r][s]=!wasOn;buildGrid();};
+      row.appendChild(cell);}
+    g.appendChild(row);}
+}
+function rebuild(){buildTracks();buildProg();buildGrid();}
+
+/* controls */
+$('root').onchange=e=>{comp.rootName=e.target.value;rebuild();};
+$('scale').onchange=e=>{comp.scale=e.target.value;rebuild();};
+$('tempo').oninput=e=>{comp.tempo=+e.target.value;$('vT').textContent=e.target.value;};
+$('rev').oninput=e=>{comp.rev=e.target.value/100;$('vR').textContent=e.target.value;if(revGain)revGain.gain.value=comp.rev;};
+
+/* ---------- presets ---------- */
+const L=(cells)=>{const g=Array.from({length:ROWS},()=>Array(STEPS).fill(false));cells.forEach(([r,s])=>{if(g[r])g[r][s]=true;});return g;};
+const PRE={
+ oxygene:{tempo:104,rootName:'A',scale:'minor',rev:0.42,prog:[0,5,2,6],
+   tr:{pad:1,arp:1,bass:1,lead:1},leadWave:'sawtooth',
+   lead:[[4,0],[1,3],[2,6],[4,8],[1,11],[2,13],[5,15]]},
+ equinoxe:{tempo:120,rootName:'C',scale:'minor',rev:0.35,prog:[0,3,4,5],
+   tr:{pad:1,arp:1,bass:1,lead:0},lead:[]},
+ blade:{tempo:66,rootName:'C',scale:'minor',rev:0.6,prog:[0,5,3,4],
+   tr:{pad:1,arp:0,bass:1,lead:1},leadWave:'sawtooth',
+   lead:[[5,0],[3,4],[2,8],[4,12]]},                      // slow majestic brass lead
+ chariots:{tempo:88,rootName:'E',scale:'major',rev:0.5,prog:[0,4,5,3],
+   tr:{pad:1,arp:0,bass:1,lead:1},leadWave:'triangle',
+   lead:[[5,0],[4,4],[3,6],[5,8],[2,12],[3,14]]},
+ theater:{tempo:60,rootName:'A',scale:'phrygian',rev:0.6,prog:[0,1,4,0],
+   tr:{pad:1,arp:0,bass:1,lead:0},lead:[]},
+ icarus:{tempo:128,rootName:'A',scale:'lydian',rev:0.4,prog:[0,4,5,1],
+   tr:{pad:1,arp:1,bass:1,lead:1},leadWave:'sawtooth',
+   lead:[[3,0],[2,2],[0,4],[3,6],[1,8],[0,10],[3,12],[1,14]]},
+};
+$('preset').onchange=e=>{const p=PRE[e.target.value];if(!p)return;
+  comp.tempo=p.tempo;comp.rootName=p.rootName;comp.scale=p.scale;comp.rev=p.rev;comp.prog=p.prog.slice();
+  comp.tracks.pad.on=!!p.tr.pad;comp.tracks.arp.on=!!p.tr.arp;comp.tracks.bass.on=!!p.tr.bass;comp.tracks.lead.on=!!p.tr.lead;
+  if(p.leadWave)comp.tracks.lead.wave=p.leadWave;
+  comp.lead=L(p.lead||[]);
+  $('root').value=comp.rootName;$('scale').value=comp.scale;$('tempo').value=comp.tempo;$('vT').textContent=comp.tempo;
+  $('rev').value=Math.round(comp.rev*100);$('vR').textContent=Math.round(comp.rev*100);if(revGain)revGain.gain.value=comp.rev;
+  rebuild();
+};
+
+/* ---------- scope ---------- */
+function scope(){const cv=$('scope'),x=cv.getContext('2d');const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;
+  cv.width=r.width*d;cv.height=r.height*d;x.setTransform(d,0,0,d,0,0);const buf=new Uint8Array(analyser.fftSize);
+  function fr(){if(!playing&&!mPlaying)return;analyser.getByteTimeDomainData(buf);x.clearRect(0,0,r.width,r.height);
+    x.beginPath();x.lineWidth=1.5;x.strokeStyle='rgba(87,227,194,.9)';
+    for(let i=0;i<buf.length;i++){const xx=i/buf.length*r.width,yy=(buf[i]/128-1)*r.height*0.45+r.height/2;i?x.lineTo(xx,yy):x.moveTo(xx,yy);}
+    x.stroke();requestAnimationFrame(fr);}fr();}
+
+/* ---------- MIDI engine: load any .mid and render it through our voices ----------
+   A general capability (a MIDI player) — feed it any file to test the lab's limits. */
+let MIDI=null,mIdx=0,mStart=0,mTimer=null,mPlaying=false;
+function vlq(dv,p){let v=0,b;do{b=dv.getUint8(p++);v=(v<<7)|(b&0x7f);}while(b&0x80);return [v,p];}
+function parseMIDI(buf){const dv=new DataView(buf);let p=0;p+=4;dv.getUint32(p);p+=4;dv.getUint16(p);p+=2;
+  const ntrks=dv.getUint16(p);p+=2;const div=dv.getUint16(p);p+=2;const tpq=(div&0x8000)?96:div;let tempos=[],tracks=[];
+  for(let t=0;t<ntrks;t++){p+=4;const len=dv.getUint32(p);p+=4;const end=p+len;let tick=0,status=0;const evs=[];
+    while(p<end){let d;[d,p]=vlq(dv,p);tick+=d;let b=dv.getUint8(p);if(b&0x80){status=b;p++;}const hi=status&0xf0;
+      if(hi===0x90||hi===0x80){const nn=dv.getUint8(p++),vv=dv.getUint8(p++);evs.push({tick,on:hi===0x90&&vv>0,note:nn,ch:status&0x0f});}
+      else if(hi===0xA0||hi===0xB0||hi===0xE0){p+=2;}
+      else if(hi===0xC0||hi===0xD0){p+=1;}
+      else if(status===0xFF){const mt=dv.getUint8(p++);let l;[l,p]=vlq(dv,p);if(mt===0x51){tempos.push({tick,us:(dv.getUint8(p)<<16)|(dv.getUint8(p+1)<<8)|dv.getUint8(p+2)});}p+=l;}
+      else if(status===0xF0||status===0xF7){let l;[l,p]=vlq(dv,p);p+=l;}
+      else{p++;}}
+    tracks.push(evs);p=end;}
+  if(!tempos.length)tempos=[{tick:0,us:500000}];tempos.sort((a,b)=>a.tick-b.tick);
+  const t2s=tk=>{let sec=0,last=0,us=500000;for(const tp of tempos){if(tp.tick>tk)break;sec+=(tp.tick-last)/tpq*(us/1e6);last=tp.tick;us=tp.us;}return sec+(tk-last)/tpq*(us/1e6);};
+  const notes=[];tracks.forEach(evs=>{const open={};evs.forEach(e=>{const k=e.ch+'_'+e.note;
+    if(e.on){(open[k]=open[k]||[]).push(e.tick);}
+    else{const a=open[k];if(a&&a.length){const s=a.shift();notes.push({start:t2s(s),dur:Math.max(0.05,t2s(e.tick)-t2s(s)),note:e.note,ch:e.ch});}}});});
+  notes.sort((a,b)=>a.start-b.start);
+  return {notes,dur:Math.max(...notes.map(n=>n.start+n.dur),1)};}
+function drum(t,n){const d=n<41?0.26:0.07,nb=AC.createBuffer(1,Math.floor(AC.sampleRate*d),AC.sampleRate),ch=nb.getChannelData(0);
+  for(let i=0;i<ch.length;i++)ch[i]=(Math.random()*2-1)*Math.pow(1-i/ch.length,n<41?3:8);
+  const s=AC.createBufferSource();s.buffer=nb;const f=AC.createBiquadFilter();f.type=n<41?'lowpass':'highpass';f.frequency.value=n<41?180:7000;
+  const g=AC.createGain();g.gain.value=0.22;s.connect(f);f.connect(g);g.connect(master);s.start(t);
+  if(n<41){const o=AC.createOscillator(),og=AC.createGain();o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(45,t+0.1);
+    og.gain.setValueAtTime(0.4,t);og.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(og);og.connect(master);o.start(t);o.stop(t+d);}}
+function midiVoice(n,t){if(n.ch===9){drum(t,n.note);return;}
+  const o=n.note<48?{wave:'sawtooth',cutoff:700,q:1.4,amp:0.13}
+    :n.note>76?{wave:'sawtooth',cutoff:3200,q:1.2,amp:0.1,vib:5}
+    :{wave:'sawtooth',cutoff:2400,q:2,amp:0.1};
+  note(AC,master,conv,midiToFreq(n.note),t,Math.min(n.dur,2.5),o);}
+function midiSched(){const ahead=AC.currentTime+0.4;while(mIdx<MIDI.notes.length){const n=MIDI.notes[mIdx];const t=mStart+n.start;
+  if(t>ahead)break;midiVoice(n,t);mIdx++;}if(mIdx>=MIDI.notes.length)setTimeout(stopMIDI,2000);}
+function playMIDI(){if(!MIDI)return;ensureAudio();mPlaying=true;mIdx=0;mStart=AC.currentTime+0.1;mTimer=setInterval(midiSched,40);$('midiplay').textContent='⏸ Stop MIDI';scope();}
+function stopMIDI(){mPlaying=false;clearInterval(mTimer);$('midiplay').textContent='▶ Play MIDI';}
+$('midiplay').onclick=()=>mPlaying?stopMIDI():playMIDI();
+$('midifile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{MIDI=parseMIDI(r.result);$('midiplay').disabled=false;$('status').textContent=f.name+' · '+MIDI.notes.length+' notes · '+Math.round(MIDI.dur)+'s';}
+    catch(err){$('status').textContent='could not parse MIDI';}};
+  r.readAsArrayBuffer(f);};
+
+/* ---- patch bridge: export the lead voice as a sequence patch / render in engine ---- */
+const ENGINE='http://127.0.0.1:7700';
+function leadPatch(){
+  const seq=[];for(let c=0;c<STEPS;c++)for(let r=0;r<ROWS;r++)if(comp.lead[r][c])seq.push({step:c,deg:ROWS-1-r});
+  const w=comp.tracks.lead.wave;
+  return {v:1,name:'studio-lead',tempo:comp.tempo,root:comp.rootName,scale:comp.scale,
+    osc:{type:'wave',wave:(w==='sawtooth'?'saw':w)},
+    filter:{type:'lowpass',cutoff:3000,q:2,env_amt:0.3},
+    env:{a:comp.tracks.lead.attack||0.03,d:0.1,s:0.5,r:0.2},
+    fx:{reverb:comp.rev,delay:0,delay_time:0.3,width:0.5,drive:1},
+    sequence:seq};
+}
+$('exp').onclick=()=>{const p=leadPatch();const b=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='studio-lead.json';a.click();};
+$('eng').onclick=async()=>{$('status').textContent='rendering…';
+  try{const r=await fetch(ENGINE+'/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(leadPatch())});
+    if(!r.ok)throw 0;new Audio(URL.createObjectURL(await r.blob())).play();$('status').textContent='engine ✓';}
+  catch(e){$('status').textContent='engine offline — run server.py';}};
+
+rebuild();
+// start on the Oxygène preset
+$('preset').value='oxygene';$('preset').dispatchEvent(new Event('change'));
+</script>

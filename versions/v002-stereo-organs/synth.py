@@ -1,0 +1,463 @@
+"""
+synth.py — a small modular synthesis engine, from first principles.
+
+Everything is plain numpy float64 arrays at a fixed sample rate. Signals are
+mono float arrays in roughly [-1, 1] until the final mix/limiting stage.
+
+Design notes for an audio-DSP reader:
+  * Oscillators are band-limited via additive synthesis (sum of harmonics up to
+    Nyquist). Slower than a wavetable, but zero aliasing and dead simple to
+    reason about — perfect for understanding the harmonic content.
+  * The filter is a Direct-Form-II transposed biquad (scipy lfilter) with
+    coefficients from the RBJ Audio EQ Cookbook. For a *swept* cutoff we
+    recompute coefficients in short blocks (zero-order hold) and carry state
+    across blocks so there are no clicks.
+"""
+
+import numpy as np
+from scipy.signal import lfilter, lfilter_zi, fftconvolve
+
+SR = 44100  # sample rate (Hz)
+
+
+# ---------------------------------------------------------------------------
+# Utilities
+# ---------------------------------------------------------------------------
+
+def note_to_hz(note: str) -> float:
+    """'A4' -> 440.0. Scientific pitch notation, A4 = 440 Hz."""
+    names = {'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+             'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11}
+    name = note[:-1]
+    octave = int(note[-1])
+    semis = names[name] + (octave - 4) * 12 - 9  # semitones from A4
+    return 440.0 * 2 ** (semis / 12)
+
+
+def t_axis(dur: float) -> np.ndarray:
+    return np.arange(int(dur * SR)) / SR
+
+
+def db(x: float) -> float:
+    """decibels -> linear gain."""
+    return 10 ** (x / 20)
+
+
+# Scale = the allowed-pitches comb (semitone offsets from the root, per octave).
+SCALES = {
+    'major':    [0, 2, 4, 5, 7, 9, 11],
+    'minor':    [0, 2, 3, 5, 7, 8, 10],
+    'dorian':   [0, 2, 3, 5, 7, 9, 10],
+    'phrygian': [0, 1, 3, 5, 7, 8, 10],   # lowered 2nd -> the dark/ancient color
+}
+
+
+def scale(root: str, mode: str, octaves=2, start_oct=None):
+    """Return ascending list of frequencies for a key — the 'comb' of allowed
+    pitches. degree(scale(...), i) then never lets you pick a wrong note."""
+    names = {'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+             'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11}
+    root_name, root_oct = root[:-1], int(root[-1])
+    if start_oct is None:
+        start_oct = root_oct
+    base = names[root_name]
+    out = []
+    for o in range(octaves + 1):
+        for semi in SCALES[mode]:
+            n = base + semi + 12 * (start_oct - 4 + o) - 9  # semis from A4
+            out.append(440.0 * 2 ** (n / 12))
+    return out
+
+
+def degree(scale_freqs, i):
+    """Index into a scale, wrapping octaves so any integer is valid."""
+    return scale_freqs[i % len(scale_freqs)] * 2 ** (i // len(scale_freqs) * 0)
+
+
+def curve(points, dur):
+    """Piecewise-linear automation: points=[(t_sec, value), ...] -> per-sample
+    array of length dur*SR. This is how a parameter 'moves' across movements
+    (think of it as drawing an automation lane)."""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    ts = np.array([p[0] for p in points], dtype=float)
+    vs = np.array([p[1] for p in points], dtype=float)
+    return np.interp(t, ts, vs)
+
+
+# ---------------------------------------------------------------------------
+# Oscillators (band-limited, additive)
+# ---------------------------------------------------------------------------
+
+def _harmonic_sum(freq, dur, amps):
+    """Sum harmonics k=1..N with given relative amplitudes, dropping any
+    harmonic above Nyquist. `freq` may be a scalar or a per-sample array
+    (for vibrato/glide); phase is integrated so frequency can vary."""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    if np.isscalar(freq):
+        freq = np.full(n, float(freq))
+    phase = 2 * np.pi * np.cumsum(freq) / SR  # instantaneous phase
+    out = np.zeros(n)
+    for k, a in enumerate(amps, start=1):
+        # mute harmonics that would alias (use mean freq as a cheap guard)
+        if k * np.mean(freq) >= SR / 2:
+            break
+        out += a * np.sin(k * phase)
+    return out
+
+
+def saw(freq, dur, n_harm=None):
+    """Band-limited sawtooth: harmonics 1/k, all of them."""
+    n_harm = n_harm or int(SR / 2 / np.mean(np.atleast_1d(freq)))
+    amps = [1.0 / k for k in range(1, n_harm + 1)]
+    return _harmonic_sum(freq, dur, amps)
+
+
+def square(freq, dur, n_harm=None):
+    """Band-limited square: odd harmonics 1/k."""
+    n_harm = n_harm or int(SR / 2 / np.mean(np.atleast_1d(freq)))
+    amps = [(1.0 / k if k % 2 else 0.0) for k in range(1, n_harm + 1)]
+    return _harmonic_sum(freq, dur, amps)
+
+
+def sine(freq, dur):
+    return _harmonic_sum(freq, dur, [1.0])
+
+
+def supersaw(freq, dur, voices=7, detune_cents=12.0):
+    """Several detuned saws summed — the classic fat string/pad oscillator.
+    Spread of slight pitch offsets creates slow beating = movement."""
+    n = int(dur * SR)
+    out = np.zeros(n)
+    spread = np.linspace(-detune_cents, detune_cents, voices)
+    for c in spread:
+        f = freq * 2 ** (c / 1200)
+        out += saw(f, dur)
+    return out / voices
+
+
+def noise(dur, seed=0):
+    """White noise — raw material for wind/breath textures."""
+    rng = np.random.default_rng(seed)
+    return rng.standard_normal(int(dur * SR))
+
+
+def fm2(freq, dur, ratio=2.0, index=2.0, mod_env=None):
+    """Two-operator FM (phase modulation): one sine modulates another's phase.
+    Inharmonic ratios (e.g. 3.5) give bell/metallic tones. `index` may be a
+    scalar or a per-sample array; pair with a decaying `mod_env` for a struck
+    bell whose timbre dulls as it rings."""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    mod = np.sin(2 * np.pi * freq * ratio * t)
+    idx = index * (mod_env if mod_env is not None else 1.0)
+    return np.sin(2 * np.pi * freq * t + idx * mod)
+
+
+# ---------------------------------------------------------------------------
+# Envelopes & modulation
+# ---------------------------------------------------------------------------
+
+def adsr(dur, a=0.01, d=0.1, s=0.7, r=0.2, sustain_level=None):
+    """Linear ADSR envelope of total length `dur` (attack/decay happen at the
+    start, release at the very end). s = sustain level (0..1)."""
+    n = int(dur * SR)
+    s = sustain_level if sustain_level is not None else s
+    na, nd, nr = int(a * SR), int(d * SR), int(r * SR)
+    na, nd, nr = min(na, n), min(nd, n), min(nr, n)
+    ns = max(0, n - na - nd - nr)
+    env = np.concatenate([
+        np.linspace(0, 1, na, endpoint=False),
+        np.linspace(1, s, nd, endpoint=False),
+        np.full(ns, s),
+        np.linspace(s, 0, nr),
+    ])
+    # pad/trim to exactly n
+    if len(env) < n:
+        env = np.concatenate([env, np.full(n - len(env), env[-1] if len(env) else 0)])
+    return env[:n]
+
+
+def lfo(rate, dur, shape='sine', depth=1.0, phase=0.0):
+    t = t_axis(dur)
+    ph = 2 * np.pi * rate * t + phase
+    if shape == 'sine':
+        w = np.sin(ph)
+    elif shape == 'tri':
+        w = 2 / np.pi * np.arcsin(np.sin(ph))
+    elif shape == 'saw':
+        w = 2 * (rate * t - np.floor(0.5 + rate * t))
+    else:
+        raise ValueError(shape)
+    return depth * w
+
+
+def drift(dur, amount=0.003, rate=0.3, seed=0):
+    """Slow random pitch/param drift = the 'analog is alive' factor.
+    Smoothed white noise, returns a multiplier centered on 1.0."""
+    rng = np.random.default_rng(seed)
+    n = int(dur * SR)
+    # generate noise at a low rate then interpolate up
+    n_ctrl = max(2, int(dur * rate * 10))
+    ctrl = rng.standard_normal(n_ctrl)
+    # smooth
+    ctrl = np.convolve(ctrl, np.ones(3) / 3, mode='same')
+    x = np.linspace(0, 1, n_ctrl)
+    xi = np.linspace(0, 1, n)
+    return 1.0 + amount * np.interp(xi, x, ctrl)
+
+
+# ---------------------------------------------------------------------------
+# Resonant filter (RBJ biquad), block-wise for swept cutoff
+# ---------------------------------------------------------------------------
+
+def _biquad_lpf(fc, q):
+    """RBJ cookbook lowpass coefficients."""
+    fc = np.clip(fc, 20, SR / 2 * 0.99)
+    w0 = 2 * np.pi * fc / SR
+    cw, sw = np.cos(w0), np.sin(w0)
+    alpha = sw / (2 * q)
+    b0 = (1 - cw) / 2
+    b1 = 1 - cw
+    b2 = (1 - cw) / 2
+    a0 = 1 + alpha
+    a1 = -2 * cw
+    a2 = 1 - alpha
+    b = np.array([b0, b1, b2]) / a0
+    a = np.array([1.0, a1 / a0, a2 / a0])
+    return b, a
+
+
+def _biquad_bpf(fc, q):
+    """RBJ cookbook bandpass (constant 0 dB peak gain)."""
+    fc = np.clip(fc, 20, SR / 2 * 0.99)
+    w0 = 2 * np.pi * fc / SR
+    cw, sw = np.cos(w0), np.sin(w0)
+    alpha = sw / (2 * q)
+    b = np.array([alpha, 0.0, -alpha])
+    a0 = 1 + alpha
+    a = np.array([1.0, -2 * cw, 1 - alpha])
+    return b / a0, np.array([1.0, a[1] / a0, a[2] / a0])
+
+
+def _block_filter(x, cutoff, q, coeff_fn, block):
+    n = len(x)
+    if np.isscalar(cutoff):
+        cutoff = np.full(n, float(cutoff))
+    out = np.zeros(n)
+    zi = None
+    for start in range(0, n, block):
+        end = min(start + block, n)
+        b, a = coeff_fn(float(np.mean(cutoff[start:end])), q)
+        if zi is None:
+            zi = lfilter_zi(b, a) * x[start]
+        out[start:end], zi = lfilter(b, a, x[start:end], zi=zi)
+    return out
+
+
+def resonant_lpf(x, cutoff, q=2.0, block=256):
+    """Lowpass with possibly time-varying cutoff (scalar or per-sample array).
+    Coefficients update every `block` samples; state carries across blocks so
+    a swept cutoff has no clicks."""
+    return _block_filter(x, cutoff, q, _biquad_lpf, block)
+
+
+def resonant_bpf(x, cutoff, q=6.0, block=256):
+    """Bandpass — used to 'pitch' noise into a wind/whistle tone."""
+    return _block_filter(x, cutoff, q, _biquad_bpf, block)
+
+
+# ---------------------------------------------------------------------------
+# Effects: phaser, tape delay, reverb, soft clip
+# ---------------------------------------------------------------------------
+
+def phaser(x, rate=0.3, depth=0.7, stages=6, feedback=0.4, mix=0.5, block=64):
+    """Classic phaser: cascade of first-order allpass filters whose break
+    frequency is swept by an LFO, summed with the dry signal -> moving notches.
+    This is THE string-machine/Oxygene shimmer.
+
+    Block-processed: the LFO barely moves over `block` samples, so we hold the
+    allpass coefficient per block and run each stage with lfilter (carrying
+    state across blocks). Feedback is injected at each block boundary — an
+    approximation that's transparent for the slow phasers we use."""
+    n = len(x)
+    lfo_sig = 0.5 * (1 + np.sin(2 * np.pi * rate * np.arange(n) / SR))
+    fmin, fmax = 300.0, 1600.0
+    fc = fmin * (fmax / fmin) ** (depth * lfo_sig)
+    tanv = np.tan(np.pi * fc / SR)
+    aarr = (tanv - 1) / (tanv + 1)        # first-order allpass coefficient
+    out = np.zeros(n)
+    states = [None] * stages
+    fb = 0.0
+    for start in range(0, n, block):
+        end = min(start + block, n)
+        a = float(np.mean(aarr[start:end]))
+        b, ac = np.array([a, 1.0]), np.array([1.0, a])
+        s = x[start:end].copy()
+        s[0] += feedback * fb
+        for st in range(stages):
+            zi = states[st] if states[st] is not None else lfilter_zi(b, ac) * s[0]
+            s, states[st] = lfilter(b, ac, s, zi=zi)
+        fb = s[-1]
+        out[start:end] = (1 - mix) * x[start:end] + mix * s
+    return out
+
+
+def tape_delay(x, time=0.375, feedback=0.35, mix=0.3, wobble=0.002):
+    """Delay with feedback and slight time wobble (tape flutter)."""
+    n = len(x)
+    base = int(time * SR)
+    out = x.copy()
+    buf = np.zeros(n + base + 100)
+    buf[:n] = x
+    # simple feedback delay with modulated read offset
+    flutter = (wobble * SR * np.sin(2 * np.pi * 6 * np.arange(n) / SR)).astype(int)
+    y = np.zeros(n)
+    d = np.zeros(n + base + 10)
+    for i in range(n):
+        r = i - base + flutter[i]
+        echo = d[r] if r >= 0 else 0.0
+        d[i] = x[i] + feedback * echo
+        y[i] = (1 - mix) * x[i] + mix * echo
+    return y
+
+
+def _ir(decay, seed):
+    """Synthetic exponentially-decaying noise impulse response (plate/hall)."""
+    rng = np.random.default_rng(seed)
+    n = int(decay * SR)
+    t = np.arange(n) / SR
+    ir = rng.standard_normal(n) * np.exp(-t / (decay / 4))
+    ir[0] = 1.0
+    return ir / (np.max(np.abs(ir)) + 1e-9)
+
+
+def _rev_chan(x, decay, seed):
+    wet = fftconvolve(x, _ir(decay, seed))[:len(x)]   # FFT = fast even when long
+    return wet / (np.max(np.abs(wet)) + 1e-9)
+
+
+def reverb(x, decay=2.5, mix=0.35, seed=1):
+    """Mono reverb."""
+    return (1 - mix) * x + mix * _rev_chan(x, decay, seed)
+
+
+def reverb_st(x, decay=3.0, mix=0.35, seed=1):
+    """Stereo reverb: two DECORRELATED impulse responses (different seeds) for
+    L and R -> an enveloping room rather than a mono wash. Accepts mono or
+    stereo input, always returns stereo (N, 2)."""
+    if np.ndim(x) == 1:
+        x = np.stack([x, x], axis=1)
+    wet = np.stack([_rev_chan(x[:, 0], decay, seed),
+                    _rev_chan(x[:, 1], decay, seed + 101)], axis=1)
+    return (1 - mix) * x + mix * wet
+
+
+def shimmer_halo(x, decay=4.0, seed=5):
+    """Shimmer: reverberate, pitch the wet up an octave, reverberate again ->
+    a rising angelic halo. Returns a normalized mono signal to add in."""
+    wet = _rev_chan(x, decay, seed)
+    n = len(wet)
+    idx = np.arange(0, n, 2.0)                        # read 2x faster = +1 octave
+    up = np.interp(idx, np.arange(n), wet)
+    octv = np.zeros(n)
+    octv[:len(up)] = up
+    return _rev_chan(octv, decay, seed + 7)
+
+
+def soft_clip(x, drive=1.0):
+    """tanh saturation — gentle analog-style nonlinearity / harmonic warmth."""
+    return np.tanh(drive * x)
+
+
+# ---------------------------------------------------------------------------
+# Stereo / space — placement, width, motion, rhythmic echo
+# ---------------------------------------------------------------------------
+
+def pan(x, p):
+    """Constant-power pan of a mono signal. p in [-1, 1] (scalar or per-sample
+    array): -1 = hard left, 0 = center, +1 = hard right. Returns (N, 2).
+    Normalized so center is ~unity gain."""
+    p = np.clip(p, -1, 1)
+    ang = (p + 1) * 0.25 * np.pi
+    return np.stack([x * np.cos(ang) * np.sqrt(2),
+                     x * np.sin(ang) * np.sqrt(2)], axis=1)
+
+
+def stereo_width(st, w):
+    """Mid/side width control. w: 0 = mono, 1 = as-is, >1 = wider. Scalar or
+    per-sample array (so width can collapse over time)."""
+    L, R = st[:, 0], st[:, 1]
+    mid, side = 0.5 * (L + R), 0.5 * (L - R)
+    return np.stack([mid + w * side, mid - w * side], axis=1)
+
+
+def autopan(st, rate=0.1, depth=0.3):
+    """Slowly sweep a stereo signal left<->right (the eyes moving around you)."""
+    n = st.shape[0]
+    p = depth * np.sin(2 * np.pi * rate * np.arange(n) / SR)
+    ang = (p + 1) * 0.25 * np.pi
+    return np.stack([st[:, 0] * np.cos(ang) * np.sqrt(2),
+                     st[:, 1] * np.sin(ang) * np.sqrt(2)], axis=1)
+
+
+def pingpong(x, time=0.5, feedback=0.45, mix=0.35, taps=10):
+    """Tempo-synced ping-pong delay: echoes of a mono signal alternate L/R,
+    decaying — rhythmic ripples that move across the field."""
+    n = len(x)
+    d = int(time * SR)
+    L, R = np.zeros(n), np.zeros(n)
+    for k in range(1, taps + 1):
+        shift = k * d
+        if shift >= n:
+            break
+        seg = np.zeros(n)
+        seg[shift:] = x[:n - shift] * (feedback ** k)
+        if k % 2:
+            L += seg
+        else:
+            R += seg
+    dry = np.stack([x, x], axis=1)
+    wet = np.stack([L, R], axis=1)
+    return (1 - mix) * dry + mix * wet
+
+
+def as_stereo(x):
+    """Ensure (N, 2)."""
+    return x if np.ndim(x) == 2 else np.stack([x, x], axis=1)
+
+
+# ---------------------------------------------------------------------------
+# Mixing / output
+# ---------------------------------------------------------------------------
+
+def mix_at(canvas: np.ndarray, sig: np.ndarray, at: float, gain=1.0):
+    """Add `sig` into `canvas` starting at time `at` seconds (in place)."""
+    start = int(at * SR)
+    end = start + len(sig)
+    if end > len(canvas):
+        canvas = np.concatenate([canvas, np.zeros(end - len(canvas))])
+    canvas[start:end] += gain * sig
+    return canvas
+
+
+def normalize(x, peak=0.89):
+    m = np.max(np.abs(x)) + 1e-9
+    return x / m * peak
+
+
+def to_stereo(left, right=None):
+    if right is None:
+        right = left
+    return np.stack([left, right], axis=1)
+
+
+def write_wav(path, x, peak=0.89):
+    """Write mono or stereo float array to 16-bit WAV."""
+    from scipy.io import wavfile
+    x = np.asarray(x, dtype=np.float64)
+    x = x / (np.max(np.abs(x)) + 1e-9) * peak
+    pcm = np.int16(np.clip(x, -1, 1) * 32767)
+    wavfile.write(path, SR, pcm)
+    return path

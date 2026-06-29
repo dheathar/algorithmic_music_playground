@@ -1,0 +1,18 @@
+# secrets
+.env
+
+# python envs
+.venv/
+.venv-ml/
+__pycache__/
+*.pyc
+
+# large lossless masters (re-render from the .py; mp3s are committed for playback)
+*.wav
+
+# third-party copyrighted MIDIs used only for private study — do not redistribute
+midi/
+
+# os / scratch
+.DS_Store
+*.output

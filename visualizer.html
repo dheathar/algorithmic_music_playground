@@ -1,0 +1,152 @@
+<title>Signal Lab — Visualizer</title>
+<meta name="description" content="A library of Milkdrop (Butterchurn) audio-reactive visuals — single or as a matrix/video-wall — driven by the lab's own pieces.">
+<style>
+  :root{--bg:#0A0C18;--panel:#12152A;--line:#272C4C;--text:#E7E9F3;--muted:#8C92B2;--faint:#5A6088;
+    --amber:#F4A659;--phosphor:#57E3C2;--phosphor-dim:#2E8C77;--violet:#9B8CFF;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--body:-apple-system,system-ui,sans-serif;}
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%;background:#000;overflow:hidden;font-family:var(--body);color:var(--text)}
+  #grid{position:fixed;inset:0;display:grid;gap:2px;background:#000}
+  #grid canvas{width:100%;height:100%;display:block;background:#000;min-width:0;min-height:0}
+  .bar{position:fixed;left:0;right:0;bottom:0;z-index:4;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    padding:12px 16px;background:linear-gradient(0deg,rgba(8,10,20,.92),rgba(8,10,20,0));transition:opacity .5s}
+  .bar.dim{opacity:0;pointer-events:none}
+  .bar select,.bar button{font-family:var(--mono);font-size:12px;background:rgba(18,21,42,.85);color:var(--text);
+    border:1px solid var(--line);border-radius:7px;padding:8px 11px;cursor:pointer}
+  .bar button:hover,.bar select:hover{border-color:var(--phosphor-dim);color:var(--phosphor)}
+  .lab{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .chk{display:flex;gap:6px;align-items:center;color:var(--muted);font-family:var(--mono);font-size:11px}
+  #warn{color:var(--amber);font-family:var(--mono);font-size:11px}
+  .back{position:fixed;top:16px;left:18px;z-index:5;font-family:var(--mono);font-size:12px;color:var(--faint);text-decoration:none}
+  .back:hover{color:var(--phosphor)}
+  .overlay{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:18px;background:radial-gradient(circle at 50% 45%,rgba(20,16,40,.5),#05060c 70%);transition:opacity 1s}
+  .overlay.hide{opacity:0;pointer-events:none}
+  .ttl{font-weight:800;letter-spacing:-.02em;font-size:clamp(28px,6vw,60px);text-align:center}
+  .ttl em{font-style:normal;color:var(--amber)}
+  .sub{color:var(--muted);max-width:50ch;text-align:center;font-size:15px;line-height:1.5}
+  .err{color:var(--amber);font-family:var(--mono);font-size:12px;max-width:52ch;text-align:center}
+  .play{width:74px;height:74px;border-radius:50%;border:1px solid var(--phosphor-dim);background:rgba(18,21,42,.7);
+    color:var(--phosphor);cursor:pointer;display:grid;place-items:center;transition:.2s}
+  .play:hover{background:var(--phosphor);color:#05060c;box-shadow:0 0 40px rgba(87,227,194,.5)}
+  .play svg{width:30px;height:30px}
+</style>
+
+<div id="grid"></div>
+<a class="back" href="index.html">← The Black Theater</a>
+
+<div class="bar dim" id="bar">
+  <span class="lab">track</span>
+  <select id="track">
+    <option value="theater_sc.mp3">The Black Theater</option>
+    <option value="dream_mix.mp3">The Black Theater (orig mix)</option>
+    <option value="icarus_mix.mp3">Icarus</option>
+    <option value="oxygene_mix.mp3">Homage to Oxygène</option>
+  </select>
+  <span class="lab">layout</span>
+  <select id="layout">
+    <option value="1x1">1 × 1</option>
+    <option value="2x2" selected>2 × 2</option>
+    <option value="1x4">1 × 4 (row)</option>
+    <option value="4x1">4 × 1 (column)</option>
+    <option value="2x3">2 × 3</option>
+    <option value="3x3">3 × 3</option>
+    <option value="4x4">4 × 4</option>
+  </select>
+  <button id="shuffle">⇄ shuffle all</button>
+  <label class="chk"><input type="checkbox" id="cycle" checked> auto-cycle</label>
+  <span id="warn"></span>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="ttl">Signal Lab <em>Visualizer</em></div>
+  <div class="sub">A video-wall of Milkdrop presets (Butterchurn), all dancing to the lab's own pieces. Pick a track, a layout, and let it run.</div>
+  <button class="play" id="play" aria-label="Begin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+  <div class="err" id="err"></div>
+</div>
+
+<script src="vendor/butterchurn.min.js"></script>
+<script src="vendor/butterchurnPresets.min.js"></script>
+<script>
+const $ = id => document.getElementById(id), grid = $('grid');
+const LAYOUTS = { '1x1':[1,1], '2x2':[2,2], '1x4':[1,4], '4x1':[4,1], '2x3':[2,3], '3x3':[3,3], '4x4':[4,4] };
+let AC, BC, presetList = [], names = [], cells = [], src = null, buffers = {}, cycler = null, started = false;
+
+function rand(){ return Math.floor(Math.random()*names.length); }
+
+async function loadBuf(file){
+  if(buffers[file]) return buffers[file];
+  const r = await fetch(file); if(!r.ok) throw new Error(r.status+' '+file);
+  buffers[file] = await AC.decodeAudioData(await r.arrayBuffer());
+  return buffers[file];
+}
+async function playTrack(file){
+  if(src){ try{ src.stop(); }catch(e){} }
+  const buf = await loadBuf(file);
+  src = AC.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(AC.destination); src.start();
+  cells.forEach(c => { try{ c.viz.connectAudio(src); }catch(e){} });   // every window hears the same source
+}
+
+function buildGrid(key){
+  const [rows, cols] = LAYOUTS[key];
+  $('warn').textContent = (rows*cols > 12) ? 'note: many WebGL windows — some may not draw' : '';
+  cells = [];
+  grid.innerHTML = '';
+  grid.style.gridTemplateRows = `repeat(${rows},1fr)`;
+  grid.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+  for(let i=0;i<rows*cols;i++){ const c=document.createElement('canvas'); grid.appendChild(c); cells.push({canvas:c, viz:null, pi:rand()}); }
+  // after layout settles, size + create a visualizer per cell
+  requestAnimationFrame(()=>{
+    const dpr = Math.min(devicePixelRatio||1, 1.5);
+    cells.forEach(cell=>{
+      const r = cell.canvas.getBoundingClientRect();
+      const w = Math.max(2, r.width|0), h = Math.max(2, r.height|0);
+      try{
+        cell.viz = BC.createVisualizer(AC, cell.canvas, {width:w, height:h, pixelRatio:dpr, textureRatio:1});
+        cell.viz.setRendererSize(w, h);
+        if(src) cell.viz.connectAudio(src);
+        cell.viz.loadPreset(presetList[cell.pi], 0.0);
+      }catch(e){ /* WebGL context limit — leave this cell dark */ }
+    });
+  });
+}
+
+function resizeAll(){
+  cells.forEach(cell=>{ if(!cell.viz) return; const r=cell.canvas.getBoundingClientRect();
+    cell.viz.setRendererSize(Math.max(2,r.width|0), Math.max(2,r.height|0)); });
+}
+addEventListener('resize', ()=> requestAnimationFrame(resizeAll));
+
+function shuffleAll(){ cells.forEach(c=>{ if(c.viz){ c.pi=rand(); c.viz.loadPreset(presetList[c.pi], 1.5); } }); }
+function startCycle(){ clearInterval(cycler);
+  if($('cycle').checked) cycler = setInterval(()=>{
+    // cycle one random cell at a time so the wall stays lively but not chaotic
+    const c = cells[Math.floor(Math.random()*cells.length)];
+    if(c && c.viz){ c.pi=rand(); c.viz.loadPreset(presetList[c.pi], 2.0); }
+  }, 4000);
+}
+
+function loop(){ requestAnimationFrame(loop); cells.forEach(c=>{ if(c.viz) try{ c.viz.render(); }catch(e){} }); }
+
+async function begin(){
+  BC = (window.butterchurn && (butterchurn.default||butterchurn));
+  const BP = (window.butterchurnPresets && (butterchurnPresets.default||butterchurnPresets));
+  if(!BC || !BP){ $('err').textContent = 'Butterchurn not found — open via the server: http://127.0.0.1:7700/visualizer.html'; return; }
+  AC = new (window.AudioContext||window.webkitAudioContext)();
+  const P = BP.getPresets(); names = Object.keys(P); presetList = names.map(n=>P[n]);
+  try{ await playTrack($('track').value); }
+  catch(e){ $('err').textContent = 'Could not load audio ('+e.message+'). Open via the server: http://127.0.0.1:7700/visualizer.html'; return; }
+  buildGrid($('layout').value);
+  startCycle(); started = true;
+  $('overlay').classList.add('hide'); $('bar').classList.remove('dim');
+  loop();
+}
+
+$('play').onclick = begin;
+$('layout').onchange = e => { if(started) buildGrid(e.target.value); };
+$('track').onchange = e => { playTrack(e.target.value).catch(()=>{}); };
+$('shuffle').onclick = shuffleAll;
+$('cycle').onchange = startCycle;
+let hideT; addEventListener('mousemove', ()=>{ if(!started) return; $('bar').classList.remove('dim'); clearTimeout(hideT);
+  hideT = setTimeout(()=> $('bar').classList.add('dim'), 3500); });
+</script>

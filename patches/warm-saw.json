@@ -1,0 +1,11 @@
+{
+  "v": 1,
+  "name": "warm-saw",
+  "dur": 3.0,
+  "note": "A3",
+  "osc": { "type": "wave", "wave": "saw", "voices": 3, "detune": 10 },
+  "filter": { "type": "lowpass", "cutoff": 1600, "q": 4, "env_amt": 0.6 },
+  "env": { "a": 0.4, "d": 0.3, "s": 0.8, "r": 1.2 },
+  "lfo": { "target": "filter", "rate": 0.3, "depth": 0.4 },
+  "fx": { "reverb": 0.4, "delay": 0.0, "delay_time": 0.3, "width": 0.7, "drive": 1.1 }
+}

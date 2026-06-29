@@ -1,0 +1,902 @@
+<title>Signal Lab — The Black Theater</title>
+<meta name="description" content="A working journal: synthesizing a childhood dream as electronic music, every sound built from first-principles DSP.">
+<style>
+  :root{
+    --bg:#0A0C18; --panel:#12152A; --panel-2:#181C36; --line:#272C4C;
+    --text:#E7E9F3; --muted:#8C92B2; --faint:#5A6088;
+    --amber:#F4A659; --amber-dim:#B97C3E;
+    --phosphor:#57E3C2; --phosphor-dim:#2E8C77;
+    --violet:#9B8CFF;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --body:-apple-system,system-ui,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);
+    line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  ::selection{background:var(--amber);color:#0A0C18}
+  h1,h2,h3,h4{text-wrap:balance}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--faint)}
+
+  /* ---------- HERO ---------- */
+  header{position:relative;border-bottom:1px solid var(--line);overflow:hidden}
+  #scope{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:.5}
+  .hero-in{position:relative;padding:72px 24px 60px;max-width:1180px;margin:0 auto}
+  .eyebrow{display:flex;gap:14px;align-items:center;margin-bottom:22px}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--phosphor);
+    box-shadow:0 0 12px var(--phosphor)}
+  h1{font-weight:800;letter-spacing:-.03em;line-height:.96;margin:0;
+    font-size:clamp(40px,7.5vw,84px)}
+  h1 .em{color:var(--amber)}
+  .sub{margin:20px 0 0;max-width:56ch;font-size:18px;color:var(--muted)}
+  .readout{margin-top:30px;display:flex;flex-wrap:wrap;gap:10px 26px;
+    font-family:var(--mono);font-size:12px;color:var(--phosphor)}
+  .readout span{color:var(--faint)}
+
+  /* ---------- TABS ---------- */
+  .tabbar{position:sticky;top:0;z-index:20;background:rgba(10,12,24,.86);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .tabbar-in{max-width:1180px;margin:0 auto;display:flex;gap:4px;padding:0 16px;
+    overflow-x:auto}
+  .tab{flex:none;background:none;border:none;color:var(--muted);cursor:pointer;
+    font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    padding:16px 16px 14px;border-bottom:2px solid transparent;transition:.16s}
+  .tab:hover{color:var(--text)}
+  .tab[aria-selected="true"]{color:var(--phosphor);border-bottom-color:var(--phosphor)}
+  .tab:focus-visible{outline:2px solid var(--amber);outline-offset:-4px;border-radius:4px}
+  .navspace{flex:1 0 16px}
+  .navlink{flex:none;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--violet);padding:16px 12px;border-bottom:2px solid transparent;white-space:nowrap}
+  .navlink:hover{color:var(--phosphor)}
+  .navlink.live{color:var(--amber)}.navlink.live:hover{color:#0A0C18;background:var(--amber);border-radius:6px}
+  .navlink:focus-visible{outline:2px solid var(--amber);outline-offset:-4px;border-radius:4px}
+
+  .panel{display:none;padding:56px 0 40px;animation:fade .35s ease}
+  .panel.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.panel{animation:none}#scope{opacity:.3}}
+
+  .phead{margin:0 0 8px;font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-.02em}
+  .lead{color:var(--muted);max-width:66ch;font-size:17px;margin:0 0 34px}
+  .lead.tight{margin-bottom:20px}
+  .subh{font-size:17px;font-weight:700;letter-spacing:-.01em;margin:42px 0 18px}
+  em{font-style:normal;color:var(--text)}
+
+  /* ---------- generic card grid ---------- */
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 16px}
+  .card .ix{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--phosphor)}
+  .card h3{margin:10px 0 6px;font-size:16px;letter-spacing:-.01em}
+  .card p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+
+  /* ---------- dream ---------- */
+  .dreamquote{margin:0 0 8px;padding:22px 26px;border-left:2px solid var(--amber);
+    background:linear-gradient(90deg,rgba(244,166,89,.06),transparent);
+    font-size:clamp(19px,2.6vw,25px);line-height:1.5;font-style:italic;color:var(--text);
+    border-radius:0 8px 8px 0}
+  .mvts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .mvt{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:18px;border-top:2px solid var(--line)}
+  .mvt.m1{border-top-color:#E7B27A}.mvt.m2{border-top-color:var(--phosphor)}.mvt.m3{border-top-color:#6A4FB0}
+  .mhd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .mnum{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--amber)}
+  .m2 .mnum{color:var(--phosphor)}.m3 .mnum{color:var(--violet)}
+  .mt{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--faint)}
+  .mvt h3{margin:0 0 6px;font-size:16px}.mvt p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+
+  /* ---------- creations / build sheets ---------- */
+  .rack{display:flex;flex-direction:column;gap:18px}
+  .creation{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}
+  .creation.featured{border-color:var(--phosphor-dim);
+    box-shadow:0 0 0 1px rgba(87,227,194,.16),0 18px 50px -22px rgba(87,227,194,.25)}
+  .creation.stem{border-left:2px solid var(--amber-dim)}
+  /* hierarchy: composed piece -> its parts */
+  .parts{margin-top:14px;padding-left:24px;border-left:2px solid var(--phosphor-dim);
+    display:flex;flex-direction:column;gap:12px;position:relative}
+  .parts::before{content:"";position:absolute;left:-2px;top:0;width:2px;height:26px;
+    background:linear-gradient(var(--phosphor),var(--phosphor-dim))}
+  .parts-label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--faint);margin:18px 0 0;display:flex;gap:8px;align-items:center}
+  .parts-label .pl-dot{color:var(--phosphor)}
+  .parts-label.std{margin-top:36px;padding-top:26px;border-top:1px solid var(--line)}
+  .creation.child{background:var(--panel-2);padding:18px 20px}
+  .creation.child .ctop h3{font-size:17px}
+  .creation.study{border-style:dashed;opacity:.92}
+  @media(max-width:600px){.parts{padding-left:14px}}
+  .ctop{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:baseline}
+  .ctop h3{margin:0;font-size:20px;letter-spacing:-.01em}
+  .featured .ctop h3{font-size:24px}
+  .role{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--phosphor);border:1px solid var(--phosphor-dim);border-radius:999px;padding:2px 9px;
+    margin-left:10px;vertical-align:middle}
+  .cmeta{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em}
+  .cdesc{margin:12px 0 16px;color:var(--muted);font-size:14px;max-width:78ch}
+  .player{display:flex;align-items:center;gap:16px}
+  .play{flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--phosphor-dim);
+    background:var(--panel-2);color:var(--phosphor);cursor:pointer;display:grid;place-items:center;transition:.18s}
+  .play:hover{background:var(--phosphor);color:#0A0C18;box-shadow:0 0 22px rgba(87,227,194,.4)}
+  .play:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .play svg{width:18px;height:18px}
+  .wavewrap{flex:1;height:60px}.wavewrap canvas{width:100%;height:100%;display:block}
+
+  details.sheet{margin-top:16px;border-top:1px solid var(--line);padding-top:4px}
+  details.sheet>summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:11px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:12px 0 4px;display:flex;
+    align-items:center;gap:8px}
+  details.sheet>summary::-webkit-details-marker{display:none}
+  details.sheet>summary::before{content:"▸";color:var(--phosphor);transition:.18s}
+  details.sheet[open]>summary::before{transform:rotate(90deg)}
+  .sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:14px 0 4px}
+  @media(max-width:680px){.sheet-grid{grid-template-columns:1fr;gap:18px}}
+  .sheet h4{margin:0 0 12px;font-size:12px;font-family:var(--mono);letter-spacing:.1em;
+    text-transform:uppercase;color:var(--phosphor)}
+  .stages{display:flex;flex-direction:column;gap:10px}
+  .stg{display:grid;grid-template-columns:18px 1fr;gap:10px;font-size:13.5px}
+  .stg .n{font-family:var(--mono);font-size:11px;color:var(--amber);padding-top:2px}
+  .stg b{font-weight:600}.stg span{color:var(--muted)}
+  ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px}
+  ol.steps li{font-size:13.5px;color:var(--muted);padding-left:4px}
+  ol.steps li::marker{color:var(--amber);font-family:var(--mono);font-size:12px}
+  .params{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .param{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--panel-2);
+    border:1px solid var(--line);border-radius:6px;padding:4px 9px}
+  .param b{color:var(--phosphor);font-weight:600}
+  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .tag{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--phosphor);
+    border:1px solid var(--phosphor-dim);border-radius:999px;padding:3px 11px}
+  .tag[title]{cursor:help;border-bottom-style:dashed}
+  .btn-open{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:#0A0C18;
+    background:var(--phosphor);border:none;border-radius:7px;padding:9px 16px;cursor:pointer;transition:.16s}
+  .btn-open:hover{box-shadow:0 0 22px rgba(87,227,194,.45)}
+  .btn-open:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  a.btn-open{display:inline-block;text-decoration:none}
+  .btn-open.live{background:var(--amber)}
+  .live-card{border-color:var(--amber-dim)!important;
+    box-shadow:0 0 0 1px rgba(244,166,89,.18),0 18px 50px -22px rgba(244,166,89,.28)!important}
+
+  /* ---------- field ---------- */
+  .field{position:relative;height:380px;border:1px solid var(--line);border-radius:12px;
+    background:radial-gradient(130% 90% at 50% 102%,rgba(244,166,89,.07),transparent 55%),var(--panel);overflow:hidden}
+  .axl{position:absolute;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+  .axl.top{top:12px;left:50%;transform:translateX(-50%)}.axl.bot{bottom:12px;left:50%;transform:translateX(-50%)}
+  .axl.lft{left:12px;top:12px}.axl.rgt{right:12px;top:12px}
+  .chip{position:absolute;transform:translate(-50%,-50%);background:var(--panel-2);border:1px solid var(--line);
+    border-radius:999px;padding:6px 12px;font-size:12.5px;white-space:nowrap;display:flex;gap:8px;align-items:center;
+    box-shadow:0 6px 18px -10px #000}
+  .chip .d{width:8px;height:8px;border-radius:50%;flex:none}
+  .chip small{font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .chip.you{background:var(--amber);color:#0A0C18;border-color:var(--amber);font-weight:700}
+  .field-key{margin-top:14px;font-size:13px;color:var(--muted)}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media(max-width:680px){.twocol{grid-template-columns:1fr}}
+  table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.t th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--faint);padding:10px 12px;border-bottom:1px solid var(--line)}
+  table.t td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top}
+  table.t td:first-child{color:var(--text);font-weight:600}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+
+  /* ---------- method ---------- */
+  .duo{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch}
+  .side{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+  .side .ix{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--phosphor)}
+  .side h3{margin:10px 0 6px;font-size:17px}.side p{margin:0;font-size:13px;color:var(--muted)}
+  .arrow{display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--amber)}
+  @media(max-width:600px){.duo{grid-template-columns:1fr}}
+
+  /* ---------- history ---------- */
+  .editions,.log{display:flex;flex-direction:column}
+  .ed{display:grid;grid-template-columns:64px 1fr auto;gap:18px;align-items:center;padding:16px 0;border-top:1px solid var(--line)}
+  .ed:first-child{border-top:none}
+  .ed .v{font-family:var(--mono);color:var(--phosphor);font-size:14px;font-weight:600}
+  .ed.old .v{color:var(--faint)}
+  .ed h3{margin:0;font-size:15px}.ed p{margin:3px 0 0;font-size:13px;color:var(--muted)}
+  .ed .play{width:40px;height:40px}.ed .play svg{width:15px;height:15px}
+  .step{display:grid;grid-template-columns:120px 1fr;gap:22px;padding:16px 0;border-top:1px solid var(--line);align-items:start}
+  .step:first-child{border-top:none}
+  .step .st{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding-top:3px}
+  .st.done{color:var(--phosphor)}.st.now{color:var(--amber)}.st.next{color:var(--faint)}
+  .step h3{margin:0 0 4px;font-size:15px;font-weight:700}.step p{margin:0;color:var(--muted);font-size:14px}
+  .chk{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle}
+  .done .chk{background:var(--phosphor);box-shadow:0 0 8px var(--phosphor)}
+  .now .chk{background:var(--amber);box-shadow:0 0 8px var(--amber)}.next .chk{background:var(--faint)}
+  @media(max-width:600px){.step{grid-template-columns:1fr;gap:6px}.ed{grid-template-columns:48px 1fr auto}}
+
+  .totop{position:fixed;right:22px;bottom:22px;z-index:40;width:48px;height:48px;border-radius:50%;
+    border:1px solid var(--line);background:rgba(18,21,42,.92);backdrop-filter:blur(8px);color:var(--phosphor);
+    cursor:pointer;display:grid;place-items:center;opacity:0;pointer-events:none;transition:.22s;
+    box-shadow:0 8px 24px -10px #000}
+  .totop.show{opacity:1;pointer-events:auto}
+  .totop:hover{background:var(--phosphor);color:#0A0C18;box-shadow:0 0 22px rgba(87,227,194,.4)}
+  .totop:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .totop svg{width:20px;height:20px}
+
+  footer{border-top:1px solid var(--line);padding:36px 0 64px;color:var(--faint);font-size:13px}
+  .stack{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.9;margin-top:10px}
+
+  /* =================================================================
+     HARDWARE / INSTRUMENT-PANEL REVAMP  (front-panel skin)
+     ================================================================= */
+  :root{--metal:#161a2c;--metal-2:#1d2236;--bevhi:rgba(255,255,255,.07);--bevlo:rgba(0,0,0,.6);}
+  body{background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(87,227,194,.05), transparent 70%),
+    repeating-linear-gradient(90deg,#0a0c16 0,#0a0c16 1px,#0b0d19 1px,#0b0d19 3px),
+    linear-gradient(180deg,#0b0d19,#080a12);}
+  /* brushed faceplates with bevel */
+  header,.creation,.card,.mvt,.side,.tablewrap,.field,.dreamquote,.scope-wrap{
+    background:linear-gradient(180deg,var(--metal-2),var(--metal))!important;
+    box-shadow:inset 0 1px 0 var(--bevhi), inset 0 -2px 7px var(--bevlo), 0 8px 22px -12px #000!important;}
+  /* engraved headings */
+  h1,.phead{text-shadow:0 1px 0 rgba(0,0,0,.7),0 -1px 0 rgba(255,255,255,.05)}
+  .label,.subh,.rl,.cmeta,.role{text-shadow:0 1px 0 rgba(0,0,0,.5)}
+  /* panel screws on modules */
+  .creation,.card,.mvt,.field{position:relative}
+  .creation::after,.card::after,.mvt::after,.field::after{content:"";position:absolute;inset:0;
+    border-radius:inherit;pointer-events:none;z-index:1;
+    background:
+     radial-gradient(circle 3.5px at 11px 11px,#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at calc(100% - 11px) 11px,#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at 11px calc(100% - 11px),#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at calc(100% - 11px) calc(100% - 11px),#05060c 45%,#2b3150 62%,transparent 66%);}
+  .creation>*,.card>*,.mvt>*,.field>*{position:relative;z-index:2}
+  /* LED-style readout */
+  .readout{padding:12px 16px;border-radius:8px;background:#0a0c16;
+    box-shadow:inset 0 2px 6px #000, inset 0 0 0 1px rgba(87,227,194,.08)}
+  .readout span{color:var(--phosphor);text-shadow:0 0 6px rgba(87,227,194,.6)}
+  /* tabs as illuminated panel buttons */
+  .tabbar{background:linear-gradient(180deg,#10121f,#0b0d18)!important}
+  .tab{margin:9px 3px;border:1px solid #0a0c14;border-radius:6px;
+    background:linear-gradient(180deg,#20243c,#161a2c);
+    box-shadow:inset 0 1px 0 var(--bevhi),0 2px 3px var(--bevlo)}
+  .tab[aria-selected="true"]{background:linear-gradient(180deg,#161a2c,#1d2236);
+    box-shadow:inset 0 2px 7px var(--bevlo),0 0 0 1px var(--phosphor-dim);color:var(--phosphor)}
+  .navlink{align-self:center;border:1px solid #0a0c14;border-radius:6px;margin:9px 3px;
+    background:linear-gradient(180deg,#20243c,#161a2c);box-shadow:inset 0 1px 0 var(--bevhi),0 2px 3px var(--bevlo)}
+  /* play buttons as metal knurled buttons */
+  .play{background:radial-gradient(120% 120% at 50% 30%,#222740,#10121f)!important;
+    box-shadow:inset 0 1px 0 var(--bevhi),0 3px 6px var(--bevlo)!important}
+  .btn-open{box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 3px 6px var(--bevlo)}
+
+  /* ---- the front-panel control row in the hero ---- */
+  .panelrow{display:flex;align-items:flex-end;gap:26px;margin-top:34px;flex-wrap:wrap;
+    padding:18px 20px 14px;border-radius:10px;
+    background:linear-gradient(180deg,#1d2236,#13172a);
+    box-shadow:inset 0 1px 0 var(--bevhi),inset 0 -2px 7px var(--bevlo),0 8px 22px -12px #000;position:relative}
+  .knob{--a:0deg;width:46px;height:46px;border-radius:50%;position:relative;
+    background:conic-gradient(from 0deg,#2a3050,#171b2e,#2a3050);
+    box-shadow:inset 0 2px 4px rgba(255,255,255,.12),inset 0 -3px 6px #000,0 4px 8px #000;
+    display:flex;align-items:flex-end;justify-content:center}
+  .knob::before{content:"";position:absolute;inset:7px;border-radius:50%;
+    background:radial-gradient(120% 120% at 50% 25%,#39415f,#11141f);
+    box-shadow:inset 0 2px 4px rgba(255,255,255,.1),inset 0 -3px 6px #000}
+  .knob::after{content:"";position:absolute;left:50%;top:9px;width:2px;height:12px;border-radius:2px;
+    background:var(--phosphor);box-shadow:0 0 6px var(--phosphor);
+    transform-origin:50% 14px;transform:translateX(-50%) rotate(var(--a))}
+  .kcap{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;color:var(--faint);white-space:nowrap}
+  .leds{position:relative;display:flex;gap:7px;align-items:center;padding-bottom:2px}
+  .led{width:8px;height:8px;border-radius:50%;background:#0c1018;box-shadow:inset 0 1px 2px #000}
+  .led.on{background:var(--amber);box-shadow:0 0 8px var(--amber),inset 0 0 2px rgba(255,255,255,.4)}
+  .panelrow .screws{position:absolute;inset:0;pointer-events:none;border-radius:10px;
+    background:
+     radial-gradient(circle 3.5px at 10px 10px,#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at calc(100% - 10px) 10px,#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at 10px calc(100% - 10px),#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at calc(100% - 10px) calc(100% - 10px),#05060c 45%,#2b3150 62%,transparent 66%)}
+  @media(prefers-reduced-motion:reduce){}
+</style>
+
+<header>
+  <canvas id="scope"></canvas>
+  <div class="hero-in">
+    <div class="eyebrow"><span class="dot"></span><span class="label">Signal Lab · an electronic-music studio, in the spirit of Jean-Michel Jarre</span></div>
+    <h1><span class="em">Signal</span> Lab</h1>
+    <p class="sub">What began as a childhood dream — synthesized from first principles in numpy, in the spirit of Jarre's <em>Oxygène</em> — has grown into a full studio: a from-scratch DSP engine <em>and</em> a realtime SuperCollider voice, an AI that turns words into patches, real recordings from space woven into the sound, and visuals that breathe with the music. Two finished pieces, and the tools to make more.</p>
+    <div class="readout">
+      <div>ENGINES <span>numpy · SuperCollider</span></div>
+      <div>VOICES <span>subtractive · additive · FM · granular</span></div>
+      <div>AI <span>text → patch</span></div>
+      <div>CREATIONS <span>2 + studies</span></div>
+      <div>STATUS <span>evolving</span></div>
+    </div>
+    <div class="panelrow" aria-hidden="true">
+      <div class="knob" style="--a:-120deg"><span class="kcap">CUTOFF</span></div>
+      <div class="knob" style="--a:40deg"><span class="kcap">RESO</span></div>
+      <div class="knob" style="--a:-30deg"><span class="kcap">DRIFT</span></div>
+      <div class="knob" style="--a:90deg"><span class="kcap">SPACE</span></div>
+      <div class="leds"><i class="led on"></i><i class="led on"></i><i class="led"></i><i class="led on"></i><i class="led"></i><span class="kcap">SIGNAL</span></div>
+      <div class="screws"></div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabbar"><div class="tabbar-in" role="tablist" id="tabs">
+  <button class="tab" role="tab" data-tab="creations">Creations</button>
+  <button class="tab" role="tab" data-tab="theater">The Black Theater</button>
+  <button class="tab" role="tab" data-tab="icarus">✦ Icarus</button>
+  <button class="tab" role="tab" data-tab="method">Method</button>
+  <button class="tab" role="tab" data-tab="history">History</button>
+  <span class="navspace"></span>
+  <a class="navlink live" href="studio.html">▶ Studio ↗</a>
+  <a class="navlink live" href="live.html">▶ Live ↗</a>
+  <a class="navlink" href="library.html">Library ↗</a>
+  <a class="navlink" href="toolkit.html">Toolkit ↗</a>
+  <a class="navlink" href="visualizer.html">Visualizer ↗</a>
+  <a class="navlink" href="music.html">Theory ↗</a>
+</div></nav>
+
+<main class="wrap">
+
+  <!-- ============ CREATIONS HUB ============ -->
+  <section class="panel" id="tab-gallery" data-group="creations" role="tabpanel">
+    <h2 class="phead">Creations</h2>
+    <p class="lead">The lab's finished pieces. Each is a complete world built from first-principles synthesis — no presets, no samples (except where noted). Open one to see its dream, its organs, and the exact build sheets.</p>
+    <div class="rack" id="gallery"></div>
+  </section>
+
+  <!-- ============ THE BLACK THEATER (dream + field + organs) ============ -->
+  <section class="panel" id="tab-dream" data-group="theater" role="tabpanel">
+    <h2 class="phead">The dream</h2>
+    <p class="lead tight">Every track needs a source. This one grows from a childhood dream — translated, element by element, into sound. You don't need to be a musician for this; you need a feeling and a way to map it.</p>
+    <blockquote class="dreamquote">A black theater, the audience at my back. I am a child alone on the dark stage, fishing into the black backdrop — abstract and lonely, in a big world full of eyes.</blockquote>
+
+    <h3 class="subh">The dream, as a score</h3>
+    <div class="grid3">
+      <div class="card"><div class="ix">CARPET</div><h3>Audience → drone</h3><p>The world full of eyes. An open-fifth drone — no third, so "black", undecided — breathing slowly. Everything rests on it.</p></div>
+      <div class="card"><div class="ix">VOICE</div><h3>Child → wind</h3><p>You: "an organ like a wind." A breathy, trembling flute voice, small and exposed above the dark.</p></div>
+      <div class="card"><div class="ix">GESTURE</div><h3>Fishing → soundings</h3><p>The experience that awaits. Deep soundings cast into the void, ringing out — lonely, probing, unanswered.</p></div>
+    </div>
+
+    <h3 class="subh">The arc — the eyes over a life</h3>
+    <p class="lead tight">The eyes are not one thing. They can be kind, adoring, envious — or they can close. The piece moves through three movements as the gaze changes; the drone itself carries the story.</p>
+    <div class="mvts">
+      <div class="mvt m1"><div class="mhd"><span class="mnum">I</span><span class="mt">0:00 – 0:30</span></div><h3>Kind eyes</h3><p>Childhood. Most eyes are warm and nice. A gentle third softens the black; the room is small and safe; the child sings simply.</p></div>
+      <div class="mvt m2"><div class="mhd"><span class="mnum">II</span><span class="mt">0:30 – 1:06</span></div><h3>Adoration &amp; envy</h3><p>Getting better. The crowd swells — a bright adoration shimmer and, beneath it, a dissonant envy cluster (Bb grinding on A). Grand, dazzling, unstable. The child soars and strains.</p></div>
+      <div class="mvt m3"><div class="mhd"><span class="mnum">III</span><span class="mt">1:06 – 1:36</span></div><h3>The eyes close</h3><p>The end is near. Voices fall away, the filter darkens (turning away), the room empties to silence. One last sounding into the void — unanswered.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ CREATIONS ============ -->
+  <section class="panel" id="tab-organs" data-group="theater" role="tabpanel">
+    <h2 class="phead">The organs</h2>
+    <p class="lead">The voices that make up The Black Theater — each waveform is the real signal. Open <em>Build sheet</em> on any organ for its exact signal chain and the steps that make it. 🎧 Headphones reveal the stereo field.</p>
+    <div class="rack" id="rack"></div>
+  </section>
+
+  <!-- ============ FIELD ============ -->
+  <section class="panel" id="tab-field" data-group="theater" role="tabpanel">
+    <h2 class="phead">Volume &amp; dimensions</h2>
+    <p class="lead tight">"Organs" are the voices of the piece. Each is given a <em>volume</em> and a <em>place</em> in a three-dimensional field: left↔right (stereo), high↔low (register), near↔far (reverb &amp; level). You are at the bottom centre, looking into the dark.</p>
+    <div class="field">
+      <span class="axl top">↑ high · far</span><span class="axl bot">↓ low · near</span>
+      <span class="axl lft">left</span><span class="axl rgt">right</span>
+      <div class="chip" style="left:50%;top:15%"><span class="d" style="background:var(--phosphor)"></span><b>Glint</b> <small>the line · top</small></div>
+      <div class="chip" style="left:21%;top:31%"><span class="d" style="background:var(--violet)"></span><b>Audience</b> <small>eyes · wide L</small></div>
+      <div class="chip" style="left:79%;top:31%"><span class="d" style="background:var(--violet)"></span><b>Audience</b> <small>eyes · wide R</small></div>
+      <div class="chip" style="left:68%;top:21%"><span class="d" style="background:var(--amber)"></span><b>Fishing</b> <small>roaming · far →</small></div>
+      <div class="chip" style="left:50%;top:55%"><span class="d" style="background:var(--phosphor)"></span><b>Child</b> <small>centre · near</small></div>
+      <div class="chip" style="left:50%;top:69%"><span class="d" style="background:var(--amber)"></span><b>Pulse</b> <small>heartbeat · time</small></div>
+      <div class="chip" style="left:50%;top:83%"><span class="d" style="background:var(--violet)"></span><b>Pedal</b> <small>stage floor · bottom</small></div>
+      <div class="chip you" style="left:50%;top:95%">YOU · the child on the stage</div>
+    </div>
+    <p class="field-key">Mix volumes: audience 0.90 · child 0.70 · fishing 0.60 · pedal 0.50 · pulse 0.40 · glint 0.30. The stereo width itself is automated — widest in movement II, collapsing to mono as the eyes close (measured side-energy 0.071 → 0.126 → 0.048).</p>
+
+    <h3 class="subh">How space &amp; time are made</h3>
+    <div class="twocol">
+      <div class="tablewrap"><table class="t"><thead><tr><th>Space</th><th>DSP</th></tr></thead><tbody>
+        <tr><td>Width</td><td>render twice, decorrelated; mid/side scaling</td></tr>
+        <tr><td>Placement</td><td>constant-power pan (L/R)</td></tr>
+        <tr><td>Depth</td><td>reverb amount + level (near ↔ far)</td></tr>
+        <tr><td>Motion</td><td>LFO auto-pan (the eyes drift)</td></tr>
+        <tr><td>Room</td><td>two decorrelated convolution IRs</td></tr>
+      </tbody></table></div>
+      <div class="tablewrap"><table class="t"><thead><tr><th>Time</th><th>DSP</th></tr></thead><tbody>
+        <tr><td>Ripples</td><td>tempo-synced ping-pong delay (1.5 s)</td></tr>
+        <tr><td>Pulse</td><td>the heartbeat organ — a thread of time</td></tr>
+        <tr><td>Drift</td><td>layered slow LFOs — never static</td></tr>
+        <tr><td>Halo</td><td>shimmer = octave-up reverb feedback</td></tr>
+        <tr><td>Arc</td><td>automation lanes across 3 movements</td></tr>
+      </tbody></table></div>
+    </div>
+  </section>
+
+  <!-- ============ ICARUS ============ -->
+  <section class="panel" id="tab-icarus" data-group="icarus" role="tabpanel">
+    <h2 class="phead">Icarus, or the Effort of Flight</h2>
+    <p class="lead">The project's second creation — a flying dream fused with cosmic horror, built on a <em>real recording of Jupiter</em>. You can fly, but only by clapping furiously; you rise above the safe rooftops into joy, and keep rising into the vast, indifferent churn of the cosmos. The higher the joy, the closer the horror.</p>
+    <blockquote class="dreamquote">I dreamt I could fly — but I had to clap my hands really fast. I flew just above the rooftops. The feeling was great… but the effort to keep the altitude was hard.</blockquote>
+
+    <h3 class="subh">The seeds, as organs</h3>
+    <div class="grid3">
+      <div class="card"><div class="ix">EFFORT</div><h3>Clapping → the Clap</h3><p>A fast motoric pulse (~8/sec). It <em>is</em> the effort; when it thins, you sag and fall.</p></div>
+      <div class="card"><div class="ix">JOY + STRAIN</div><h3>Flight → Altitude</h3><p>A soaring Lydian pad &amp; lead — the brightest mode, the "flight" mode. It sags and recovers with the effort.</p></div>
+      <div class="card"><div class="ix">HOME</div><h3>Rooftops → warmth</h3><p>A warm low chord below: safety, the human world, receding as you climb.</p></div>
+      <div class="card"><div class="ix">THE COSMOS</div><h3>Jupiter → the Void</h3><p>The ion-acoustic recording, engineered into the abyss — looming louder the higher you go.</p></div>
+      <div class="card"><div class="ix">WRONGNESS</div><h3>Horror → daemon flutes</h3><p>Alien whole-tone piping that appears at altitude — the cosmos is not empty.</p></div>
+      <div class="card"><div class="ix">TENSION</div><h3>Lydian vs whole-tone</h3><p>Human joy (bright, tonal) against the cosmos (floating, no home). The clash is the feeling.</p></div>
+    </div>
+
+    <h3 class="subh">The flight — four stages</h3>
+    <div class="mvts">
+      <div class="mvt m1"><div class="mhd"><span class="mnum">I</span><span class="mt">0:00–0:35</span></div><h3>Takeoff</h3><p>Warm rooftops, the clap begins, you lift into the first joy. The void is only a rumor.</p></div>
+      <div class="mvt m2"><div class="mhd"><span class="mnum">II</span><span class="mt">0:35–1:30</span></div><h3>Climb</h3><p>The clap drives hard, altitude rises and strains, the Jupiter churn creeps in from above.</p></div>
+      <div class="mvt m3"><div class="mhd"><span class="mnum">III</span><span class="mt">1:30–2:15</span></div><h3>The height</h3><p>High up: the void roars, daemon flutes pipe, beauty and terror at once — maximum effort.</p></div>
+      <div class="mvt" style="border-top-color:var(--amber-dim)"><div class="mhd"><span class="mnum" style="color:var(--amber)">IV</span><span class="mt">2:15–3:00</span></div><h3>Descent</h3><p>The clap tires, altitude sags, you sink back toward the rooftops — relief and loss, unresolved.</p></div>
+    </div>
+
+    <h3 class="subh">The piece &amp; its organs</h3>
+    <p class="lead tight">🎧 The Void is engineered live from the Jupiter sample — granular cloud + varispeed abyss + spectral drone. Open any build sheet for the recipe.</p>
+    <div class="rack" id="rack-icarus"></div>
+  </section>
+
+  <!-- ============ METHOD ============ -->
+  <section class="panel" id="tab-method" data-group="method" role="tabpanel">
+    <h2 class="phead">Method</h2>
+    <p class="lead">Two tools, one handshake. Python <em>invents</em> the sounds; GarageBand <em>arranges and mixes</em> them. They line up only if both agree on a few numbers.</p>
+    <div class="duo">
+      <div class="side"><div class="ix">PYTHON ENGINE</div><h3>Sound-design lab</h3><p>Unique oscillators, filters, phaser, drift, stereo space — written from scratch. Renders one WAV per organ.</p></div>
+      <div class="arrow">— stems →</div>
+      <div class="side"><div class="ix">GARAGEBAND</div><h3>Arrange &amp; mix</h3><p>Each stem on its own track: volume, pan, effects, mute / solo. Visualise the waveforms and polish.</p></div>
+    </div>
+
+    <h3 class="subh">The handshake — project convention</h3>
+    <div class="tablewrap"><table class="t"><thead><tr><th>Parameter</th><th>Value</th><th>Why</th></tr></thead><tbody>
+      <tr><td>Sample rate</td><td>44100 Hz</td><td>Studio standard; matches the engine.</td></tr>
+      <tr><td>Tempo</td><td>60 BPM</td><td>Suspended, dreamlike — set by the dream's stillness.</td></tr>
+      <tr><td>Key</td><td>A Phrygian</td><td>The darkest common mode — "the black of the theater".</td></tr>
+      <tr><td>Bar length</td><td>4.0 s</td><td>Derived: 4 · 60 / 60.</td></tr>
+      <tr><td>Length</td><td>96 s</td><td>24 bars · three movements.</td></tr>
+      <tr><td>Export</td><td>1 WAV / organ</td><td>All 96 s, stereo, starting at t = 0 → aligns in GarageBand.</td></tr>
+    </tbody></table></div>
+
+    <h3 class="subh">The signal chain (subtractive core)</h3>
+    <div class="grid3" id="chainGrid"></div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="panel" id="tab-history" data-group="history" role="tabpanel">
+    <h2 class="phead">Editions</h2>
+    <p class="lead tight">Every version is kept — nothing is overwritten. Each edition is archived with the exact code that made it, so we can always go back and compare.</p>
+    <div class="editions" id="editions"></div>
+
+    <h3 class="subh">Progress log</h3>
+    <div class="log" id="log"></div>
+
+    <footer>
+      <div class="label">Workbench</div>
+      <div class="stack">
+        ~/Workspace/music/jarre-synth/<br>
+        synth.py — DSP core · dream.py — composition · versions/ — every edition<br>
+        .venv — python 3.14 · numpy 2.5 · scipy 1.18
+      </div>
+    </footer>
+  </section>
+</main>
+
+<button class="totop" id="toTop" aria-label="Back to top" title="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<script>
+const ASSETS = {"dream_mix": {"src": "dream_mix.mp3", "wave": [0.006, 0.014, 0.019, 0.025, 0.029, 0.032, 0.034, 0.038, 0.04, 0.046, 0.051, 0.058, 0.061, 0.065, 0.07, 0.073, 0.076, 0.088, 0.103, 0.114, 0.131, 0.142, 0.148, 0.148, 0.144, 0.139, 0.149, 0.157, 0.162, 0.176, 0.182, 0.186, 0.189, 0.201, 0.208, 0.207, 0.194, 0.377, 0.304, 0.304, 0.288, 0.17, 0.239, 0.226, 0.207, 0.223, 0.202, 0.171, 0.218, 0.197, 0.333, 0.203, 0.22, 0.246, 0.214, 0.163, 0.161, 0.181, 0.2, 0.192, 0.209, 0.235, 0.298, 0.44, 0.314, 0.397, 0.337, 0.314, 0.31, 0.3, 0.265, 0.26, 0.277, 0.289, 0.373, 0.458, 0.417, 0.364, 0.333, 0.296, 0.293, 0.229, 0.207, 0.251, 0.28, 0.304, 0.322, 0.326, 0.363, 0.372, 0.395, 0.432, 0.368, 0.36, 0.321, 0.318, 0.313, 0.268, 0.245, 0.235, 0.213, 0.375, 0.233, 0.23, 0.222, 0.218, 0.217, 0.215, 0.202, 0.206, 0.198, 0.173, 0.17, 0.178, 0.311, 0.198, 0.24, 0.2, 0.192, 0.205, 0.208, 0.242, 0.27, 0.29, 0.29, 0.271, 0.445, 0.373, 0.242, 0.271, 0.172, 0.228, 0.297, 0.313, 0.361, 0.336, 0.293, 0.283, 0.25, 0.344, 0.328, 0.406, 0.423, 0.36, 0.308, 0.285, 0.291, 0.28, 0.293, 0.311, 0.321, 0.347, 0.407, 0.38, 0.407, 0.36, 0.339, 0.297, 0.328, 0.302, 0.301, 0.312, 0.278, 0.33, 0.3, 0.506, 0.359, 0.38, 0.385, 0.373, 0.329, 0.338, 0.316, 0.349, 0.345, 0.354, 0.333, 0.377, 0.37, 0.387, 0.366, 0.376, 0.306, 0.309, 0.302, 0.296, 0.297, 0.289, 0.308, 0.31, 0.353, 0.306, 0.327, 0.37, 0.265, 0.264, 0.254, 0.283, 0.282, 0.252, 0.242, 0.216, 0.219, 0.352, 0.237, 0.192, 0.18, 0.155, 0.153, 0.148, 0.16, 0.15, 0.165, 0.168, 0.185, 0.199, 0.213, 0.227, 0.246, 0.262, 0.28, 0.284, 0.287, 0.277, 0.28, 0.28, 0.28, 0.275, 0.292, 0.271, 0.278, 0.283, 0.272, 0.274, 0.305, 0.293, 0.286, 0.308, 0.322, 0.328, 0.351, 0.37, 0.356, 0.35, 0.336, 0.315, 0.318, 0.336, 0.32, 0.295, 0.295, 0.266, 0.27, 0.252, 0.235, 0.31, 0.308, 0.405, 0.396, 0.402, 0.398, 0.404, 0.361, 0.341, 0.382, 0.397, 0.406, 0.506, 0.469, 0.437, 0.429, 0.434, 0.413, 0.367, 0.301, 0.36, 0.324, 0.365, 0.423, 0.465, 0.459, 0.465, 0.441, 0.47, 0.468, 0.415, 0.377, 0.416, 0.294, 0.327, 0.317, 0.348, 0.322, 0.336, 0.317, 0.346, 0.299, 0.345, 0.361, 0.371, 0.418, 0.408, 0.423, 0.501, 0.459, 0.469, 0.469, 0.419, 0.393, 0.435, 0.488, 0.524, 0.527, 0.473, 0.448, 0.46, 0.39, 0.403, 0.453, 0.477, 0.508, 0.518, 0.456, 0.478, 0.445, 0.437, 0.46, 0.482, 0.477, 0.476, 0.443, 0.407, 0.448, 0.349, 0.293, 0.321, 0.336, 0.291, 0.334, 0.358, 0.396, 0.381, 0.376, 0.411, 0.407, 0.466, 0.451, 0.519, 0.472, 0.381, 0.425, 0.393, 0.393, 0.433, 0.385, 0.462, 0.44, 0.489, 0.475, 0.393, 0.336, 0.359, 0.346, 0.337, 0.319, 0.306, 0.3, 0.27, 0.254, 0.312, 0.316, 0.338, 0.393, 0.363, 0.388, 0.528, 0.443, 0.512, 0.588, 0.569, 0.585, 0.539, 0.593, 0.592, 0.588, 0.605, 0.678, 0.692, 0.699, 0.625, 0.586, 0.566, 0.522, 0.5, 0.433, 0.494, 0.54, 0.513, 0.445, 0.417, 0.494, 0.556, 0.483, 0.415, 0.513, 0.471, 0.456, 0.471, 0.447, 0.511, 0.442, 0.43, 0.571, 0.514, 0.506, 0.517, 0.445, 0.479, 0.462, 0.494, 0.59, 0.524, 0.548, 0.598, 0.617, 0.528, 0.582, 0.596, 0.522, 0.608, 0.566, 0.53, 0.597, 0.499, 0.468, 0.544, 0.461, 0.449, 0.44, 0.477, 0.435, 0.368, 0.386, 0.403, 0.468, 0.444, 0.34, 0.432, 0.369, 0.369, 0.393, 0.345, 0.435, 0.402, 0.483, 0.434, 0.377, 0.406, 0.44, 0.389, 0.425, 0.49, 0.398, 0.385, 0.409, 0.389, 0.497, 0.422, 0.49, 0.462, 0.414, 0.431, 0.345, 0.335, 0.333, 0.318, 0.333, 0.319, 0.3, 0.282, 0.321, 0.311, 0.276, 0.334, 0.258, 0.29, 0.272, 0.328, 0.299, 0.326, 0.314, 0.314, 0.301, 0.298, 0.327, 0.295, 0.292, 0.336, 0.361, 0.316, 0.332, 0.308, 0.281, 0.303, 0.322, 0.255, 0.295, 0.273, 0.286, 0.275, 0.343, 0.356, 0.335, 0.266, 0.274, 0.291, 0.26, 0.313, 0.289, 0.323, 0.316, 0.314, 0.289, 0.39, 0.366, 0.325, 0.334, 0.32, 0.316, 0.346, 0.318, 0.314, 0.284, 0.342, 0.359, 0.302, 0.285, 0.322, 0.34, 0.313, 0.344, 0.352, 0.417, 0.421, 0.419, 0.376, 0.359, 0.357, 0.318, 0.332, 0.324, 0.325, 0.359, 0.312, 0.333, 0.274, 0.246, 0.212, 0.208, 0.18, 0.183, 0.175, 0.203, 0.237, 0.278, 0.284, 0.308, 0.282, 0.301, 0.316, 0.327, 0.331, 0.4, 0.377, 0.324, 0.313, 0.232, 0.227, 0.175, 0.145, 0.137, 0.138, 0.14, 0.127, 0.13, 0.176, 0.203, 0.236, 0.278, 0.262, 0.271, 0.274, 0.272, 0.275, 0.284, 0.286, 0.284, 0.299, 0.3, 0.303, 0.312, 0.29, 0.306, 0.282, 0.277, 0.244, 0.228, 0.217, 0.18, 0.162, 0.146, 0.136, 0.132, 0.122, 0.114, 0.205, 0.251, 0.256, 0.153, 0.136, 0.187, 0.174, 0.165, 0.209, 0.153, 0.114, 0.149, 0.112, 0.104, 0.121, 0.14, 0.125, 0.195, 0.219, 0.215, 0.215, 0.202, 0.198, 0.219, 0.228, 0.214, 0.212, 0.197, 0.218, 0.202, 0.224, 0.231, 0.203, 0.207, 0.207, 0.233, 0.198, 0.185, 0.201, 0.222, 0.22, 0.208, 0.216, 0.207, 0.206, 0.174, 0.152, 0.152, 0.122, 0.099, 0.098, 0.081, 0.073, 0.068, 0.058, 0.048, 0.049, 0.046, 0.05, 0.048, 0.043, 0.043, 0.042, 0.04, 0.038, 0.035, 0.031, 0.028, 0.021, 0.018, 0.035, 0.025, 0.015, 0.021, 0.016, 0.016, 0.017, 0.019, 0.019, 0.02, 0.02, 0.019, 0.019, 0.019, 0.018, 0.017, 0.015, 0.014, 0.013, 0.012, 0.011, 0.009, 0.008, 0.006, 0.006, 0.005, 0.004, 0.004, 0.004, 0.003, 0.003, 0.002, 0.002, 0.001, 0.001], "dur": 96.0}, "audience": {"src": "stem_audience.mp3", "wave": [0.005, 0.011, 0.016, 0.021, 0.026, 0.029, 0.032, 0.035, 0.035, 0.038, 0.041, 0.044, 0.048, 0.051, 0.055, 0.059, 0.062, 0.072, 0.084, 0.096, 0.105, 0.112, 0.115, 0.12, 0.131, 0.139, 0.146, 0.141, 0.148, 0.15, 0.146, 0.142, 0.136, 0.15, 0.152, 0.148, 0.131, 0.133, 0.139, 0.141, 0.137, 0.131, 0.123, 0.136, 0.153, 0.176, 0.187, 0.176, 0.183, 0.174, 0.164, 0.148, 0.151, 0.144, 0.128, 0.118, 0.119, 0.116, 0.113, 0.107, 0.103, 0.092, 0.099, 0.113, 0.123, 0.137, 0.143, 0.151, 0.147, 0.148, 0.148, 0.152, 0.153, 0.155, 0.159, 0.156, 0.153, 0.146, 0.14, 0.133, 0.134, 0.13, 0.127, 0.122, 0.115, 0.11, 0.115, 0.116, 0.118, 0.124, 0.123, 0.126, 0.128, 0.127, 0.136, 0.143, 0.155, 0.161, 0.155, 0.161, 0.154, 0.142, 0.128, 0.122, 0.122, 0.125, 0.139, 0.147, 0.16, 0.166, 0.166, 0.143, 0.164, 0.155, 0.145, 0.133, 0.145, 0.147, 0.158, 0.159, 0.162, 0.159, 0.164, 0.159, 0.151, 0.156, 0.155, 0.163, 0.165, 0.161, 0.149, 0.142, 0.139, 0.142, 0.154, 0.162, 0.165, 0.168, 0.167, 0.167, 0.157, 0.153, 0.16, 0.158, 0.159, 0.158, 0.16, 0.184, 0.207, 0.221, 0.236, 0.237, 0.242, 0.242, 0.235, 0.224, 0.209, 0.224, 0.229, 0.239, 0.243, 0.24, 0.229, 0.244, 0.239, 0.238, 0.236, 0.223, 0.231, 0.226, 0.217, 0.205, 0.191, 0.17, 0.172, 0.18, 0.185, 0.181, 0.179, 0.163, 0.175, 0.174, 0.184, 0.177, 0.175, 0.174, 0.18, 0.181, 0.183, 0.175, 0.174, 0.183, 0.188, 0.183, 0.179, 0.184, 0.186, 0.189, 0.192, 0.193, 0.186, 0.159, 0.174, 0.158, 0.142, 0.126, 0.128, 0.135, 0.142, 0.139, 0.146, 0.145, 0.145, 0.135, 0.124, 0.109, 0.121, 0.137, 0.152, 0.161, 0.168, 0.172, 0.174, 0.167, 0.174, 0.184, 0.189, 0.191, 0.196, 0.194, 0.196, 0.196, 0.189, 0.184, 0.182, 0.181, 0.175, 0.168, 0.177, 0.188, 0.188, 0.192, 0.202, 0.191, 0.174, 0.156, 0.175, 0.183, 0.168, 0.184, 0.194, 0.188, 0.189, 0.199, 0.191, 0.187, 0.182, 0.17, 0.194, 0.193, 0.205, 0.233, 0.216, 0.183, 0.195, 0.21, 0.228, 0.251, 0.242, 0.245, 0.245, 0.243, 0.243, 0.255, 0.221, 0.246, 0.254, 0.221, 0.244, 0.252, 0.245, 0.271, 0.242, 0.274, 0.254, 0.23, 0.214, 0.223, 0.205, 0.248, 0.273, 0.223, 0.224, 0.183, 0.213, 0.192, 0.203, 0.201, 0.201, 0.191, 0.227, 0.235, 0.229, 0.293, 0.243, 0.221, 0.217, 0.262, 0.258, 0.264, 0.274, 0.24, 0.238, 0.223, 0.209, 0.236, 0.238, 0.228, 0.31, 0.243, 0.212, 0.262, 0.257, 0.261, 0.278, 0.239, 0.217, 0.245, 0.239, 0.303, 0.257, 0.233, 0.268, 0.245, 0.197, 0.236, 0.221, 0.222, 0.211, 0.23, 0.309, 0.268, 0.269, 0.341, 0.333, 0.289, 0.305, 0.313, 0.27, 0.249, 0.257, 0.271, 0.322, 0.296, 0.281, 0.303, 0.286, 0.277, 0.313, 0.305, 0.287, 0.32, 0.274, 0.293, 0.322, 0.36, 0.311, 0.301, 0.281, 0.399, 0.408, 0.316, 0.312, 0.322, 0.294, 0.358, 0.393, 0.314, 0.379, 0.427, 0.411, 0.403, 0.434, 0.451, 0.435, 0.508, 0.491, 0.496, 0.487, 0.509, 0.395, 0.439, 0.512, 0.49, 0.445, 0.446, 0.497, 0.53, 0.53, 0.497, 0.504, 0.648, 0.491, 0.521, 0.576, 0.5, 0.495, 0.491, 0.505, 0.552, 0.509, 0.472, 0.565, 0.56, 0.514, 0.545, 0.497, 0.586, 0.556, 0.469, 0.542, 0.534, 0.542, 0.506, 0.467, 0.466, 0.556, 0.46, 0.397, 0.46, 0.421, 0.4, 0.453, 0.421, 0.42, 0.476, 0.337, 0.396, 0.418, 0.373, 0.384, 0.378, 0.356, 0.442, 0.329, 0.324, 0.37, 0.332, 0.323, 0.34, 0.341, 0.33, 0.342, 0.338, 0.413, 0.413, 0.331, 0.358, 0.354, 0.237, 0.379, 0.357, 0.291, 0.323, 0.29, 0.322, 0.365, 0.361, 0.369, 0.366, 0.339, 0.372, 0.346, 0.358, 0.371, 0.409, 0.374, 0.346, 0.374, 0.303, 0.34, 0.293, 0.286, 0.377, 0.264, 0.301, 0.319, 0.319, 0.262, 0.296, 0.305, 0.279, 0.248, 0.322, 0.363, 0.329, 0.339, 0.36, 0.374, 0.34, 0.29, 0.293, 0.246, 0.314, 0.319, 0.313, 0.406, 0.35, 0.359, 0.364, 0.282, 0.331, 0.309, 0.265, 0.299, 0.273, 0.239, 0.265, 0.266, 0.277, 0.277, 0.246, 0.228, 0.306, 0.295, 0.319, 0.267, 0.261, 0.253, 0.256, 0.261, 0.234, 0.218, 0.254, 0.269, 0.228, 0.244, 0.218, 0.227, 0.258, 0.244, 0.237, 0.263, 0.277, 0.252, 0.228, 0.235, 0.253, 0.22, 0.205, 0.191, 0.18, 0.18, 0.166, 0.173, 0.198, 0.159, 0.166, 0.15, 0.146, 0.142, 0.12, 0.126, 0.116, 0.101, 0.107, 0.107, 0.103, 0.109, 0.105, 0.103, 0.096, 0.108, 0.103, 0.093, 0.089, 0.084, 0.06, 0.051, 0.041, 0.031, 0.027, 0.027, 0.035, 0.04, 0.038, 0.042, 0.043, 0.038, 0.033, 0.026, 0.024, 0.025, 0.032, 0.038, 0.045, 0.05, 0.055, 0.058, 0.059, 0.057, 0.054, 0.053, 0.052, 0.055, 0.059, 0.06, 0.065, 0.071, 0.075, 0.077, 0.076, 0.073, 0.071, 0.07, 0.072, 0.072, 0.072, 0.068, 0.062, 0.062, 0.062, 0.059, 0.051, 0.046, 0.037, 0.03, 0.027, 0.029, 0.033, 0.035, 0.039, 0.043, 0.048, 0.054, 0.057, 0.058, 0.057, 0.057, 0.051, 0.047, 0.047, 0.044, 0.045, 0.046, 0.045, 0.044, 0.043, 0.042, 0.04, 0.037, 0.032, 0.033, 0.034, 0.036, 0.036, 0.035, 0.035, 0.039, 0.042, 0.043, 0.044, 0.044, 0.044, 0.044, 0.043, 0.041, 0.04, 0.038, 0.035, 0.032, 0.029, 0.027, 0.024, 0.023, 0.023, 0.022, 0.022, 0.021, 0.019, 0.017, 0.014, 0.013, 0.011, 0.01, 0.01, 0.01, 0.011, 0.012, 0.012, 0.013, 0.013, 0.013, 0.013, 0.012, 0.011, 0.01, 0.009, 0.008, 0.007, 0.007, 0.006, 0.006, 0.005, 0.005, 0.004, 0.004, 0.003, 0.002, 0.002, 0.002, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0], "dur": 96.0}, "child": {"src": "stem_child.mp3", "wave": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.193, 0.319, 0.456, 0.475, 0.429, 0.418, 0.361, 0.333, 0.283, 0.168, 0.116, 0.065, 0.252, 0.412, 0.591, 0.577, 0.532, 0.494, 0.454, 0.446, 0.365, 0.249, 0.221, 0.328, 0.426, 0.509, 0.531, 0.524, 0.535, 0.542, 0.52, 0.509, 0.531, 0.517, 0.455, 0.463, 0.351, 0.244, 0.184, 0.106, 0.071, 0.058, 0.024, 0.031, 0.028, 0.023, 0.031, 0.027, 0.021, 0.02, 0.013, 0.008, 0.008, 0.006, 0.004, 0.003, 0.002, 0.002, 0.002, 0.001, 0.179, 0.305, 0.474, 0.461, 0.412, 0.433, 0.335, 0.294, 0.252, 0.12, 0.23, 0.342, 0.564, 0.603, 0.573, 0.45, 0.377, 0.319, 0.267, 0.378, 0.468, 0.572, 0.643, 0.622, 0.556, 0.561, 0.591, 0.591, 0.627, 0.635, 0.616, 0.647, 0.671, 0.655, 0.662, 0.63, 0.578, 0.517, 0.401, 0.307, 0.278, 0.202, 0.155, 0.15, 0.11, 0.074, 0.072, 0.043, 0.028, 0.027, 0.029, 0.024, 0.019, 0.013, 0.012, 0.01, 0.007, 0.006, 0.004, 0.002, 0.002, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.286, 0.389, 0.568, 0.595, 0.575, 0.523, 0.42, 0.381, 0.288, 0.246, 0.396, 0.587, 0.77, 0.75, 0.683, 0.61, 0.459, 0.393, 0.185, 0.132, 0.076, 0.283, 0.45, 0.607, 0.662, 0.541, 0.506, 0.503, 0.573, 0.545, 0.525, 0.343, 0.295, 0.16, 0.147, 0.142, 0.087, 0.11, 0.081, 0.058, 0.054, 0.041, 0.03, 0.019, 0.02, 0.276, 0.397, 0.572, 0.616, 0.577, 0.506, 0.439, 0.371, 0.315, 0.479, 0.591, 0.685, 0.682, 0.612, 0.536, 0.453, 0.193, 0.316, 0.406, 0.566, 0.641, 0.621, 0.593, 0.547, 0.618, 0.628, 0.631, 0.653, 0.633, 0.602, 0.519, 0.405, 0.34, 0.27, 0.19, 0.137, 0.149, 0.106, 0.077, 0.068, 0.042, 0.029, 0.028, 0.03, 0.023, 0.018, 0.014, 0.013, 0.01, 0.007, 0.007, 0.004, 0.003, 0.002, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.263, 0.443, 0.631, 0.632, 0.615, 0.563, 0.52, 0.467, 0.44, 0.265, 0.389, 0.555, 0.611, 0.625, 0.548, 0.518, 0.413, 0.378, 0.218, 0.404, 0.465, 0.544, 0.479, 0.474, 0.403, 0.366, 0.421, 0.334, 0.227, 0.232, 0.148, 0.12, 0.134, 0.122, 0.124, 0.099, 0.093, 0.062, 0.036, 0.029, 0.012, 0.013, 0.01, 0.009, 0.009, 0.271, 0.425, 0.568, 0.602, 0.548, 0.469, 0.478, 0.564, 0.546, 0.605, 0.579, 0.545, 0.594, 0.553, 0.498, 0.483, 0.353, 0.234, 0.207, 0.136, 0.131, 0.072, 0.112, 0.085, 0.069, 0.065, 0.059, 0.039, 0.022, 0.022, 0.018, 0.013, 0.01, 0.01, 0.008, 0.008, 0.006, 0.004, 0.004, 0.002, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.148, 0.264, 0.375, 0.407, 0.415, 0.436, 0.444, 0.434, 0.403, 0.438, 0.428, 0.427, 0.425, 0.366, 0.357, 0.294, 0.208, 0.153, 0.083, 0.059, 0.045, 0.019, 0.135, 0.237, 0.415, 0.479, 0.472, 0.449, 0.453, 0.493, 0.493, 0.506, 0.524, 0.52, 0.494, 0.428, 0.334, 0.286, 0.224, 0.145, 0.126, 0.109, 0.069, 0.055, 0.038, 0.166, 0.282, 0.471, 0.509, 0.523, 0.555, 0.549, 0.559, 0.542, 0.553, 0.555, 0.559, 0.562, 0.559, 0.569, 0.563, 0.564, 0.566, 0.518, 0.462, 0.389, 0.297, 0.205, 0.139, 0.102, 0.077, 0.065, 0.054, 0.049, 0.036, 0.03, 0.026, 0.022, 0.019, 0.017, 0.017, 0.011, 0.008, 0.007, 0.003, 0.001, 0.001, 0.0, 0.0, 0.0, 0.187, 0.326, 0.484, 0.496, 0.472, 0.451, 0.453, 0.508, 0.518, 0.519, 0.526, 0.529, 0.517, 0.501, 0.533, 0.521, 0.51, 0.534, 0.546, 0.524, 0.553, 0.526, 0.523, 0.541, 0.532, 0.521, 0.532, 0.537, 0.522, 0.483, 0.398, 0.353, 0.285, 0.176, 0.138, 0.126, 0.087, 0.064, 0.05, 0.032, 0.02, 0.02, 0.019, 0.02, 0.022, 0.02, 0.022, 0.017, 0.013, 0.011, 0.006, 0.004, 0.003, 0.002, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "dur": 96.0}, "fishing": {"src": "stem_fishing.mp3", "wave": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.314, 0.455, 0.579, 0.478, 0.158, 0.515, 0.516, 0.324, 0.279, 0.301, 0.275, 0.321, 0.333, 0.147, 0.123, 0.365, 0.363, 0.251, 0.215, 0.186, 0.138, 0.158, 0.102, 0.09, 0.116, 0.19, 0.11, 0.101, 0.145, 0.123, 0.091, 0.09, 0.052, 0.05, 0.086, 0.078, 0.08, 0.051, 0.055, 0.058, 0.063, 0.046, 0.034, 0.039, 0.028, 0.026, 0.019, 0.043, 0.041, 0.018, 0.023, 0.025, 0.022, 0.017, 0.012, 0.015, 0.01, 0.015, 0.016, 0.012, 0.009, 0.011, 0.013, 0.012, 0.009, 0.008, 0.009, 0.005, 0.004, 0.005, 0.009, 0.005, 0.003, 0.005, 0.005, 0.003, 0.003, 0.003, 0.003, 0.003, 0.003, 0.003, 0.002, 0.002, 0.002, 0.003, 0.002, 0.001, 0.002, 0.001, 0.001, 0.001, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.001, 0.0, 0.001, 0.001, 0.0, 0.0, 0.0, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.309, 0.27, 0.363, 0.386, 0.381, 0.261, 0.387, 0.358, 0.365, 0.337, 0.414, 0.349, 0.34, 0.341, 0.35, 0.316, 0.281, 0.263, 0.2, 0.175, 0.103, 0.142, 0.192, 0.194, 0.195, 0.209, 0.164, 0.144, 0.154, 0.065, 0.041, 0.052, 0.074, 0.069, 0.067, 0.038, 0.056, 0.06, 0.034, 0.034, 0.022, 0.042, 0.031, 0.039, 0.033, 0.024, 0.038, 0.038, 0.038, 0.026, 0.024, 0.013, 0.01, 0.014, 0.015, 0.014, 0.015, 0.009, 0.009, 0.014, 0.014, 0.005, 0.006, 0.006, 0.007, 0.007, 0.007, 0.007, 0.007, 0.008, 0.008, 0.007, 0.006, 0.006, 0.001, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.003, 0.001, 0.001, 0.001, 0.001, 0.002, 0.002, 0.001, 0.001, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.0, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.284, 0.331, 0.379, 0.31, 0.305, 0.435, 0.407, 0.35, 0.394, 0.307, 0.423, 0.274, 0.294, 0.276, 0.305, 0.314, 0.257, 0.201, 0.158, 0.184, 0.154, 0.142, 0.096, 0.069, 0.084, 0.104, 0.073, 0.092, 0.066, 0.1, 0.08, 0.095, 0.087, 0.065, 0.065, 0.059, 0.088, 0.095, 0.039, 0.036, 0.052, 0.03, 0.05, 0.044, 0.045, 0.022, 0.026, 0.03, 0.033, 0.022, 0.029, 0.022, 0.02, 0.011, 0.012, 0.011, 0.011, 0.013, 0.008, 0.013, 0.377, 0.407, 0.414, 0.457, 0.425, 0.402, 0.378, 0.382, 0.567, 0.279, 0.311, 0.383, 0.262, 0.311, 0.413, 0.318, 0.268, 0.222, 0.124, 0.169, 0.118, 0.156, 0.166, 0.156, 0.139, 0.134, 0.091, 0.105, 0.123, 0.078, 0.08, 0.095, 0.055, 0.061, 0.061, 0.079, 0.06, 0.055, 0.047, 0.051, 0.029, 0.031, 0.032, 0.026, 0.02, 0.03, 0.03, 0.033, 0.025, 0.029, 0.021, 0.02, 0.029, 0.023, 0.014, 0.012, 0.013, 0.013, 0.01, 0.012, 0.008, 0.008, 0.009, 0.006, 0.006, 0.007, 0.007, 0.005, 0.006, 0.007, 0.005, 0.004, 0.005, 0.005, 0.005, 0.005, 0.004, 0.002, 0.003, 0.003, 0.003, 0.002, 0.002, 0.001, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.001, 0.001, 0.0, 0.0, 0.252, 0.255, 0.199, 0.302, 0.309, 0.334, 0.43, 0.485, 0.486, 0.373, 0.351, 0.23, 0.271, 0.298, 0.263, 0.229, 0.187, 0.192, 0.274, 0.156, 0.162, 0.167, 0.192, 0.173, 0.19, 0.096, 0.132, 0.124, 0.101, 0.114, 0.083, 0.069, 0.039, 0.035, 0.049, 0.069, 0.045, 0.05, 0.061, 0.048, 0.052, 0.07, 0.044, 0.046, 0.052, 0.044, 0.041, 0.042, 0.027, 0.028, 0.032, 0.025, 0.024, 0.016, 0.013, 0.009, 0.013, 0.013, 0.012, 0.008, 0.011, 0.012, 0.007, 0.014, 0.009, 0.009, 0.01, 0.008, 0.009, 0.009, 0.005, 0.006, 0.006, 0.005, 0.005, 0.003, 0.002, 0.002, 0.002, 0.002, 0.002, 0.001, 0.002, 0.002, 0.002, 0.002, 0.003, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.0, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.357, 0.586, 0.584, 0.303, 0.151, 0.371, 0.332, 0.322, 0.327, 0.199, 0.256, 0.384, 0.236, 0.21, 0.265, 0.367, 0.202, 0.191, 0.171, 0.176, 0.155, 0.132, 0.127, 0.145, 0.144, 0.145, 0.125, 0.073, 0.109, 0.104, 0.108, 0.086, 0.036, 0.053, 0.07, 0.103, 0.069, 0.069, 0.039, 0.047, 0.043, 0.048, 0.052, 0.022, 0.021, 0.02, 0.022, 0.033, 0.029, 0.023, 0.009, 0.019, 0.017, 0.018, 0.009, 0.01, 0.008, 0.019, 0.02, 0.012, 0.01, 0.006, 0.009, 0.005, 0.009, 0.007, 0.004, 0.005, 0.003, 0.007, 0.007, 0.005, 0.003, 0.004, 0.004, 0.004, 0.002, 0.002, 0.001, 0.002, 0.004, 0.003, 0.002, 0.001, 0.002, 0.002, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.001, 0.001, 0.0], "dur": 96.0}, "pedal": {"src": "stem_pedal.mp3", "wave": [0.007, 0.015, 0.022, 0.027, 0.037, 0.049, 0.061, 0.073, 0.082, 0.09, 0.097, 0.102, 0.106, 0.112, 0.117, 0.123, 0.131, 0.139, 0.148, 0.158, 0.166, 0.17, 0.171, 0.169, 0.163, 0.164, 0.171, 0.202, 0.223, 0.237, 0.246, 0.249, 0.249, 0.246, 0.239, 0.229, 0.238, 0.261, 0.279, 0.29, 0.292, 0.312, 0.337, 0.366, 0.393, 0.408, 0.42, 0.424, 0.424, 0.423, 0.42, 0.42, 0.422, 0.421, 0.414, 0.395, 0.37, 0.342, 0.311, 0.296, 0.301, 0.304, 0.31, 0.318, 0.324, 0.329, 0.349, 0.369, 0.386, 0.394, 0.394, 0.393, 0.388, 0.38, 0.373, 0.367, 0.363, 0.358, 0.349, 0.335, 0.354, 0.377, 0.396, 0.409, 0.412, 0.411, 0.405, 0.389, 0.366, 0.404, 0.423, 0.423, 0.408, 0.374, 0.327, 0.348, 0.365, 0.37, 0.369, 0.362, 0.35, 0.355, 0.377, 0.396, 0.4, 0.4, 0.391, 0.402, 0.424, 0.435, 0.435, 0.425, 0.397, 0.348, 0.348, 0.341, 0.328, 0.381, 0.444, 0.475, 0.48, 0.475, 0.441, 0.383, 0.344, 0.323, 0.31, 0.376, 0.419, 0.425, 0.419, 0.388, 0.327, 0.365, 0.405, 0.427, 0.429, 0.426, 0.417, 0.414, 0.407, 0.386, 0.345, 0.352, 0.378, 0.385, 0.384, 0.357, 0.418, 0.463, 0.488, 0.491, 0.488, 0.473, 0.441, 0.403, 0.358, 0.363, 0.377, 0.404, 0.427, 0.441, 0.448, 0.451, 0.45, 0.447, 0.438, 0.419, 0.393, 0.361, 0.327, 0.349, 0.37, 0.384, 0.397, 0.412, 0.426, 0.435, 0.437, 0.435, 0.419, 0.403, 0.449, 0.469, 0.471, 0.468, 0.447, 0.425, 0.414, 0.405, 0.389, 0.363, 0.363, 0.395, 0.419, 0.439, 0.45, 0.455, 0.457, 0.459, 0.461, 0.461, 0.461, 0.457, 0.451, 0.443, 0.437, 0.433, 0.433, 0.437, 0.444, 0.452, 0.46, 0.47, 0.477, 0.481, 0.481, 0.476, 0.462, 0.439, 0.406, 0.388, 0.38, 0.373, 0.385, 0.394, 0.395, 0.394, 0.387, 0.378, 0.365, 0.352, 0.348, 0.344, 0.341, 0.358, 0.377, 0.395, 0.412, 0.421, 0.425, 0.425, 0.419, 0.407, 0.391, 0.366, 0.34, 0.342, 0.368, 0.385, 0.395, 0.4, 0.402, 0.403, 0.403, 0.403, 0.401, 0.398, 0.393, 0.392, 0.402, 0.405, 0.405, 0.402, 0.393, 0.38, 0.384, 0.402, 0.411, 0.414, 0.413, 0.406, 0.393, 0.371, 0.362, 0.378, 0.397, 0.424, 0.432, 0.432, 0.454, 0.467, 0.468, 0.492, 0.515, 0.518, 0.512, 0.486, 0.443, 0.421, 0.455, 0.47, 0.471, 0.465, 0.444, 0.432, 0.448, 0.456, 0.459, 0.461, 0.464, 0.465, 0.466, 0.465, 0.457, 0.442, 0.447, 0.478, 0.504, 0.523, 0.529, 0.529, 0.521, 0.5, 0.478, 0.463, 0.469, 0.473, 0.473, 0.468, 0.458, 0.442, 0.422, 0.398, 0.373, 0.373, 0.372, 0.391, 0.411, 0.426, 0.439, 0.451, 0.46, 0.468, 0.474, 0.476, 0.475, 0.466, 0.438, 0.431, 0.455, 0.506, 0.524, 0.524, 0.494, 0.519, 0.568, 0.595, 0.597, 0.591, 0.565, 0.516, 0.467, 0.456, 0.505, 0.539, 0.554, 0.554, 0.544, 0.521, 0.487, 0.456, 0.441, 0.478, 0.525, 0.566, 0.605, 0.629, 0.646, 0.657, 0.661, 0.663, 0.668, 0.675, 0.683, 0.69, 0.691, 0.691, 0.688, 0.679, 0.668, 0.655, 0.64, 0.629, 0.621, 0.612, 0.605, 0.595, 0.58, 0.565, 0.549, 0.53, 0.512, 0.527, 0.543, 0.559, 0.579, 0.598, 0.619, 0.644, 0.664, 0.681, 0.693, 0.695, 0.694, 0.687, 0.671, 0.65, 0.625, 0.592, 0.565, 0.543, 0.521, 0.521, 0.537, 0.544, 0.544, 0.575, 0.612, 0.627, 0.626, 0.61, 0.57, 0.5, 0.545, 0.627, 0.691, 0.738, 0.753, 0.753, 0.742, 0.706, 0.659, 0.607, 0.555, 0.538, 0.57, 0.607, 0.648, 0.68, 0.702, 0.716, 0.72, 0.721, 0.719, 0.714, 0.708, 0.699, 0.685, 0.667, 0.642, 0.605, 0.562, 0.516, 0.518, 0.537, 0.547, 0.547, 0.533, 0.5, 0.452, 0.444, 0.44, 0.474, 0.52, 0.564, 0.601, 0.619, 0.622, 0.619, 0.592, 0.546, 0.535, 0.554, 0.558, 0.558, 0.554, 0.542, 0.518, 0.485, 0.444, 0.407, 0.428, 0.441, 0.443, 0.487, 0.527, 0.557, 0.568, 0.567, 0.546, 0.501, 0.463, 0.494, 0.503, 0.502, 0.482, 0.456, 0.484, 0.52, 0.549, 0.566, 0.568, 0.563, 0.542, 0.507, 0.455, 0.418, 0.458, 0.494, 0.514, 0.517, 0.511, 0.486, 0.447, 0.39, 0.338, 0.298, 0.324, 0.358, 0.387, 0.413, 0.426, 0.431, 0.432, 0.427, 0.417, 0.403, 0.38, 0.355, 0.325, 0.307, 0.309, 0.319, 0.325, 0.326, 0.321, 0.308, 0.325, 0.344, 0.354, 0.355, 0.354, 0.348, 0.338, 0.326, 0.313, 0.3, 0.29, 0.284, 0.279, 0.276, 0.273, 0.27, 0.276, 0.277, 0.272, 0.261, 0.249, 0.247, 0.256, 0.261, 0.261, 0.259, 0.253, 0.24, 0.226, 0.238, 0.251, 0.262, 0.267, 0.268, 0.268, 0.264, 0.258, 0.248, 0.233, 0.22, 0.208, 0.21, 0.211, 0.211, 0.209, 0.205, 0.199, 0.197, 0.195, 0.19, 0.181, 0.17, 0.163, 0.165, 0.168, 0.168, 0.169, 0.168, 0.172, 0.184, 0.196, 0.207, 0.216, 0.219, 0.22, 0.218, 0.209, 0.197, 0.18, 0.158, 0.14, 0.127, 0.132, 0.135, 0.136, 0.135, 0.13, 0.123, 0.115, 0.127, 0.14, 0.149, 0.155, 0.156, 0.156, 0.153, 0.147, 0.14, 0.135, 0.129, 0.125, 0.12, 0.114, 0.109, 0.104, 0.098, 0.093, 0.093, 0.094, 0.094, 0.094, 0.093, 0.092, 0.091, 0.089, 0.09, 0.093, 0.095, 0.096, 0.1, 0.106, 0.111, 0.112, 0.111, 0.106, 0.094, 0.082, 0.079, 0.088, 0.091, 0.089, 0.083, 0.074, 0.074, 0.082, 0.091, 0.094, 0.094, 0.09, 0.079, 0.071, 0.066, 0.064, 0.063, 0.065, 0.068, 0.069, 0.069, 0.068, 0.067, 0.066, 0.064, 0.061, 0.057, 0.052, 0.049, 0.051, 0.054, 0.057, 0.058, 0.058, 0.057, 0.053, 0.047, 0.041, 0.038, 0.034, 0.033, 0.033, 0.033, 0.035, 0.035, 0.034, 0.031, 0.026, 0.025, 0.024, 0.021, 0.018, 0.015, 0.012, 0.011, 0.01, 0.01, 0.008, 0.007, 0.006, 0.006, 0.005, 0.004, 0.002, 0.002], "dur": 96.0}, "pulse": {"src": "stem_pulse.mp3", "wave": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.888, 0.46, 0.518, 0.436, 0.125, 0.05, 0.063, 0.041, 0.041, 0.022, 0.018, 0.01, 0.006, 0.887, 0.329, 0.519, 0.347, 0.106, 0.059, 0.063, 0.041, 0.02, 0.022, 0.016, 0.006, 0.008, 0.887, 0.217, 0.519, 0.239, 0.056, 0.063, 0.039, 0.041, 0.02, 0.022, 0.016, 0.006, 0.887, 0.596, 0.122, 0.519, 0.182, 0.054, 0.063, 0.039, 0.041, 0.02, 0.022, 0.01, 0.006, 0.887, 0.46, 0.519, 0.437, 0.125, 0.05, 0.063, 0.041, 0.041, 0.022, 0.018, 0.01, 0.006, 0.887, 0.329, 0.519, 0.347, 0.106, 0.059, 0.063, 0.041, 0.02, 0.022, 0.016, 0.006, 0.008, 0.887, 0.217, 0.519, 0.239, 0.056, 0.063, 0.039, 0.041, 0.02, 0.022, 0.016, 0.006, 0.887, 0.596, 0.122, 0.519, 0.182, 0.054, 0.063, 0.039, 0.041, 0.02, 0.022, 0.01, 0.006, 0.887, 0.46, 0.519, 0.437, 0.125, 0.05, 0.063, 0.041, 0.041, 0.022, 0.018, 0.01, 0.006, 0.887, 0.329, 0.519, 0.347, 0.106, 0.059, 0.063, 0.041, 0.02, 0.022, 0.016, 0.006, 0.008, 0.887, 0.217, 0.519, 0.239, 0.056, 0.063, 0.039, 0.041, 0.02, 0.022, 0.016, 0.006, 0.887, 0.596, 0.122, 0.519, 0.182, 0.054, 0.063, 0.039, 0.041, 0.02, 0.022, 0.01, 0.006, 0.887, 0.46, 0.519, 0.437, 0.125, 0.05, 0.063, 0.041, 0.041, 0.022, 0.018, 0.01, 0.006, 0.887, 0.329, 0.519, 0.347, 0.106, 0.059, 0.063, 0.041, 0.02, 0.022, 0.016, 0.006, 0.008, 0.003, 0.004, 0.003, 0.002, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.311, 0.075, 0.019, 0.026, 0.013, 0.015, 0.01, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.309, 0.078, 0.02, 0.026, 0.012, 0.015, 0.009, 0.309, 0.159, 0.034, 0.026, 0.019, 0.015, 0.01, 0.008, 0.006, 0.004, 0.004, 0.001, 0.002, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.621, 0.151, 0.339, 0.156, 0.04, 0.048, 0.03, 0.021, 0.018, 0.013, 0.011, 0.005, 0.007, 0.575, 0.298, 0.062, 0.313, 0.085, 0.033, 0.044, 0.019, 0.017, 0.012, 0.012, 0.007, 0.006, 0.006, 0.526, 0.422, 0.104, 0.286, 0.132, 0.034, 0.041, 0.025, 0.016, 0.016, 0.011, 0.008, 0.006, 0.005, 0.002, 0.002, 0.473, 0.154, 0.257, 0.189, 0.031, 0.027, 0.036, 0.016, 0.014, 0.01, 0.008, 0.004, 0.005, 0.003, 0.002, 0.001, 0.416, 0.184, 0.227, 0.203, 0.062, 0.024, 0.032, 0.014, 0.012, 0.009, 0.007, 0.003, 0.004, 0.004, 0.001, 0.002, 0.001, 0.357, 0.185, 0.038, 0.195, 0.053, 0.02, 0.028, 0.012, 0.011, 0.008, 0.007, 0.004, 0.004, 0.004, 0.001, 0.001, 0.001, 0.0, 0.295, 0.153, 0.031, 0.161, 0.044, 0.017, 0.023, 0.01, 0.009, 0.006, 0.006, 0.004, 0.003, 0.003, 0.001, 0.001, 0.001, 0.0, 0.0, 0.23, 0.102, 0.125, 0.112, 0.034, 0.013, 0.018, 0.008, 0.007, 0.005, 0.004, 0.002, 0.002, 0.002, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.162, 0.053, 0.088, 0.065, 0.01, 0.009, 0.012, 0.005, 0.005, 0.003, 0.003, 0.001, 0.002, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.093, 0.075, 0.019, 0.051, 0.023, 0.006, 0.007, 0.004, 0.003, 0.003, 0.002, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.093, 0.048, 0.01, 0.051, 0.014, 0.005, 0.007, 0.003, 0.003, 0.002, 0.002, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "dur": 96.0}, "glint": {"src": "stem_glint.mp3", "wave": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.026, 0.049, 0.089, 0.089, 0.153, 0.142, 0.219, 0.245, 0.286, 0.334, 0.343, 0.331, 0.292, 0.305, 0.264, 0.29, 0.273, 0.294, 0.291, 0.292, 0.283, 0.228, 0.268, 0.21, 0.259, 0.22, 0.257, 0.267, 0.267, 0.278, 0.209, 0.286, 0.202, 0.267, 0.212, 0.242, 0.207, 0.201, 0.173, 0.118, 0.14, 0.105, 0.11, 0.082, 0.089, 0.06, 0.076, 0.061, 0.061, 0.051, 0.044, 0.045, 0.033, 0.041, 0.037, 0.038, 0.034, 0.032, 0.029, 0.022, 0.025, 0.02, 0.022, 0.018, 0.015, 0.015, 0.013, 0.011, 0.011, 0.007, 0.008, 0.007, 0.006, 0.006, 0.005, 0.038, 0.077, 0.105, 0.148, 0.179, 0.254, 0.303, 0.347, 0.394, 0.447, 0.439, 0.447, 0.425, 0.435, 0.425, 0.414, 0.441, 0.392, 0.458, 0.394, 0.476, 0.454, 0.489, 0.5, 0.415, 0.502, 0.369, 0.49, 0.357, 0.475, 0.467, 0.467, 0.469, 0.352, 0.471, 0.353, 0.474, 0.416, 0.479, 0.469, 0.445, 0.439, 0.288, 0.401, 0.282, 0.357, 0.305, 0.31, 0.26, 0.193, 0.211, 0.174, 0.175, 0.153, 0.142, 0.132, 0.113, 0.116, 0.083, 0.102, 0.086, 0.086, 0.07, 0.059, 0.055, 0.043, 0.043, 0.038, 0.034, 0.034, 0.031, 0.025, 0.028, 0.022, 0.025, 0.047, 0.086, 0.132, 0.17, 0.22, 0.319, 0.346, 0.434, 0.504, 0.549, 0.572, 0.573, 0.59, 0.542, 0.57, 0.479, 0.565, 0.549, 0.462, 0.533, 0.469, 0.52, 0.473, 0.518, 0.513, 0.528, 0.541, 0.513, 0.545, 0.529, 0.548, 0.502, 0.551, 0.55, 0.545, 0.543, 0.549, 0.536, 0.548, 0.547, 0.446, 0.551, 0.531, 0.553, 0.536, 0.557, 0.551, 0.545, 0.515, 0.463, 0.474, 0.426, 0.411, 0.37, 0.358, 0.31, 0.283, 0.256, 0.171, 0.202, 0.145, 0.165, 0.142, 0.149, 0.136, 0.084, 0.126, 0.068, 0.11, 0.058, 0.095, 0.086, 0.084, 0.077, 0.05, 0.082, 0.082, 0.139, 0.151, 0.197, 0.302, 0.301, 0.362, 0.403, 0.48, 0.436, 0.475, 0.41, 0.456, 0.45, 0.421, 0.465, 0.364, 0.479, 0.383, 0.501, 0.484, 0.517, 0.526, 0.428, 0.526, 0.365, 0.517, 0.376, 0.505, 0.497, 0.496, 0.5, 0.332, 0.502, 0.335, 0.503, 0.445, 0.508, 0.515, 0.485, 0.52, 0.342, 0.519, 0.346, 0.519, 0.492, 0.508, 0.471, 0.374, 0.427, 0.259, 0.382, 0.265, 0.336, 0.286, 0.279, 0.238, 0.138, 0.188, 0.169, 0.191, 0.216, 0.213, 0.254, 0.251, 0.313, 0.322, 0.386, 0.415, 0.431, 0.408, 0.393, 0.385, 0.36, 0.381, 0.358, 0.375, 0.355, 0.361, 0.357, 0.338, 0.354, 0.344, 0.344, 0.338, 0.338, 0.34, 0.33, 0.339, 0.321, 0.337, 0.319, 0.334, 0.314, 0.333, 0.33, 0.319, 0.329, 0.312, 0.306, 0.285, 0.275, 0.235, 0.244, 0.208, 0.182, 0.169, 0.14, 0.129, 0.098, 0.088, 0.074, 0.06, 0.067, 0.058, 0.061, 0.05, 0.028, 0.042, 0.032, 0.037, 0.029, 0.034, 0.031, 0.031, 0.029, 0.021, 0.024, 0.021, 0.021, 0.02, 0.019, 0.019, 0.017, 0.017, 0.013, 0.015, 0.013, 0.011, 0.011, 0.008, 0.009, 0.007, 0.006, 0.007, 0.005, 0.006, 0.004, 0.005, 0.004, 0.003, 0.003, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.021, 0.039, 0.071, 0.072, 0.122, 0.114, 0.176, 0.196, 0.229, 0.267, 0.274, 0.265, 0.234, 0.244, 0.211, 0.232, 0.218, 0.235, 0.233, 0.234, 0.226, 0.182, 0.214, 0.168, 0.207, 0.176, 0.206, 0.214, 0.213, 0.223, 0.167, 0.229, 0.177, 0.233, 0.212, 0.236, 0.234, 0.221, 0.232, 0.175, 0.232, 0.191, 0.233, 0.223, 0.232, 0.232, 0.195, 0.221, 0.152, 0.199, 0.143, 0.175, 0.147, 0.148, 0.123, 0.1, 0.096, 0.079, 0.075, 0.066, 0.066, 0.045, 0.054, 0.042, 0.044, 0.039, 0.036, 0.034, 0.026, 0.031, 0.025, 0.028, 0.024, 0.024, 0.021, 0.016, 0.019, 0.014, 0.015, 0.012, 0.01, 0.011, 0.009, 0.008, 0.008, 0.005, 0.006, 0.005, 0.004, 0.005, 0.003, 0.004, 0.003, 0.003, 0.002, 0.002, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "dur": 96.0}, "pad": {"src": "out_pad.mp3", "wave": [0.005, 0.018, 0.031, 0.034, 0.03, 0.048, 0.034, 0.064, 0.035, 0.061, 0.032, 0.065, 0.048, 0.05, 0.053, 0.051, 0.065, 0.045, 0.056, 0.068, 0.08, 0.082, 0.072, 0.066, 0.058, 0.079, 0.069, 0.078, 0.082, 0.084, 0.102, 0.102, 0.122, 0.138, 0.146, 0.147, 0.163, 0.158, 0.201, 0.168, 0.211, 0.152, 0.135, 0.171, 0.224, 0.227, 0.191, 0.177, 0.149, 0.159, 0.12, 0.095, 0.135, 0.156, 0.162, 0.214, 0.181, 0.23, 0.19, 0.347, 0.205, 0.305, 0.262, 0.275, 0.225, 0.319, 0.264, 0.506, 0.4, 0.405, 0.374, 0.35, 0.457, 0.499, 0.456, 0.459, 0.308, 0.357, 0.364, 0.372, 0.401, 0.525, 0.55, 0.5, 0.57, 0.77, 0.758, 0.67, 0.679, 0.644, 0.89, 0.73, 0.56, 0.547, 0.482, 0.516, 0.588, 0.482, 0.565, 0.425, 0.327, 0.412, 0.432, 0.508, 0.396, 0.347, 0.501, 0.606, 0.493, 0.406, 0.421, 0.579, 0.575, 0.538, 0.453, 0.546, 0.551, 0.421, 0.46, 0.431, 0.526, 0.576, 0.47, 0.366, 0.395, 0.292, 0.322, 0.395, 0.375, 0.484, 0.562, 0.31, 0.556, 0.456, 0.465, 0.401, 0.433, 0.504, 0.503, 0.582, 0.674, 0.426, 0.551, 0.462, 0.476, 0.525, 0.477, 0.581, 0.583, 0.501, 0.627, 0.515, 0.395, 0.508, 0.49, 0.382, 0.361, 0.512, 0.553, 0.466, 0.311, 0.456, 0.362, 0.404, 0.337, 0.518, 0.421, 0.36, 0.412, 0.528, 0.4, 0.4, 0.484, 0.48, 0.431, 0.349, 0.438, 0.563, 0.533, 0.406, 0.43, 0.526, 0.559, 0.382, 0.324, 0.419, 0.442, 0.405, 0.284, 0.507, 0.395, 0.357, 0.387, 0.53, 0.44, 0.35, 0.432, 0.437, 0.324, 0.342, 0.363, 0.342, 0.356, 0.39, 0.512, 0.49, 0.385, 0.432, 0.408, 0.475, 0.458, 0.521, 0.5, 0.484, 0.456, 0.526, 0.58, 0.467, 0.632, 0.619, 0.509, 0.469, 0.528, 0.572, 0.485, 0.474, 0.416, 0.341, 0.359, 0.4, 0.375, 0.456, 0.435, 0.509, 0.417, 0.367, 0.499, 0.39, 0.44, 0.352, 0.378, 0.419, 0.311, 0.399, 0.334, 0.416, 0.436, 0.418, 0.482, 0.502, 0.518, 0.422, 0.358, 0.479, 0.492, 0.396, 0.318, 0.294, 0.473, 0.403, 0.43, 0.276, 0.486, 0.539, 0.566, 0.682, 0.527, 0.461, 0.694, 0.742, 0.713, 0.729, 0.712, 0.748, 0.456, 0.579, 0.703, 0.566, 0.481, 0.437, 0.583, 0.489, 0.304, 0.374, 0.505, 0.407, 0.533, 0.386, 0.431, 0.444, 0.482, 0.395, 0.341, 0.405, 0.279, 0.293, 0.352, 0.317, 0.297, 0.403, 0.482, 0.48, 0.64, 0.457, 0.585, 0.565, 0.556, 0.359, 0.562, 0.556, 0.477, 0.438, 0.433, 0.431, 0.392, 0.469, 0.44, 0.556, 0.414, 0.482, 0.381, 0.518, 0.508, 0.571, 0.534, 0.555, 0.52, 0.59, 0.576, 0.541, 0.666, 0.608, 0.494, 0.567, 0.702, 0.572, 0.564, 0.565, 0.655, 0.727, 0.72, 0.644, 0.727, 0.516, 0.725, 0.567, 0.549, 0.735, 0.614, 0.669, 0.786, 0.668, 0.696, 0.644, 0.772, 0.519, 0.625, 0.632, 0.572, 0.59, 0.45, 0.419, 0.463, 0.523, 0.465, 0.382, 0.425, 0.449, 0.436, 0.467, 0.537, 0.511, 0.428, 0.469, 0.443, 0.573, 0.427, 0.55, 0.545, 0.459, 0.512, 0.471, 0.432, 0.616, 0.522, 0.6, 0.47, 0.403, 0.608, 0.366, 0.43, 0.387, 0.35, 0.347, 0.43, 0.42, 0.462, 0.51, 0.417, 0.534, 0.532, 0.57, 0.537, 0.565, 0.671, 0.7, 0.711, 0.575, 0.66, 0.655, 0.54, 0.511, 0.462, 0.448, 0.642, 0.504, 0.659, 0.514, 0.429, 0.553, 0.572, 0.46, 0.538, 0.514, 0.537, 0.476, 0.636, 0.536, 0.568, 0.49, 0.451, 0.508, 0.598, 0.567, 0.494, 0.669, 0.547, 0.619, 0.611, 0.547, 0.645, 0.538, 0.588, 0.664, 0.626, 0.663, 0.587, 0.831, 0.807, 0.739, 0.831, 0.809, 0.799, 0.852, 0.764, 0.665, 0.699, 0.635, 0.809, 0.677, 0.393, 0.512, 0.551, 0.427, 0.653, 0.501, 0.565, 0.557, 0.596, 0.5, 0.584, 0.609, 0.609, 0.467, 0.466, 0.444, 0.479, 0.431, 0.367, 0.388, 0.469, 0.541, 0.428, 0.406, 0.443, 0.374, 0.551, 0.452, 0.502, 0.573, 0.476, 0.51, 0.53, 0.378, 0.401, 0.531, 0.575, 0.452, 0.436, 0.296, 0.354, 0.493, 0.436, 0.418, 0.398, 0.488, 0.371, 0.32, 0.439, 0.496, 0.428, 0.342, 0.588, 0.48, 0.372, 0.464, 0.468, 0.62, 0.585, 0.489, 0.539, 0.498, 0.569, 0.6, 0.371, 0.436, 0.451, 0.529, 0.409, 0.395, 0.431, 0.481, 0.377, 0.491, 0.597, 0.388, 0.582, 0.375, 0.583, 0.537, 0.491, 0.647, 0.491, 0.658, 0.555, 0.635, 0.326, 0.596, 0.429, 0.365, 0.436, 0.285, 0.325, 0.484, 0.34, 0.323, 0.398, 0.394, 0.483, 0.351, 0.287, 0.321, 0.389, 0.445, 0.289, 0.304, 0.417, 0.307, 0.385, 0.415, 0.382, 0.412, 0.28, 0.525, 0.352, 0.324, 0.297, 0.352, 0.34, 0.269, 0.287, 0.253, 0.361, 0.135, 0.292, 0.284, 0.219, 0.239, 0.321, 0.194, 0.304, 0.415, 0.382, 0.36, 0.376, 0.569, 0.498, 0.219, 0.413, 0.356, 0.363, 0.244, 0.35, 0.396, 0.35, 0.318, 0.383, 0.309, 0.283, 0.294, 0.345, 0.321, 0.229, 0.232, 0.279, 0.251, 0.261, 0.256, 0.196, 0.304, 0.302, 0.231, 0.277, 0.297, 0.282, 0.284, 0.271, 0.225, 0.235, 0.307, 0.225, 0.287, 0.257, 0.22, 0.244, 0.215, 0.169, 0.194, 0.263, 0.227, 0.225, 0.261, 0.286, 0.332, 0.323, 0.225, 0.265, 0.224, 0.242, 0.23, 0.208, 0.277, 0.227, 0.288, 0.255, 0.296, 0.293, 0.272, 0.244, 0.304, 0.27, 0.196, 0.231, 0.278, 0.246, 0.282, 0.253, 0.242, 0.34, 0.27, 0.266, 0.277, 0.222, 0.222, 0.198, 0.192, 0.228, 0.175, 0.291, 0.258, 0.198, 0.259, 0.227, 0.248, 0.217, 0.2, 0.222, 0.19, 0.127, 0.203, 0.195, 0.181, 0.222, 0.184, 0.165, 0.152, 0.14, 0.171, 0.155, 0.143, 0.11, 0.204, 0.147, 0.153, 0.135, 0.149, 0.164, 0.141, 0.121, 0.182, 0.152, 0.15, 0.19, 0.156, 0.131, 0.166, 0.121, 0.181, 0.162, 0.16], "dur": 6.0}, "icarus_mix": {"src": "icarus_mix.mp3", "wave": [0.192, 0.165, 0.165, 0.162, 0.171, 0.174, 0.174, 0.17, 0.177, 0.191, 0.163, 0.175, 0.174, 0.184, 0.167, 0.201, 0.246, 0.236, 0.207, 0.274, 0.237, 0.233, 0.199, 0.207, 0.207, 0.201, 0.221, 0.193, 0.248, 0.26, 0.307, 0.26, 0.253, 0.238, 0.255, 0.236, 0.314, 0.223, 0.304, 0.243, 0.288, 0.302, 0.292, 0.292, 0.263, 0.291, 0.3, 0.265, 0.344, 0.308, 0.302, 0.333, 0.278, 0.343, 0.306, 0.291, 0.291, 0.286, 0.283, 0.293, 0.334, 0.321, 0.313, 0.294, 0.304, 0.278, 0.265, 0.361, 0.328, 0.319, 0.39, 0.278, 0.3, 0.328, 0.303, 0.288, 0.295, 0.29, 0.344, 0.333, 0.294, 0.318, 0.368, 0.379, 0.325, 0.363, 0.324, 0.358, 0.339, 0.372, 0.346, 0.345, 0.361, 0.292, 0.377, 0.335, 0.393, 0.374, 0.337, 0.348, 0.394, 0.377, 0.382, 0.407, 0.375, 0.372, 0.436, 0.379, 0.471, 0.317, 0.395, 0.37, 0.413, 0.434, 0.357, 0.4, 0.386, 0.462, 0.408, 0.411, 0.409, 0.417, 0.427, 0.41, 0.376, 0.431, 0.374, 0.365, 0.408, 0.364, 0.408, 0.421, 0.338, 0.386, 0.419, 0.383, 0.393, 0.385, 0.434, 0.452, 0.396, 0.443, 0.475, 0.465, 0.41, 0.445, 0.411, 0.438, 0.48, 0.389, 0.435, 0.485, 0.502, 0.449, 0.461, 0.403, 0.408, 0.469, 0.463, 0.462, 0.41, 0.43, 0.476, 0.435, 0.385, 0.388, 0.407, 0.359, 0.398, 0.382, 0.317, 0.366, 0.33, 0.333, 0.304, 0.192, 0.155, 0.076, 0.055, 0.062, 0.058, 0.061, 0.081, 0.103, 0.048, 0.088, 0.115, 0.14, 0.156, 0.208, 0.225, 0.235, 0.26, 0.263, 0.324, 0.312, 0.338, 0.381, 0.399, 0.342, 0.431, 0.435, 0.411, 0.521, 0.48, 0.414, 0.43, 0.476, 0.584, 0.466, 0.505, 0.52, 0.547, 0.432, 0.524, 0.541, 0.608, 0.518, 0.507, 0.594, 0.524, 0.562, 0.527, 0.62, 0.58, 0.612, 0.61, 0.565, 0.619, 0.589, 0.71, 0.617, 0.692, 0.595, 0.7, 0.725, 0.719, 0.628, 0.735, 0.703, 0.583, 0.564, 0.394, 0.3, 0.259, 0.252, 0.289, 0.242, 0.236, 0.217, 0.23, 0.263, 0.222, 0.229, 0.259, 0.258, 0.242, 0.222, 0.268, 0.276, 0.245, 0.265, 0.257, 0.228, 0.238, 0.42, 0.534, 0.638, 0.701, 0.649, 0.723, 0.658, 0.721, 0.718, 0.686, 0.77, 0.683, 0.722, 0.827, 0.756, 0.71, 0.638, 0.656, 0.685, 0.747, 0.617, 0.634, 0.68, 0.704, 0.597, 0.741, 0.68, 0.663, 0.693, 0.704, 0.71, 0.621, 0.574, 0.761, 0.721, 0.646, 0.686, 0.742, 0.715, 0.676, 0.677, 0.66, 0.646, 0.594, 0.722, 0.668, 0.66, 0.613, 0.531, 0.448, 0.347, 0.247, 0.306, 0.288, 0.233, 0.269, 0.247, 0.265, 0.283, 0.269, 0.248, 0.262, 0.285, 0.238, 0.292, 0.244, 0.24, 0.268, 0.315, 0.275, 0.32, 0.296, 0.349, 0.465, 0.595, 0.675, 0.594, 0.661, 0.701, 0.666, 0.666, 0.676, 0.758, 0.683, 0.641, 0.793, 0.657, 0.67, 0.645, 0.794, 0.684, 0.672, 0.68, 0.742, 0.647, 0.651, 0.675, 0.737, 0.67, 0.693, 0.734, 0.697, 0.664, 0.727, 0.653, 0.695, 0.697, 0.764, 0.72, 0.66, 0.62, 0.642, 0.74, 0.739, 0.655, 0.757, 0.725, 0.734, 0.662, 0.8, 0.678, 0.6, 0.639, 0.653, 0.482, 0.436, 0.357, 0.272, 0.291, 0.306, 0.255, 0.295, 0.276, 0.251, 0.322, 0.335, 0.355, 0.413, 0.356, 0.329, 0.357, 0.287, 0.355, 0.345, 0.279, 0.304, 0.345, 0.374, 0.339, 0.365, 0.321, 0.355, 0.416, 0.678, 0.659, 0.676, 0.614, 0.67, 0.712, 0.663, 0.807, 0.635, 0.677, 0.717, 0.719, 0.648, 0.664, 0.731, 0.802, 0.696, 0.72, 0.741, 0.737, 0.711, 0.775, 0.744, 0.71, 0.74, 0.607, 0.695, 0.807, 0.641, 0.664, 0.672, 0.671, 0.622, 0.666, 0.778, 0.728, 0.675, 0.746, 0.673, 0.75, 0.752, 0.726, 0.609, 0.743, 0.681, 0.748, 0.654, 0.737, 0.635, 0.733, 0.676, 0.683, 0.743, 0.703, 0.678, 0.542, 0.422, 0.358, 0.292, 0.358, 0.304, 0.41, 0.336, 0.384, 0.307, 0.32, 0.342, 0.246, 0.353, 0.279, 0.251, 0.362, 0.334, 0.359, 0.34, 0.33, 0.342, 0.329, 0.294, 0.397, 0.32, 0.302, 0.309, 0.345, 0.358, 0.342, 0.365, 0.438, 0.563, 0.649, 0.692, 0.738, 0.611, 0.743, 0.788, 0.677, 0.705, 0.71, 0.619, 0.668, 0.701, 0.769, 0.711, 0.654, 0.685, 0.749, 0.718, 0.655, 0.795, 0.725, 0.677, 0.7, 0.726, 0.726, 0.661, 0.668, 0.711, 0.692, 0.661, 0.689, 0.671, 0.69, 0.605, 0.656, 0.771, 0.7, 0.618, 0.746, 0.771, 0.741, 0.652, 0.725, 0.76, 0.683, 0.62, 0.703, 0.757, 0.626, 0.625, 0.702, 0.662, 0.698, 0.738, 0.712, 0.74, 0.682, 0.779, 0.675, 0.675, 0.594, 0.714, 0.717, 0.608, 0.681, 0.652, 0.641, 0.591, 0.713, 0.648, 0.615, 0.62, 0.665, 0.593, 0.614, 0.733, 0.64, 0.623, 0.622, 0.593, 0.644, 0.702, 0.547, 0.624, 0.585, 0.611, 0.612, 0.598, 0.666, 0.538, 0.563, 0.674, 0.622, 0.601, 0.611, 0.588, 0.514, 0.509, 0.603, 0.529, 0.49, 0.451, 0.525, 0.49, 0.508, 0.592, 0.528, 0.479, 0.518, 0.555, 0.495, 0.427, 0.465, 0.474, 0.487, 0.481, 0.439, 0.472, 0.47, 0.466, 0.436, 0.501, 0.405, 0.479, 0.343, 0.503, 0.421, 0.407, 0.437, 0.399, 0.379, 0.377, 0.356, 0.471, 0.34, 0.328, 0.314, 0.328, 0.334, 0.279, 0.374, 0.366, 0.34, 0.369, 0.296, 0.29, 0.309, 0.36, 0.281, 0.271, 0.291, 0.283, 0.264, 0.271, 0.235, 0.286, 0.224, 0.285, 0.251, 0.219, 0.23, 0.267, 0.221, 0.257, 0.217, 0.242, 0.263, 0.196, 0.215, 0.19, 0.21, 0.213, 0.166, 0.16, 0.168, 0.15, 0.162, 0.167, 0.13, 0.131, 0.176, 0.14, 0.117, 0.135, 0.105, 0.139, 0.141, 0.106, 0.135, 0.118, 0.106, 0.112, 0.118, 0.093, 0.119, 0.117, 0.099, 0.092, 0.101, 0.098, 0.101, 0.088, 0.096, 0.113, 0.099, 0.099, 0.093, 0.091, 0.088, 0.115, 0.116, 0.13, 0.095], "dur": 180.0}, "ic_clap": {"src": "ic_clap.mp3", "wave": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.419, 0.377, 0.42, 0.407, 0.424, 0.405, 0.422, 0.438, 0.402, 0.438, 0.418, 0.452, 0.435, 0.415, 0.451, 0.429, 0.465, 0.445, 0.465, 0.445, 0.425, 0.48, 0.462, 0.479, 0.458, 0.495, 0.475, 0.453, 0.493, 0.471, 0.498, 0.487, 0.504, 0.484, 0.463, 0.523, 0.502, 0.52, 0.497, 0.537, 0.515, 0.491, 0.534, 0.51, 0.541, 0.513, 0.54, 0.514, 0.491, 0.555, 0.531, 0.548, 0.522, 0.561, 0.537, 0.51, 0.554, 0.527, 0.567, 0.531, 0.563, 0.531, 0.506, 0.573, 0.549, 0.566, 0.539, 0.579, 0.554, 0.527, 0.572, 0.545, 0.585, 0.56, 0.579, 0.573, 0.522, 0.587, 0.566, 0.584, 0.556, 0.576, 0.598, 0.544, 0.59, 0.562, 0.604, 0.578, 0.549, 0.596, 0.563, 0.608, 0.579, 0.602, 0.573, 0.546, 0.616, 0.59, 0.608, 0.579, 0.622, 0.595, 0.566, 0.614, 0.585, 0.614, 0.599, 0.617, 0.59, 0.562, 0.634, 0.607, 0.626, 0.596, 0.64, 0.613, 0.582, 0.632, 0.602, 0.638, 0.605, 0.636, 0.605, 0.578, 0.653, 0.625, 0.644, 0.613, 0.659, 0.63, 0.599, 0.65, 0.619, 0.665, 0.622, 0.659, 0.62, 0.589, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.622, 0.667, 0.637, 0.656, 0.65, 0.59, 0.662, 0.637, 0.655, 0.622, 0.642, 0.667, 0.604, 0.63, 0.524, 0.442, 0.344, 0.253, 0.221, 0.143, 0.148, 0.181, 0.228, 0.239, 0.217, 0.289, 0.309, 0.308, 0.36, 0.425, 0.433, 0.434, 0.485, 0.485, 0.546, 0.556, 0.611, 0.59, 0.563, 0.635, 0.607, 0.626, 0.595, 0.639, 0.611, 0.58, 0.63, 0.599, 0.635, 0.601, 0.631, 0.6, 0.573, 0.647, 0.619, 0.637, 0.606, 0.651, 0.623, 0.591, 0.641, 0.61, 0.655, 0.612, 0.649, 0.611, 0.582, 0.659, 0.63, 0.649, 0.617, 0.663, 0.634, 0.602, 0.653, 0.621, 0.666, 0.566, 0.417, 0.362, 0.128, 0.034, 0.021, 0.009, 0.004, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.081, 0.267, 0.373, 0.6, 0.625, 0.6, 0.655, 0.622, 0.652, 0.635, 0.652, 0.622, 0.592, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.622, 0.658, 0.623, 0.653, 0.62, 0.591, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.622, 0.667, 0.623, 0.659, 0.62, 0.589, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.619, 0.457, 0.264, 0.163, 0.034, 0.018, 0.008, 0.003, 0.002, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.047, 0.249, 0.465, 0.568, 0.645, 0.622, 0.664, 0.636, 0.604, 0.655, 0.622, 0.652, 0.635, 0.652, 0.622, 0.592, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.622, 0.658, 0.623, 0.653, 0.62, 0.591, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.622, 0.667, 0.623, 0.659, 0.62, 0.589, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.597, 0.443, 0.262, 0.165, 0.045, 0.016, 0.008, 0.004, 0.002, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.077, 0.295, 0.413, 0.525, 0.643, 0.619, 0.651, 0.634, 0.652, 0.622, 0.592, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.622, 0.658, 0.623, 0.653, 0.62, 0.591, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.622, 0.667, 0.623, 0.659, 0.62, 0.589, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.622, 0.667, 0.637, 0.656, 0.65, 0.59, 0.662, 0.637, 0.655, 0.567, 0.433, 0.375, 0.12, 0.038, 0.019, 0.01, 0.005, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.144, 0.246, 0.445, 0.572, 0.593, 0.651, 0.622, 0.658, 0.622, 0.653, 0.62, 0.591, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.622, 0.667, 0.623, 0.659, 0.62, 0.589, 0.667, 0.637, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.622, 0.667, 0.637, 0.656, 0.65, 0.59, 0.662, 0.637, 0.655, 0.622, 0.642, 0.667, 0.604, 0.655, 0.622, 0.667, 0.637, 0.604, 0.655, 0.618, 0.665, 0.632, 0.654, 0.62, 0.588, 0.662, 0.631, 0.646, 0.613, 0.654, 0.624, 0.59, 0.639, 0.605, 0.632, 0.614, 0.628, 0.598, 0.567, 0.639, 0.609, 0.623, 0.591, 0.631, 0.601, 0.569, 0.616, 0.584, 0.615, 0.58, 0.606, 0.574, 0.546, 0.615, 0.586, 0.6, 0.569, 0.607, 0.579, 0.547, 0.593, 0.562, 0.599, 0.556, 0.583, 0.545, 0.515, 0.582, 0.552, 0.562, 0.531, 0.564, 0.536, 0.505, 0.545, 0.515, 0.547, 0.519, 0.529, 0.524, 0.469, 0.525, 0.503, 0.511, 0.482, 0.493, 0.512, 0.457, 0.494, 0.466, 0.495, 0.469, 0.442, 0.477, 0.447, 0.476, 0.449, 0.46, 0.434, 0.409, 0.46, 0.436, 0.443, 0.418, 0.442, 0.419, 0.395, 0.426, 0.401, 0.416, 0.402, 0.407, 0.385, 0.363, 0.408, 0.386, 0.392, 0.369, 0.39, 0.37, 0.347, 0.375, 0.353, 0.368, 0.345, 0.356, 0.33, 0.29, 0.343, 0.272, 0.306, 0.316, 0.329, 0.306, 0.262, 0.316, 0.248, 0.274, 0.278, 0.288, 0.261, 0.226, 0.266, 0.207, 0.231, 0.234, 0.238, 0.218, 0.185, 0.221, 0.171, 0.188, 0.19, 0.187, 0.189, 0.149, 0.173, 0.131, 0.146, 0.144, 0.142, 0.143, 0.108, 0.126, 0.095, 0.103, 0.1, 0.088, 0.095, 0.081, 0.078, 0.055, 0.06, 0.054, 0.045, 0.048, 0.039, 0.007, 0.003, 0.002, 0.001, 0.0], "dur": 180.0}, "ic_void": {"src": "ic_void.mp3", "wave": [0.057, 0.086, 0.146, 0.11, 0.146, 0.107, 0.135, 0.127, 0.112, 0.126, 0.148, 0.132, 0.134, 0.161, 0.129, 0.136, 0.107, 0.154, 0.107, 0.161, 0.114, 0.142, 0.147, 0.146, 0.166, 0.151, 0.157, 0.149, 0.12, 0.143, 0.129, 0.138, 0.166, 0.181, 0.138, 0.213, 0.177, 0.132, 0.159, 0.143, 0.162, 0.168, 0.17, 0.172, 0.141, 0.154, 0.174, 0.142, 0.151, 0.156, 0.201, 0.163, 0.147, 0.221, 0.231, 0.177, 0.164, 0.194, 0.245, 0.212, 0.197, 0.253, 0.25, 0.184, 0.224, 0.23, 0.248, 0.234, 0.255, 0.208, 0.217, 0.201, 0.191, 0.218, 0.235, 0.285, 0.243, 0.264, 0.276, 0.281, 0.278, 0.336, 0.318, 0.253, 0.273, 0.296, 0.3, 0.322, 0.272, 0.298, 0.353, 0.321, 0.379, 0.323, 0.382, 0.366, 0.382, 0.374, 0.392, 0.442, 0.373, 0.532, 0.449, 0.453, 0.397, 0.535, 0.513, 0.4, 0.504, 0.496, 0.382, 0.433, 0.474, 0.484, 0.417, 0.418, 0.537, 0.557, 0.578, 0.453, 0.493, 0.448, 0.346, 0.504, 0.4, 0.366, 0.38, 0.361, 0.313, 0.319, 0.33, 0.337, 0.35, 0.319, 0.31, 0.325, 0.356, 0.275, 0.286, 0.291, 0.407, 0.483, 0.593, 0.535, 0.387, 0.474, 0.464, 0.585, 0.563, 0.541, 0.502, 0.6, 0.714, 0.604, 0.627, 0.474, 0.468, 0.46, 0.354, 0.367, 0.548, 0.363, 0.461, 0.451, 0.394, 0.389, 0.39, 0.329, 0.313, 0.405, 0.317, 0.351, 0.344, 0.293, 0.268, 0.293, 0.319, 0.242, 0.236, 0.306, 0.243, 0.219, 0.266, 0.2, 0.201, 0.175, 0.232, 0.183, 0.171, 0.143, 0.139, 0.115, 0.165, 0.139, 0.11, 0.114, 0.101, 0.107, 0.131, 0.164, 0.13, 0.118, 0.125, 0.149, 0.114, 0.116, 0.171, 0.136, 0.153, 0.146, 0.128, 0.156, 0.186, 0.165, 0.131, 0.135, 0.162, 0.166, 0.173, 0.128, 0.158, 0.211, 0.132, 0.18, 0.138, 0.143, 0.135, 0.123, 0.162, 0.176, 0.155, 0.143, 0.145, 0.148, 0.137, 0.151, 0.133, 0.126, 0.141, 0.166, 0.136, 0.145, 0.123, 0.151, 0.155, 0.134, 0.141, 0.144, 0.163, 0.141, 0.176, 0.165, 0.195, 0.178, 0.171, 0.15, 0.133, 0.149, 0.163, 0.151, 0.149, 0.163, 0.163, 0.158, 0.186, 0.148, 0.142, 0.163, 0.209, 0.158, 0.167, 0.139, 0.187, 0.161, 0.151, 0.161, 0.185, 0.209, 0.325, 0.357, 0.326, 0.245, 0.25, 0.279, 0.316, 0.306, 0.365, 0.354, 0.324, 0.358, 0.368, 0.312, 0.316, 0.377, 0.316, 0.303, 0.279, 0.332, 0.294, 0.395, 0.292, 0.301, 0.294, 0.28, 0.263, 0.233, 0.302, 0.169, 0.169, 0.226, 0.21, 0.164, 0.196, 0.164, 0.18, 0.188, 0.203, 0.206, 0.178, 0.206, 0.201, 0.199, 0.181, 0.184, 0.247, 0.202, 0.191, 0.23, 0.239, 0.196, 0.2, 0.189, 0.197, 0.172, 0.217, 0.18, 0.187, 0.193, 0.214, 0.188, 0.236, 0.161, 0.184, 0.204, 0.253, 0.251, 0.219, 0.178, 0.2, 0.259, 0.178, 0.253, 0.184, 0.179, 0.23, 0.203, 0.229, 0.228, 0.223, 0.26, 0.258, 0.22, 0.229, 0.197, 0.201, 0.182, 0.23, 0.267, 0.241, 0.298, 0.248, 0.25, 0.282, 0.237, 0.273, 0.245, 0.238, 0.271, 0.279, 0.276, 0.239, 0.275, 0.302, 0.29, 0.261, 0.294, 0.306, 0.269, 0.285, 0.271, 0.278, 0.301, 0.321, 0.307, 0.362, 0.311, 0.346, 0.325, 0.352, 0.319, 0.422, 0.387, 0.441, 0.391, 0.5, 0.428, 0.469, 0.532, 0.372, 0.469, 0.476, 0.455, 0.599, 0.46, 0.49, 0.547, 0.434, 0.37, 0.39, 0.546, 0.467, 0.401, 0.429, 0.515, 0.479, 0.422, 0.499, 0.466, 0.5, 0.378, 0.383, 0.499, 0.37, 0.36, 0.329, 0.291, 0.309, 0.309, 0.322, 0.386, 0.306, 0.329, 0.29, 0.292, 0.293, 0.337, 0.397, 0.354, 0.545, 0.457, 0.433, 0.412, 0.446, 0.577, 0.478, 0.445, 0.487, 0.558, 0.509, 0.608, 0.528, 0.429, 0.461, 0.421, 0.327, 0.345, 0.363, 0.439, 0.472, 0.448, 0.419, 0.31, 0.404, 0.404, 0.395, 0.335, 0.339, 0.294, 0.288, 0.404, 0.314, 0.361, 0.333, 0.288, 0.301, 0.328, 0.373, 0.343, 0.384, 0.388, 0.335, 0.4, 0.312, 0.344, 0.371, 0.348, 0.275, 0.434, 0.347, 0.342, 0.332, 0.45, 0.355, 0.285, 0.312, 0.358, 0.454, 0.372, 0.377, 0.344, 0.406, 0.327, 0.409, 0.382, 0.322, 0.401, 0.318, 0.302, 0.337, 0.419, 0.333, 0.29, 0.335, 0.341, 0.327, 0.348, 0.284, 0.379, 0.404, 0.335, 0.302, 0.31, 0.318, 0.315, 0.248, 0.282, 0.322, 0.321, 0.309, 0.299, 0.414, 0.347, 0.302, 0.281, 0.317, 0.301, 0.274, 0.249, 0.309, 0.242, 0.273, 0.294, 0.286, 0.285, 0.248, 0.24, 0.228, 0.226, 0.27, 0.267, 0.235, 0.276, 0.242, 0.274, 0.24, 0.256, 0.262, 0.259, 0.28, 0.307, 0.312, 0.327, 0.272, 0.264, 0.25, 0.255, 0.28, 0.274, 0.273, 0.284, 0.265, 0.261, 0.281, 0.29, 0.508, 0.531, 0.447, 0.496, 0.376, 0.41, 0.49, 0.374, 0.486, 0.517, 0.479, 0.468, 0.475, 0.452, 0.405, 0.431, 0.446, 0.457, 0.367, 0.452, 0.4, 0.502, 0.371, 0.432, 0.375, 0.311, 0.328, 0.325, 0.293, 0.288, 0.248, 0.206, 0.226, 0.223, 0.245, 0.253, 0.212, 0.235, 0.235, 0.253, 0.276, 0.251, 0.203, 0.239, 0.244, 0.183, 0.202, 0.213, 0.197, 0.268, 0.244, 0.207, 0.237, 0.208, 0.188, 0.183, 0.165, 0.177, 0.196, 0.186, 0.161, 0.192, 0.177, 0.205, 0.186, 0.157, 0.165, 0.138, 0.136, 0.166, 0.197, 0.171, 0.132, 0.217, 0.155, 0.202, 0.146, 0.141, 0.178, 0.167, 0.177, 0.205, 0.186, 0.161, 0.162, 0.158, 0.205, 0.164, 0.167, 0.186, 0.18, 0.244, 0.188, 0.175, 0.183, 0.176, 0.179, 0.185, 0.151, 0.185, 0.158, 0.182, 0.158, 0.175, 0.174, 0.176, 0.187, 0.152, 0.185, 0.169, 0.174, 0.179, 0.188, 0.188, 0.228, 0.178, 0.158, 0.203, 0.211, 0.163, 0.195, 0.194, 0.17, 0.203, 0.223, 0.197, 0.169, 0.177, 0.196, 0.183, 0.198, 0.186, 0.246, 0.216, 0.285, 0.194], "dur": 180.0}, "ic_flutes": {"src": "ic_flutes.mp3", "wave": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.112, 0.222, 0.252, 0.268, 0.279, 0.337, 0.281, 0.282, 0.252, 0.205, 0.177, 0.16, 0.147, 0.103, 0.052, 0.077, 0.074, 0.054, 0.057, 0.047, 0.195, 0.249, 0.223, 0.271, 0.203, 0.295, 0.276, 0.291, 0.269, 0.236, 0.15, 0.139, 0.155, 0.131, 0.124, 0.101, 0.069, 0.065, 0.047, 0.039, 0.148, 0.316, 0.27, 0.238, 0.301, 0.278, 0.267, 0.241, 0.243, 0.251, 0.208, 0.202, 0.162, 0.144, 0.109, 0.086, 0.19, 0.327, 0.286, 0.309, 0.291, 0.316, 0.251, 0.26, 0.242, 0.176, 0.217, 0.212, 0.185, 0.164, 0.141, 0.104, 0.104, 0.086, 0.082, 0.087, 0.086, 0.072, 0.057, 0.036, 0.154, 0.283, 0.321, 0.34, 0.351, 0.423, 0.351, 0.351, 0.315, 0.256, 0.22, 0.199, 0.183, 0.128, 0.065, 0.096, 0.092, 0.067, 0.071, 0.058, 0.045, 0.044, 0.038, 0.03, 0.223, 0.291, 0.254, 0.314, 0.241, 0.359, 0.337, 0.36, 0.332, 0.289, 0.183, 0.172, 0.192, 0.162, 0.154, 0.125, 0.086, 0.081, 0.059, 0.048, 0.053, 0.05, 0.039, 0.043, 0.166, 0.37, 0.31, 0.282, 0.336, 0.326, 0.311, 0.283, 0.282, 0.297, 0.245, 0.237, 0.192, 0.17, 0.129, 0.102, 0.074, 0.079, 0.078, 0.07, 0.049, 0.044, 0.032, 0.035, 0.152, 0.306, 0.247, 0.285, 0.283, 0.31, 0.249, 0.262, 0.243, 0.174, 0.22, 0.214, 0.185, 0.166, 0.144, 0.105, 0.105, 0.089, 0.085, 0.09, 0.089, 0.074, 0.059, 0.037, 0.138, 0.251, 0.284, 0.3, 0.309, 0.372, 0.309, 0.309, 0.277, 0.225, 0.194, 0.175, 0.16, 0.112, 0.057, 0.084, 0.081, 0.059, 0.063, 0.051, 0.039, 0.039, 0.033, 0.026, 0.167, 0.218, 0.19, 0.233, 0.179, 0.266, 0.25, 0.267, 0.246, 0.214, 0.136, 0.127, 0.142, 0.12, 0.114, 0.093, 0.064, 0.06, 0.044, 0.036, 0.039, 0.037, 0.029, 0.032, 0.029, 0.023, 0.021, 0.014, 0.098, 0.225, 0.185, 0.176, 0.204, 0.204, 0.196, 0.177, 0.178, 0.188, 0.155, 0.15, 0.121, 0.107, 0.082, 0.065, 0.046, 0.05, 0.049, 0.044, 0.031, 0.028, 0.02, 0.022, 0.019, 0.015, 0.014, 0.012, 0.011, 0.011, 0.009, 0.005, 0.003, 0.002, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "dur": 180.0}, "ic_tension": {"src": "ic_tension.mp3", "wave": [0.261, 0.279, 0.253, 0.242, 0.253, 0.26, 0.255, 0.268, 0.281, 0.299, 0.276, 0.29, 0.274, 0.336, 0.29, 0.3, 0.281, 0.304, 0.3, 0.304, 0.309, 0.289, 0.276, 0.281, 0.292, 0.287, 0.286, 0.296, 0.327, 0.358, 0.384, 0.381, 0.34, 0.328, 0.328, 0.325, 0.338, 0.314, 0.318, 0.346, 0.364, 0.357, 0.392, 0.434, 0.397, 0.393, 0.367, 0.383, 0.368, 0.405, 0.391, 0.37, 0.398, 0.412, 0.428, 0.417, 0.411, 0.403, 0.393, 0.46, 0.412, 0.45, 0.432, 0.425, 0.414, 0.435, 0.411, 0.436, 0.437, 0.468, 0.466, 0.413, 0.459, 0.433, 0.431, 0.444, 0.466, 0.454, 0.435, 0.463, 0.447, 0.469, 0.457, 0.499, 0.494, 0.509, 0.531, 0.489, 0.46, 0.467, 0.491, 0.488, 0.457, 0.484, 0.528, 0.548, 0.496, 0.497, 0.464, 0.524, 0.475, 0.499, 0.535, 0.49, 0.494, 0.517, 0.541, 0.507, 0.492, 0.507, 0.483, 0.541, 0.538, 0.551, 0.551, 0.482, 0.563, 0.547, 0.542, 0.574, 0.524, 0.545, 0.568, 0.578, 0.579, 0.562, 0.58, 0.597, 0.586, 0.554, 0.578, 0.544, 0.544, 0.551, 0.572, 0.546, 0.541, 0.623, 0.606, 0.618, 0.622, 0.623, 0.642, 0.605, 0.557, 0.624, 0.574, 0.606, 0.597, 0.523, 0.635, 0.747, 0.616, 0.607, 0.566, 0.615, 0.619, 0.619, 0.622, 0.624, 0.625, 0.631, 0.643, 0.566, 0.544, 0.498, 0.504, 0.47, 0.459, 0.43, 0.384, 0.397, 0.334, 0.349, 0.3, 0.269, 0.278, 0.239, 0.25, 0.205, 0.182, 0.165, 0.156, 0.118, 0.108, 0.101, 0.109, 0.121, 0.112, 0.11, 0.116, 0.121, 0.121, 0.11, 0.124, 0.108, 0.111, 0.106, 0.116, 0.109, 0.115, 0.111, 0.113, 0.1, 0.111, 0.11, 0.11, 0.1, 0.111, 0.109, 0.095, 0.098, 0.104, 0.111, 0.093, 0.108, 0.112, 0.109, 0.105, 0.1, 0.097, 0.095, 0.096, 0.097, 0.104, 0.11, 0.107, 0.1, 0.105, 0.117, 0.107, 0.106, 0.101, 0.096, 0.095, 0.101, 0.097, 0.099, 0.1, 0.096, 0.103, 0.099, 0.1, 0.088, 0.089, 0.092, 0.102, 0.11, 0.109, 0.104, 0.096, 0.095, 0.091, 0.104, 0.099, 0.098, 0.091, 0.095, 0.096, 0.103, 0.098, 0.1, 0.096, 0.099, 0.094, 0.099, 0.092, 0.103, 0.094, 0.087, 0.085, 0.084, 0.079, 0.091, 0.098, 0.092, 0.09, 0.099, 0.088, 0.082, 0.079, 0.084, 0.09, 0.09, 0.089, 0.089, 0.093, 0.092, 0.091, 0.09, 0.095, 0.08, 0.089, 0.08, 0.085, 0.081, 0.08, 0.087, 0.086, 0.089, 0.087, 0.083, 0.094, 0.08, 0.093, 0.095, 0.081, 0.091, 0.083, 0.086, 0.087, 0.087, 0.085, 0.089, 0.089, 0.087, 0.094, 0.096, 0.084, 0.081, 0.086, 0.079, 0.072, 0.072, 0.08, 0.09, 0.078, 0.08, 0.075, 0.075, 0.077, 0.088, 0.08, 0.072, 0.084, 0.084, 0.089, 0.087, 0.088, 0.083, 0.084, 0.084, 0.074, 0.076, 0.082, 0.081, 0.075, 0.076, 0.073, 0.075, 0.075, 0.077, 0.073, 0.071, 0.087, 0.081, 0.073, 0.071, 0.074, 0.072, 0.073, 0.076, 0.073, 0.076, 0.067, 0.076, 0.078, 0.077, 0.079, 0.08, 0.082, 0.078, 0.081, 0.082, 0.081, 0.075, 0.087, 0.088, 0.088, 0.085, 0.086, 0.081, 0.091, 0.073, 0.085, 0.085, 0.082, 0.087, 0.087, 0.084, 0.079, 0.083, 0.08, 0.08, 0.089, 0.098, 0.105, 0.092, 0.096, 0.091, 0.095, 0.096, 0.098, 0.094, 0.098, 0.097, 0.096, 0.089, 0.097, 0.106, 0.096, 0.104, 0.109, 0.105, 0.097, 0.1, 0.099, 0.094, 0.098, 0.103, 0.101, 0.104, 0.098, 0.103, 0.095, 0.106, 0.101, 0.114, 0.12, 0.115, 0.111, 0.109, 0.103, 0.11, 0.1, 0.104, 0.104, 0.104, 0.094, 0.113, 0.113, 0.116, 0.111, 0.118, 0.104, 0.093, 0.102, 0.11, 0.123, 0.106, 0.12, 0.116, 0.121, 0.123, 0.121, 0.122, 0.115, 0.118, 0.103, 0.104, 0.106, 0.104, 0.116, 0.103, 0.105, 0.102, 0.114, 0.123, 0.118, 0.117, 0.139, 0.126, 0.132, 0.132, 0.124, 0.133, 0.138, 0.129, 0.128, 0.123, 0.13, 0.123, 0.124, 0.126, 0.13, 0.132, 0.138, 0.131, 0.137, 0.131, 0.145, 0.131, 0.13, 0.133, 0.139, 0.132, 0.134, 0.152, 0.138, 0.137, 0.14, 0.135, 0.135, 0.138, 0.14, 0.132, 0.136, 0.151, 0.137, 0.138, 0.135, 0.136, 0.131, 0.121, 0.123, 0.125, 0.124, 0.124, 0.122, 0.138, 0.134, 0.131, 0.122, 0.116, 0.119, 0.122, 0.128, 0.13, 0.138, 0.13, 0.137, 0.131, 0.133, 0.129, 0.126, 0.128, 0.121, 0.125, 0.124, 0.122, 0.129, 0.125, 0.124, 0.122, 0.121, 0.126, 0.13, 0.128, 0.128, 0.117, 0.127, 0.126, 0.123, 0.121, 0.122, 0.112, 0.116, 0.114, 0.12, 0.129, 0.115, 0.11, 0.107, 0.11, 0.113, 0.107, 0.122, 0.122, 0.115, 0.113, 0.11, 0.128, 0.12, 0.113, 0.108, 0.109, 0.113, 0.114, 0.106, 0.116, 0.117, 0.119, 0.11, 0.107, 0.104, 0.111, 0.105, 0.1, 0.092, 0.105, 0.091, 0.104, 0.102, 0.107, 0.107, 0.11, 0.1, 0.107, 0.108, 0.1, 0.103, 0.106, 0.096, 0.122, 0.103, 0.108, 0.108, 0.102, 0.094, 0.094, 0.097, 0.091, 0.097, 0.101, 0.1, 0.101, 0.098, 0.106, 0.101, 0.103, 0.104, 0.11, 0.11, 0.101, 0.101, 0.1, 0.094, 0.088, 0.08, 0.085, 0.082, 0.083, 0.083, 0.091, 0.095, 0.097, 0.097, 0.095, 0.092, 0.096, 0.099, 0.088, 0.085, 0.089, 0.085, 0.089, 0.082, 0.089, 0.091, 0.082, 0.083, 0.091, 0.085, 0.09, 0.085, 0.083, 0.082, 0.081, 0.078, 0.083, 0.084, 0.081, 0.084, 0.071, 0.085, 0.081, 0.081, 0.082, 0.082, 0.082, 0.077, 0.077, 0.077, 0.072, 0.075, 0.079, 0.071, 0.074, 0.078, 0.079, 0.074, 0.072, 0.077, 0.071, 0.068, 0.06, 0.072, 0.068, 0.064, 0.071, 0.079, 0.075, 0.072, 0.068, 0.07, 0.067, 0.068, 0.065, 0.067, 0.065, 0.064, 0.07, 0.065, 0.061, 0.063, 0.062, 0.066, 0.071, 0.065, 0.064, 0.06, 0.055, 0.064, 0.066, 0.064, 0.063, 0.066, 0.059, 0.065, 0.059], "dur": 180.0}, "ic_riser": {"src": "ic_riser.mp3", "wave": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.002, 0.004, 0.007, 0.008, 0.011, 0.014, 0.016, 0.017, 0.026, 0.026, 0.022, 0.036, 0.049, 0.042, 0.045, 0.06, 0.062, 0.09, 0.084, 0.097, 0.109, 0.131, 0.164, 0.161, 0.178, 0.211, 0.233, 0.253, 0.322, 0.318, 0.393, 0.387, 0.425, 0.601, 0.566, 0.588, 0.678, 0.884, 0.779, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "dur": 180.0}, "ic_pad": {"src": "ic_pad.mp3", "wave": [0.182, 0.126, 0.13, 0.128, 0.155, 0.145, 0.128, 0.14, 0.125, 0.139, 0.12, 0.122, 0.144, 0.155, 0.149, 0.181, 0.155, 0.133, 0.14, 0.136, 0.133, 0.162, 0.153, 0.166, 0.127, 0.157, 0.123, 0.139, 0.139, 0.122, 0.146, 0.203, 0.194, 0.14, 0.189, 0.143, 0.165, 0.146, 0.152, 0.162, 0.14, 0.144, 0.179, 0.142, 0.145, 0.202, 0.163, 0.167, 0.177, 0.215, 0.204, 0.188, 0.191, 0.177, 0.18, 0.173, 0.155, 0.181, 0.147, 0.172, 0.14, 0.198, 0.168, 0.197, 0.211, 0.196, 0.209, 0.184, 0.199, 0.179, 0.203, 0.185, 0.214, 0.142, 0.194, 0.155, 0.186, 0.186, 0.182, 0.169, 0.21, 0.225, 0.247, 0.214, 0.23, 0.227, 0.244, 0.166, 0.202, 0.174, 0.194, 0.171, 0.174, 0.185, 0.183, 0.256, 0.184, 0.213, 0.203, 0.209, 0.228, 0.229, 0.184, 0.257, 0.233, 0.224, 0.181, 0.182, 0.201, 0.2, 0.168, 0.191, 0.217, 0.224, 0.224, 0.212, 0.292, 0.231, 0.296, 0.208, 0.239, 0.178, 0.225, 0.189, 0.187, 0.179, 0.201, 0.236, 0.203, 0.208, 0.236, 0.29, 0.245, 0.276, 0.257, 0.266, 0.257, 0.267, 0.224, 0.2, 0.208, 0.191, 0.198, 0.219, 0.199, 0.298, 0.257, 0.23, 0.268, 0.284, 0.277, 0.242, 0.285, 0.232, 0.263, 0.265, 0.216, 0.232, 0.211, 0.212, 0.259, 0.182, 0.225, 0.235, 0.227, 0.3, 0.246, 0.191, 0.258, 0.244, 0.194, 0.216, 0.238, 0.203, 0.197, 0.218, 0.184, 0.23, 0.15, 0.165, 0.194, 0.148, 0.17, 0.146, 0.139, 0.123, 0.202, 0.164, 0.182, 0.221, 0.201, 0.222, 0.234, 0.287, 0.248, 0.276, 0.294, 0.319, 0.373, 0.377, 0.417, 0.454, 0.359, 0.481, 0.471, 0.467, 0.536, 0.492, 0.521, 0.568, 0.517, 0.659, 0.479, 0.509, 0.486, 0.549, 0.505, 0.413, 0.511, 0.415, 0.414, 0.419, 0.534, 0.427, 0.369, 0.47, 0.405, 0.407, 0.466, 0.486, 0.395, 0.419, 0.445, 0.472, 0.536, 0.536, 0.646, 0.581, 0.672, 0.526, 0.5, 0.358, 0.305, 0.293, 0.23, 0.249, 0.245, 0.247, 0.215, 0.203, 0.205, 0.176, 0.206, 0.213, 0.221, 0.188, 0.187, 0.204, 0.171, 0.19, 0.173, 0.199, 0.184, 0.212, 0.182, 0.261, 0.417, 0.489, 0.578, 0.517, 0.609, 0.596, 0.683, 0.55, 0.678, 0.56, 0.449, 0.515, 0.683, 0.653, 0.603, 0.571, 0.555, 0.55, 0.538, 0.531, 0.597, 0.4, 0.558, 0.494, 0.543, 0.488, 0.507, 0.492, 0.481, 0.558, 0.412, 0.505, 0.564, 0.527, 0.573, 0.533, 0.599, 0.596, 0.552, 0.583, 0.564, 0.537, 0.689, 0.663, 0.523, 0.541, 0.71, 0.471, 0.356, 0.341, 0.236, 0.226, 0.216, 0.202, 0.225, 0.243, 0.211, 0.19, 0.213, 0.234, 0.217, 0.195, 0.186, 0.171, 0.181, 0.234, 0.229, 0.248, 0.269, 0.28, 0.265, 0.301, 0.374, 0.498, 0.536, 0.553, 0.469, 0.691, 0.614, 0.657, 0.593, 0.575, 0.556, 0.554, 0.625, 0.552, 0.486, 0.474, 0.569, 0.572, 0.537, 0.589, 0.483, 0.546, 0.659, 0.509, 0.472, 0.531, 0.571, 0.484, 0.495, 0.627, 0.549, 0.607, 0.525, 0.677, 0.608, 0.58, 0.679, 0.619, 0.587, 0.634, 0.638, 0.578, 0.563, 0.532, 0.72, 0.559, 0.524, 0.571, 0.668, 0.532, 0.495, 0.544, 0.34, 0.333, 0.31, 0.217, 0.186, 0.24, 0.225, 0.224, 0.28, 0.199, 0.235, 0.204, 0.19, 0.255, 0.203, 0.25, 0.256, 0.247, 0.291, 0.248, 0.21, 0.209, 0.224, 0.274, 0.247, 0.213, 0.246, 0.315, 0.436, 0.432, 0.609, 0.503, 0.573, 0.509, 0.501, 0.538, 0.552, 0.592, 0.572, 0.482, 0.445, 0.53, 0.63, 0.555, 0.542, 0.618, 0.592, 0.616, 0.606, 0.523, 0.586, 0.601, 0.492, 0.568, 0.634, 0.622, 0.524, 0.677, 0.62, 0.559, 0.602, 0.477, 0.53, 0.558, 0.565, 0.516, 0.593, 0.617, 0.507, 0.563, 0.582, 0.555, 0.394, 0.57, 0.583, 0.549, 0.497, 0.629, 0.654, 0.588, 0.631, 0.591, 0.489, 0.563, 0.375, 0.326, 0.272, 0.272, 0.29, 0.273, 0.222, 0.229, 0.24, 0.234, 0.212, 0.262, 0.292, 0.221, 0.222, 0.206, 0.191, 0.195, 0.202, 0.24, 0.216, 0.238, 0.247, 0.197, 0.178, 0.215, 0.234, 0.228, 0.233, 0.247, 0.263, 0.365, 0.418, 0.444, 0.589, 0.597, 0.565, 0.585, 0.645, 0.676, 0.636, 0.515, 0.595, 0.572, 0.679, 0.447, 0.485, 0.538, 0.583, 0.526, 0.577, 0.537, 0.466, 0.487, 0.503, 0.537, 0.475, 0.493, 0.624, 0.626, 0.564, 0.656, 0.757, 0.594, 0.63, 0.541, 0.616, 0.623, 0.53, 0.568, 0.623, 0.575, 0.506, 0.611, 0.53, 0.532, 0.657, 0.54, 0.528, 0.576, 0.528, 0.507, 0.529, 0.541, 0.496, 0.572, 0.479, 0.509, 0.533, 0.464, 0.553, 0.553, 0.568, 0.585, 0.629, 0.573, 0.505, 0.619, 0.515, 0.494, 0.541, 0.538, 0.535, 0.533, 0.513, 0.669, 0.546, 0.597, 0.587, 0.575, 0.508, 0.517, 0.54, 0.416, 0.473, 0.499, 0.455, 0.456, 0.379, 0.51, 0.394, 0.415, 0.417, 0.461, 0.479, 0.426, 0.579, 0.408, 0.583, 0.541, 0.471, 0.495, 0.478, 0.449, 0.48, 0.485, 0.441, 0.482, 0.395, 0.436, 0.477, 0.454, 0.438, 0.413, 0.479, 0.351, 0.442, 0.4, 0.327, 0.359, 0.378, 0.375, 0.307, 0.334, 0.29, 0.32, 0.326, 0.373, 0.392, 0.313, 0.337, 0.306, 0.361, 0.392, 0.361, 0.341, 0.332, 0.304, 0.332, 0.311, 0.317, 0.308, 0.331, 0.409, 0.314, 0.298, 0.305, 0.272, 0.301, 0.255, 0.265, 0.251, 0.282, 0.308, 0.268, 0.248, 0.215, 0.264, 0.227, 0.285, 0.258, 0.219, 0.237, 0.258, 0.243, 0.245, 0.297, 0.269, 0.232, 0.238, 0.251, 0.205, 0.221, 0.21, 0.239, 0.279, 0.189, 0.193, 0.288, 0.214, 0.251, 0.167, 0.214, 0.166, 0.191, 0.156, 0.132, 0.15, 0.131, 0.151, 0.118, 0.144, 0.153, 0.147, 0.144, 0.153, 0.138, 0.164, 0.155, 0.148, 0.123, 0.127, 0.116, 0.122, 0.124, 0.12, 0.107, 0.132, 0.102, 0.089, 0.11, 0.09, 0.118, 0.102, 0.114, 0.081], "dur": 180.0}, "ic_bass": {"src": "ic_bass.mp3", "wave": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.077, 0.109, 0.122, 0.129, 0.15, 0.18, 0.196, 0.203, 0.223, 0.265, 0.264, 0.265, 0.297, 0.36, 0.373, 0.364, 0.451, 0.41, 0.393, 0.414, 0.487, 0.474, 0.44, 0.452, 0.524, 0.474, 0.458, 0.479, 0.565, 0.548, 0.512, 0.609, 0.55, 0.53, 0.553, 0.65, 0.629, 0.586, 0.6, 0.694, 0.626, 0.604, 0.627, 0.735, 0.709, 0.661, 0.779, 0.703, 0.678, 0.702, 0.821, 0.791, 0.738, 0.753, 0.866, 0.781, 0.706, 0.549, 0.433, 0.227, 0.009, 0.003, 0.002, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.174, 0.35, 0.492, 0.668, 0.872, 0.78, 0.745, 0.76, 0.865, 0.822, 0.763, 0.864, 0.778, 0.743, 0.759, 0.861, 0.818, 0.762, 0.768, 0.862, 0.777, 0.743, 0.759, 0.86, 0.818, 0.761, 0.861, 0.776, 0.743, 0.759, 0.859, 0.817, 0.761, 0.767, 0.86, 0.776, 0.742, 0.759, 0.858, 0.816, 0.761, 0.859, 0.775, 0.742, 0.759, 0.857, 0.816, 0.76, 0.687, 0.576, 0.352, 0.17, 0.026, 0.004, 0.002, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.185, 0.345, 0.521, 0.782, 0.813, 0.758, 0.765, 0.855, 0.774, 0.741, 0.759, 0.853, 0.813, 0.758, 0.854, 0.773, 0.741, 0.759, 0.852, 0.812, 0.758, 0.764, 0.854, 0.773, 0.74, 0.759, 0.852, 0.811, 0.758, 0.853, 0.773, 0.74, 0.759, 0.851, 0.811, 0.757, 0.764, 0.852, 0.772, 0.74, 0.758, 0.85, 0.81, 0.757, 0.851, 0.772, 0.74, 0.758, 0.849, 0.809, 0.757, 0.763, 0.774, 0.534, 0.345, 0.189, 0.012, 0.003, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.128, 0.297, 0.525, 0.642, 0.739, 0.756, 0.846, 0.806, 0.755, 0.847, 0.77, 0.739, 0.758, 0.845, 0.806, 0.755, 0.761, 0.846, 0.77, 0.738, 0.758, 0.844, 0.805, 0.754, 0.846, 0.77, 0.738, 0.758, 0.844, 0.805, 0.754, 0.76, 0.845, 0.769, 0.738, 0.758, 0.843, 0.804, 0.754, 0.844, 0.769, 0.738, 0.758, 0.842, 0.803, 0.753, 0.76, 0.844, 0.769, 0.738, 0.757, 0.842, 0.803, 0.753, 0.843, 0.768, 0.607, 0.458, 0.312, 0.152, 0.047, 0.003, 0.002, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.169, 0.341, 0.485, 0.659, 0.849, 0.77, 0.739, 0.758, 0.844, 0.805, 0.754, 0.846, 0.77, 0.739, 0.758, 0.845, 0.806, 0.755, 0.761, 0.847, 0.77, 0.739, 0.758, 0.846, 0.807, 0.755, 0.848, 0.771, 0.739, 0.758, 0.847, 0.808, 0.756, 0.762, 0.849, 0.771, 0.739, 0.758, 0.848, 0.809, 0.756, 0.85, 0.772, 0.74, 0.758, 0.849, 0.809, 0.757, 0.763, 0.851, 0.772, 0.74, 0.758, 0.85, 0.81, 0.757, 0.847, 0.764, 0.728, 0.741, 0.827, 0.783, 0.727, 0.729, 0.809, 0.729, 0.694, 0.707, 0.789, 0.747, 0.693, 0.771, 0.694, 0.661, 0.673, 0.752, 0.712, 0.66, 0.661, 0.735, 0.661, 0.629, 0.64, 0.715, 0.677, 0.627, 0.699, 0.628, 0.597, 0.607, 0.68, 0.643, 0.596, 0.597, 0.664, 0.596, 0.566, 0.574, 0.642, 0.606, 0.559, 0.621, 0.554, 0.524, 0.529, 0.598, 0.564, 0.517, 0.517, 0.578, 0.513, 0.484, 0.488, 0.556, 0.523, 0.478, 0.536, 0.473, 0.445, 0.45, 0.514, 0.484, 0.44, 0.439, 0.495, 0.435, 0.408, 0.413, 0.473, 0.446, 0.404, 0.454, 0.399, 0.372, 0.378, 0.433, 0.408, 0.367, 0.363, 0.407, 0.355, 0.329, 0.333, 0.379, 0.356, 0.319, 0.353, 0.308, 0.284, 0.289, 0.326, 0.307, 0.275, 0.272, 0.301, 0.264, 0.243, 0.247, 0.276, 0.261, 0.234, 0.253, 0.224, 0.204, 0.208, 0.23, 0.217, 0.196, 0.192, 0.205, 0.181, 0.163, 0.164, 0.177, 0.166, 0.149, 0.151, 0.135, 0.12, 0.12, 0.126, 0.118, 0.107, 0.102, 0.104, 0.094, 0.083, 0.082, 0.084, 0.078, 0.07, 0.067, 0.06, 0.052, 0.051, 0.05, 0.024, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "dur": 180.0}, "ic_lead": {"src": "ic_lead.mp3", "wave": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.143, 0.24, 0.206, 0.244, 0.193, 0.243, 0.243, 0.231, 0.274, 0.343, 0.295, 0.267, 0.328, 0.315, 0.394, 0.377, 0.36, 0.388, 0.309, 0.389, 0.436, 0.379, 0.324, 0.391, 0.35, 0.436, 0.411, 0.364, 0.374, 0.424, 0.385, 0.357, 0.483, 0.47, 0.456, 0.41, 0.341, 0.349, 0.48, 0.327, 0.431, 0.377, 0.349, 0.369, 0.484, 0.513, 0.486, 0.372, 0.39, 0.48, 0.463, 0.521, 0.447, 0.57, 0.508, 0.5, 0.531, 0.426, 0.497, 0.527, 0.401, 0.539, 0.591, 0.598, 0.605, 0.521, 0.502, 0.555, 0.449, 0.517, 0.56, 0.413, 0.471, 0.507, 0.531, 0.501, 0.525, 0.612, 0.54, 0.562, 0.58, 0.452, 0.452, 0.559, 0.477, 0.578, 0.543, 0.554, 0.529, 0.607, 0.583, 0.589, 0.518, 0.461, 0.565, 0.484, 0.588, 0.55, 0.561, 0.533, 0.612, 0.588, 0.594, 0.592, 0.493, 0.462, 0.573, 0.581, 0.572, 0.562, 0.535, 0.615, 0.593, 0.599, 0.596, 0.497, 0.465, 0.574, 0.492, 0.595, 0.557, 0.511, 0.526, 0.57, 0.507, 0.596, 0.642, 0.464, 0.486, 0.632, 0.673, 0.671, 0.666, 0.579, 0.556, 0.614, 0.566, 0.614, 0.476, 0.499, 0.629, 0.664, 0.678, 0.677, 0.557, 0.543, 0.599, 0.537, 0.565, 0.493, 0.489, 0.559, 0.587, 0.589, 0.567, 0.544, 0.632, 0.61, 0.615, 0.611, 0.51, 0.478, 0.589, 0.505, 0.61, 0.572, 0.575, 0.63, 0.602, 0.618, 0.62, 0.511, 0.48, 0.594, 0.508, 0.614, 0.576, 0.587, 0.558, 0.64, 0.615, 0.621, 0.546, 0.485, 0.595, 0.51, 0.619, 0.579, 0.59, 0.561, 0.644, 0.618, 0.625, 0.623, 0.519, 0.487, 0.603, 0.527, 0.553, 0.694, 0.549, 0.549, 0.599, 0.517, 0.596, 0.642, 0.47, 0.527, 0.653, 0.694, 0.701, 0.71, 0.579, 0.64, 0.519, 0.594, 0.643, 0.472, 0.519, 0.657, 0.696, 0.708, 0.706, 0.609, 0.586, 0.72, 0.63, 0.562, 0.586, 0.575, 0.548, 0.636, 0.62, 0.572, 0.559, 0.663, 0.639, 0.644, 0.638, 0.532, 0.499, 0.618, 0.626, 0.617, 0.606, 0.577, 0.663, 0.639, 0.646, 0.642, 0.536, 0.502, 0.619, 0.53, 0.641, 0.601, 0.604, 0.661, 0.633, 0.649, 0.651, 0.537, 0.505, 0.623, 0.533, 0.644, 0.604, 0.616, 0.586, 0.672, 0.645, 0.652, 0.573, 0.509, 0.624, 0.535, 0.65, 0.608, 0.619, 0.589, 0.696, 0.588, 0.571, 0.548, 0.55, 0.518, 0.675, 0.71, 0.737, 0.705, 0.637, 0.596, 0.663, 0.534, 0.613, 0.661, 0.485, 0.533, 0.674, 0.713, 0.724, 0.729, 0.593, 0.655, 0.529, 0.605, 0.654, 0.479, 0.526, 0.665, 0.704, 0.714, 0.723, 0.538, 0.673, 0.575, 0.63, 0.546, 0.485, 0.588, 0.519, 0.63, 0.596, 0.599, 0.561, 0.649, 0.622, 0.629, 0.626, 0.521, 0.487, 0.602, 0.609, 0.6, 0.587, 0.558, 0.641, 0.616, 0.622, 0.617, 0.514, 0.48, 0.592, 0.506, 0.611, 0.572, 0.574, 0.626, 0.598, 0.613, 0.613, 0.505, 0.474, 0.585, 0.499, 0.602, 0.564, 0.574, 0.545, 0.624, 0.598, 0.603, 0.53, 0.469, 0.574, 0.491, 0.596, 0.557, 0.566, 0.534, 0.612, 0.586, 0.605, 0.573, 0.473, 0.478, 0.497, 0.54, 0.526, 0.482, 0.492, 0.53, 0.505, 0.6, 0.557, 0.458, 0.47, 0.478, 0.407, 0.559, 0.518, 0.497, 0.529, 0.499, 0.557, 0.527, 0.436, 0.494, 0.491, 0.431, 0.549, 0.45, 0.564, 0.431, 0.573, 0.46, 0.449, 0.427, 0.461, 0.494, 0.441, 0.58, 0.463, 0.474, 0.41, 0.505, 0.36, 0.386, 0.407, 0.345, 0.385, 0.384, 0.37, 0.34, 0.316, 0.328, 0.359, 0.356, 0.32, 0.308, 0.318, 0.278, 0.259, 0.273, 0.303, 0.22, 0.293, 0.269, 0.244, 0.244, 0.288, 0.253, 0.287, 0.217, 0.225, 0.217, 0.222, 0.206, 0.222, 0.228, 0.217, 0.256, 0.231, 0.245, 0.189, 0.2, 0.127, 0.053, 0.041, 0.027, 0.021, 0.015, 0.007, 0.008, 0.006, 0.002, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "dur": 180.0}, "ic_wind": {"src": "ic_wind.mp3", "wave": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.006, 0.015, 0.023, 0.024, 0.028, 0.025, 0.024, 0.022, 0.016, 0.018, 0.02, 0.016, 0.02, 0.019, 0.019, 0.019, 0.023, 0.02, 0.019, 0.022, 0.02, 0.017, 0.022, 0.016, 0.016, 0.015, 0.015, 0.014, 0.015, 0.015, 0.012, 0.012, 0.011, 0.011, 0.008, 0.009, 0.009, 0.008, 0.008, 0.006, 0.006, 0.006, 0.004, 0.004, 0.003, 0.002, 0.002, 0.001, 0.076, 0.206, 0.311, 0.374, 0.497, 0.557, 0.488, 0.515, 0.518, 0.743, 0.475, 0.491, 0.541, 0.475, 0.436, 0.493, 0.48, 0.487, 0.575, 0.566, 0.463, 0.546, 0.491, 0.475, 0.5, 0.374, 0.274, 0.207, 0.141, 0.114, 0.072, 0.04, 0.032, 0.02, 0.013, 0.01, 0.006, 0.003, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.071, 0.168, 0.324, 0.592, 0.529, 0.504, 0.465, 0.537, 0.425, 0.582, 0.47, 0.496, 0.481, 0.473, 0.572, 0.537, 0.514, 0.515, 0.525, 0.492, 0.523, 0.535, 0.492, 0.477, 0.585, 0.414, 0.316, 0.189, 0.138, 0.108, 0.069, 0.046, 0.034, 0.025, 0.015, 0.01, 0.005, 0.003, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.072, 0.232, 0.319, 0.428, 0.454, 0.444, 0.578, 0.537, 0.462, 0.54, 0.504, 0.459, 0.476, 0.525, 0.479, 0.484, 0.601, 0.464, 0.443, 0.567, 0.587, 0.578, 0.569, 0.535, 0.585, 0.514, 0.532, 0.601, 0.501, 0.46, 0.35, 0.185, 0.135, 0.091, 0.059, 0.049, 0.033, 0.025, 0.015, 0.008, 0.005, 0.003, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.077, 0.189, 0.282, 0.415, 0.464, 0.468, 0.465, 0.475, 0.532, 0.597, 0.449, 0.502, 0.473, 0.551, 0.476, 0.444, 0.512, 0.53, 0.574, 0.54, 0.59, 0.498, 0.542, 0.525, 0.473, 0.513, 0.51, 0.461, 0.545, 0.477, 0.536, 0.45, 0.522, 0.402, 0.315, 0.224, 0.138, 0.095, 0.057, 0.048, 0.033, 0.022, 0.016, 0.009, 0.005, 0.002, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.002, 0.003, 0.005, 0.005, 0.007, 0.01, 0.01, 0.013, 0.011, 0.014, 0.015, 0.016, 0.02, 0.019, 0.02, 0.021, 0.026, 0.021, 0.021, 0.026, 0.022, 0.026, 0.025, 0.021, 0.023, 0.022, 0.024, 0.027, 0.024, 0.028, 0.023, 0.021, 0.023, 0.021, 0.019, 0.02, 0.017, 0.016, 0.016, 0.014, 0.013, 0.011, 0.01, 0.009, 0.007, 0.007, 0.003, 0.003, 0.002, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "dur": 180.0}};
+const PLAY=`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+const PAUSE=`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>`;
+const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const VALID_TABS=['creations','theater','icarus','method','history'];
+const GLOSSARY={
+ 'supersaw':'Several detuned sawtooth oscillators stacked — a thick, wide ensemble.',
+ 'phaser':'Sweeping allpass notches — the shimmering string-machine effect.',
+ 'reverb':'Simulated space; here, convolution with a decaying-noise impulse.',
+ 'drone':'A sustained, unchanging tone underpinning the harmony.',
+ 'shimmer':'Reverb pitched up an octave and fed back — a rising halo.',
+ 'granular':'Chopping a sound into tiny grains and scattering them into a cloud.',
+ 'spectral':'Working in the frequency domain (FFT) — re-exciting a sample’s spectrum.',
+ 'sampled':'Built from a real recording rather than pure synthesis.',
+ 'lydian':'The brightest mode (raised 4th) — a floating, "flight" quality.',
+ 'whole-tone':'A 6-note scale of only whole steps — no home note, alien.',
+ 'phrygian':'A dark mode with a lowered 2nd — ancient, ominous.',
+ 'sonar':'A deep, round ping that drops in pitch, like sounding the depths.',
+ 'ping-pong':'A delay whose echoes alternate left and right.',
+ 'motoric':'A relentless, machine-like steady pulse.',
+ 'sub':'Very low bass frequencies, felt as much as heard.',
+ 'drawbars':'Organ-style additive synthesis — sine harmonics mixed like a Hammond.',
+ 'envy':'A dissonant cluster (the ♭2 beating against the root) = unease.',
+ 'breath':'Noise shaped to mimic the air of a flute/voice attack.',
+ 'strain':'The altitude line sagging in pitch/volume when effort flags.',
+ 'effort':'The clapping pulse that must be maintained to stay aloft.',
+ 'dissonant':'Notes that clash (a minor 2nd or tritone) — tension.',
+ 'glide':'Flight with no flapping — the percussion drops out and you float.',
+ 'drive':'Forward rhythmic momentum (here, the driving bass).',
+ 'cosmic horror':'Dread of the vast, indifferent, unknowable cosmos (Lovecraft).',
+ 'riser':'A building sweep that leads into a new section.',
+ 'reverse':'A sound played backwards — a swell/inhale.',
+ 'floating':'Sustained, unmoored tones with no strong pulse.',
+};
+function tagHTML(t){const g=GLOSSARY[t]; return '<span class="tag"'+(g?' title="'+g+'"':'')+'>'+t+'</span>';}
+
+/* ---------- tabs (grouped panels; browser Back moves between tabs) ---------- */
+const tabBtns=[...document.querySelectorAll('.tab')];
+const nav=document.querySelector('.tabbar');
+function showTab(id, push){
+  if(!VALID_TABS.includes(id)) id='creations';
+  tabBtns.forEach(b=>b.setAttribute('aria-selected', b.dataset.tab===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on', p.dataset.group===id));
+  if(push && location.hash!=='#'+id) history.pushState({tab:id},'','#'+id);
+  requestAnimationFrame(()=>dispatchEvent(new Event('resize')));  // redraw now-visible waveforms
+}
+tabBtns.forEach(b=>b.onclick=()=>{
+  showTab(b.dataset.tab, true);
+  nav.scrollIntoView({block:'start', behavior: RM?'auto':'smooth'});
+});
+addEventListener('popstate',()=>showTab((location.hash||'#creations').slice(1), false));
+showTab((location.hash||'#creations').slice(1), false);
+
+/* ---------- back to top ---------- */
+const toTop=document.getElementById('toTop');
+addEventListener('scroll',()=>toTop.classList.toggle('show', scrollY>500));
+toTop.onclick=()=>scrollTo({top:0, behavior: RM?'auto':'smooth'});
+
+/* ---------- oscilloscope ---------- */
+(function(){
+  const c=document.getElementById('scope'), x=c.getContext('2d');
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function size(){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;x.setTransform(d,0,0,d,0,0);return r;}
+  let r=size(); addEventListener('resize',()=>r=size()); let t=0;
+  function frame(){
+    x.clearRect(0,0,r.width,r.height); const midY=r.height*0.5;
+    for(let L=0;L<3;L++){
+      x.beginPath(); const amp=r.height*(0.10+L*0.05),f=(1.2+L*0.7),spd=(0.6+L*0.25);
+      for(let px=0;px<=r.width;px+=2){const u=px/r.width;
+        const y=midY+Math.sin(u*Math.PI*2*f+t*spd)*amp+Math.sin(u*Math.PI*2*(f*2.3)+t*spd*1.4)*amp*0.35;
+        px===0?x.moveTo(px,y):x.lineTo(px,y);}
+      const col=L===0?'87,227,194':(L===1?'244,166,89':'155,140,255');
+      x.strokeStyle='rgba('+col+','+(0.5-L*0.13)+')';x.lineWidth=L===0?1.6:1;x.stroke();
+    }
+    if(!reduce){t+=0.012;requestAnimationFrame(frame);}
+  }
+  reduce?frame():requestAnimationFrame(frame);
+})();
+
+/* ---------- a reusable player (button + waveform) ---------- */
+function buildPlayer(host, asset, accent){
+  const cv=host.querySelector('canvas'), g=cv.getContext('2d');
+  const audio=new Audio(asset.src), btn=host.querySelector('.play');
+  let progress=0;
+  function draw(){
+    const rect=cv.getBoundingClientRect(),d=devicePixelRatio||1;
+    cv.width=rect.width*d;cv.height=rect.height*d;g.setTransform(d,0,0,d,0,0);
+    const W=rect.width,H=rect.height,mid=H/2,n=asset.wave.length,bw=W/n;
+    for(let i=0;i<n;i++){const h=Math.max(1,asset.wave[i]*H*0.92),pos=i/n;
+      g.fillStyle=pos<=progress?accent:'#3A406A';g.fillRect(i*bw,mid-h/2,Math.max(1,bw*0.7),h);}
+  }
+  draw(); addEventListener('resize',draw);
+  btn.onclick=()=>{
+    if(audio.paused){document.querySelectorAll('audio').forEach(a=>a!==audio&&a.pause());audio.play();btn.innerHTML=PAUSE;}
+    else{audio.pause();btn.innerHTML=PLAY;}
+  };
+  audio.ontimeupdate=()=>{progress=audio.currentTime/(audio.duration||1);draw();};
+  audio.onended=()=>{btn.innerHTML=PLAY;progress=0;draw();};
+}
+
+/* ---------- creations data (build sheets) ---------- */
+const CREATIONS=[
+ {key:'dream_mix',title:'The Black Theater',featured:true,role:'full mix',
+  meta:'A Phrygian · 60 BPM · stereo · 96 s',
+  desc:'The six organs summed into one piece. Three movements follow the eyes — kind, then adoring & envious, then closing — driven by shared automation lanes; the stereo width swells and then collapses with them.',
+  design:[['Sum','Six organs','audience · child · fishing · pedal · pulse · glint, each at its own level.'],
+          ['Lanes','Automation','Shared curves drive amplitude, filter cutoff, warmth, adoration, envy & murmur across the 3 movements.'],
+          ['Glue','Soft clip','tanh saturation on the master for analog warmth and peak control.']],
+  steps:['Render each organ to a stereo buffer (96 s).','Sum at 0.9 / 0.7 / 0.6 / 0.5 / 0.4 / 0.3.','Scale ×0.7 and tanh soft-clip the master.','Write 16-bit stereo WAV; archive the whole edition under versions/.'],
+  params:{Key:'A Phrygian',Tempo:'60 BPM',Voices:'6',Out:'stereo WAV'}},
+
+ {key:'audience',title:'Audience — the eyes',stem:true,role:'drone · wide',
+  meta:'volume 0.90 · all around · moving',
+  desc:'The world full of eyes, and the protagonist of the piece. An open-fifth drone (no third → "black") that warms in childhood, then in movement II splits into a bright adoration shimmer and a dissonant envy cluster, before the eyes close.',
+  design:[['Osc','Open-fifth core','A1 + E2 + A2 sines with slow analog drift — no third, so the harmony stays "black".'],
+          ['Layer','Warm third','C3 + E3 sines, gated by the warmth lane — present in childhood, gone by mastery.'],
+          ['Layer','Adoration','detuned saws E3/A3/C4/E4, swelling in movement II.'],
+          ['Layer','Envy','detuned saws A#2/A#3/F3 — the Bb beats against A; grows late in II.'],
+          ['Texture','Crowd murmur','low-passed noise (260 Hz), faint, fading as the room empties.'],
+          ['Filter','Dark LPF sweep','resonant lowpass swept 430 → 1150 → 150 Hz across the movements.'],
+          ['Space','Width + motion','rendered twice (decorrelated) for width; auto-pan 0.025 Hz; width collapses to mono in III.'],
+          ['Space','Shimmer + reverb','octave-up shimmer halo (× adoration) + stereo convolution reverb (4.8 s).']],
+  steps:['Render the drone twice with different drift seeds → L and R.','Add warm / adoration / envy / murmur layers, each scaled by its automation lane.','Sweep the dark resonant lowpass with the cutoff lane.','Apply the breathing swell × master amplitude.','Mid/side width automation + slow auto-pan.','Add the shimmer halo, then stereo reverb.'],
+  params:{Core:'A1·E2·A2',Mode:'open 5th',Cutoff:'430→1150→150',Reverb:'4.8 s'}},
+
+ {key:'child',title:'Child — a wind',stem:true,role:'lead · centre',
+  meta:'volume 0.70 · centre · near',
+  desc:'You: small and exposed, dead centre and close. A hollow flute tone with breath on the attack and a vibrato that fades in — sighing Phrygian phrases that grow confident in movement II and resign in III.',
+  design:[['Osc','Hollow flute','sine fundamental + 0.14 × 3rd harmonic → a breathy, hollow timbre.'],
+          ['Mod','Vibrato','5 Hz, depth fading in after 0.4 s (how a held breath behaves).'],
+          ['Noise','Breath chiff','band-passed noise at 2.5× pitch, gated to the attack only.'],
+          ['Noise','Air','low-passed noise (2200 Hz) at low level — body of breath.'],
+          ['Notes','Phrygian phrases','tender (I) → soaring with a strained Bb (II) → low & resigned (III).'],
+          ['Space','Intimate','centre, dry core; stereo reverb tail (3.0 s) for a little air.']],
+  steps:['Build each note: hollow tone + fade-in vibrato.','Add the breath chiff (attack) and a touch of air.','Envelope and place each phrase on the timeline.','Keep it centred; add a short stereo reverb tail for intimacy.'],
+  params:{Vibrato:'5 Hz',Harm:'1 + 3rd',Reverb:'3.0 s',Pan:'centre'}},
+
+ {key:'pulse',title:'Pulse — the heartbeat',stem:true,role:'rhythm · time',
+  meta:'volume 0.40 · centre · near',
+  desc:'The thread of time through the timeless drone — a soft sub heartbeat. Calm lub-dub in childhood, quicker and fainter amid the crowd, slowing and fading as the end nears.',
+  design:[['Osc','Sub thump','sine at 72 Hz dropping to ~32 Hz in 80 ms — a soft kick.'],
+          ['Env','Fast decay','exponential, ~90 ms — a heartbeat, not a drum.'],
+          ['Pattern','Tempo by movement','calm lub-dub (I), steady & faint (II), slowing + dying (III).'],
+          ['Filter/space','Close','low-pass 200 Hz; minimal reverb (1.8 s) — kept near.']],
+  steps:['Synthesize a single soft thump (pitch-drop sine + fast decay).','Place lub-dub pairs with movement-dependent tempo & gain.','Low-pass to keep it sub; add a touch of close reverb.'],
+  params:{Pitch:'72→32 Hz',Decay:'90 ms',LPF:'200 Hz',Pan:'centre'}},
+
+ {key:'pedal',title:'Pedal — the stage floor',stem:true,role:'bass · bottom',
+  meta:'volume 0.50 · centre · bottom',
+  desc:'A deep drawbar-organ tone — the literal ground beneath everything, giving the world a floor. A nod to the "organ" you named the voices after.',
+  design:[['Osc','Drawbars','sines at harmonics 1·2·3·4·6 of A1 — additive, like an organ\'s drawbars.'],
+          ['Mod','Drift','slow per-harmonic drift for analog life.'],
+          ['Filter','Warm LPF','low-pass 600 Hz — round and dark.'],
+          ['Env','Floor arc','swells with the piece, strongest under the movement-II peak.'],
+          ['Space','Centre','centred, light stereo reverb (3.2 s).']],
+  steps:['Sum the drawbar harmonics of A1 with drift.','Low-pass for warmth.','Shape with the floor amplitude arc.','Centre-pan and add light reverb.'],
+  params:{Root:'A1',Drawbars:'1·2·3·4·6',LPF:'600 Hz',Pan:'centre'}},
+
+ {key:'glint',title:'Glint — the line',stem:true,role:'texture · top',
+  meta:'volume 0.30 · high · wide · far',
+  desc:'A high, glassy thread cast upward — the line into the dark, taut with hope through movement II. The top of the field: panned wide and set far back.',
+  design:[['Osc','Glassy','high sine + a 1.5× partial (a fifth above) for a glassy ring.'],
+          ['Mod','Slow vibrato','4.2 Hz, gentle.'],
+          ['Env','Slow swell','1.3 s attack — it appears rather than strikes.'],
+          ['Space','High & far','notes panned alternately L/R; long reverb (7.0 s) sets it far back.']],
+  steps:['Build glassy high notes with a slow swell.','Pan successive notes to alternating sides.','Place them mostly in movement II.','Drench in long reverb to push them far and high.'],
+  params:{Reg:'A5–E6',Vib:'4.2 Hz',Reverb:'7.0 s',Pan:'wide'}},
+
+ {key:'fishing',title:'Fishing — what awaits',stem:true,role:'gesture · far',
+  meta:'volume 0.60 · roaming · far',
+  desc:'Soundings cast into the dark: deep, round tones that drop in pitch and ring out, rippling left↔right and roaming into the distance — lonely, probing, unanswered.',
+  design:[['Osc','Sounding','sine + detuned octave (2.005×) + 3rd partial; pitch drops 3 % over 1 s.'],
+          ['Env','Long ring','fast attack, 2.5 s decay — a struck depth.'],
+          ['Filter','Round','low-pass 1200 Hz — dark, not bright; no clang.'],
+          ['Time','Ping-pong ripples','tempo-synced delay (1.5 s), echoes alternate L/R, feedback 0.45.'],
+          ['Space','Roam + far','auto-pan 0.02 Hz; long stereo reverb (6.0 s) = the void.']],
+  steps:['Synthesize each sounding (pitch-drop sine stack + long decay).','Low-pass for a round, dark tone.','Place sparse casts across the movements.','Ping-pong delay for ripples; auto-pan to roam; long reverb for distance.'],
+  params:{Drop:'3 % / 1 s',LPF:'1200 Hz',Delay:'1.5 s',Reverb:'6.0 s'}},
+
+ {key:'pad',title:'Oxygène-style pad',early:true,role:'study · mono',
+  meta:'early study · mono',
+  desc:'The very first voice of the project — a study of the subtractive signal chain, made before the dream gave the work its direction.',
+  design:[['Osc','Supersaw','7 detuned saws per note → a thick string ensemble (Am9 chord).'],
+          ['Env','Slow swell','slow-attack ADSR, like a string machine.'],
+          ['Filter','Resonant LPF','softens the buzz, adds body.'],
+          ['Space','Phaser + reverb','swept-allpass phaser shimmer + 3 s reverb. Mono.']],
+  steps:['Stack 7 detuned saws per chord note.','Swell with a slow ADSR.','Soften with a resonant lowpass.','Phaser, then reverb.'],
+  params:{Chord:'Am9',Voices:'7 saws',FX:'phaser+reverb',Out:'mono'}},
+];
+
+const C=Object.fromEntries(CREATIONS.map(c=>[c.key,c]));
+const rack=document.getElementById('rack');
+
+function addCreation(container, cr, nested){
+  const A=ASSETS[cr.key]; if(!A) return;
+  const accent=cr.featured?'#57E3C2':'#F4A659';
+  const el=document.createElement('div');
+  el.className='creation'+(cr.featured?' featured':'')+(nested?' child':'')+(cr.early?' study':'');
+  el.innerHTML=`
+    <div class="ctop"><h3>${cr.title}<span class="role">${cr.role}</span></h3>
+      <div class="cmeta">${cr.meta} · ${A.dur}s</div></div>
+    <p class="cdesc">${cr.desc}</p>
+    <div class="player"><button class="play" aria-label="Play ${cr.title}">${PLAY}</button>
+      <div class="wavewrap"><canvas></canvas></div></div>
+    <details class="sheet"><summary>Build sheet — signal chain &amp; steps</summary>
+      <div class="sheet-grid">
+        <div><h4>Signal chain</h4><div class="stages">${cr.design.map((s,i)=>
+          `<div class="stg"><span class="n">${String(i+1).padStart(2,'0')}</span><div><b>${s[1]}</b> <span>· ${s[0]}</span><br><span>${s[2]}</span></div></div>`).join('')}</div></div>
+        <div><h4>Build steps</h4><ol class="steps">${cr.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+          <div class="params">${Object.entries(cr.params).map(([k,v])=>`<span class="param">${k} <b>${v}</b></span>`).join('')}</div></div>
+      </div>
+    </details>
+    <div class="tags">${cr.tags?cr.tags.map(tagHTML).join(''):''}</div>`;
+  container.appendChild(el);
+  buildPlayer(el.querySelector('.player'), A, accent);
+}
+
+// 1) the composed piece, then 2) its parts nested beneath, then 3) studies
+const PART_ORDER=['audience','pedal','pulse','child','glint','fishing'];  // floor → top → gesture
+addCreation(rack, C['dream_mix'], false);
+
+const plabel=document.createElement('div'); plabel.className='parts-label';
+plabel.innerHTML='<span class="pl-dot">▾</span> assembled from six organs — play any part on its own';
+rack.appendChild(plabel);
+const parts=document.createElement('div'); parts.className='parts'; rack.appendChild(parts);
+PART_ORDER.forEach(k=>addCreation(parts, C[k], true));
+
+const slabel=document.createElement('div'); slabel.className='parts-label std';
+slabel.textContent='Studies — not part of the piece';
+rack.appendChild(slabel);
+addCreation(rack, C['pad'], false);
+
+/* ---------- Icarus creations ---------- */
+const ICARUS=[
+ {key:'icarus_mix', title:'Icarus, or the Effort of Flight', featured:true, role:'full mix',
+  meta:'A → A Lydian · 128 BPM · stereo · 3 min',
+  desc:'A flying dream fused with cosmic horror, on a real Jupiter recording. Struggle → breakthrough → keeping the pace. In the sustain the effort comes in waves: flap (clap + bass drive) then GLIDE (percussion drops, you float on rushing wind).',
+  design:[['Lanes','Effort in waves','an automation lane alternates flapping and gliding; the breakthrough is a master breath then a surge.'],
+          ['Sum','Nine organs','tension · clap · riser · pad · bass · lead · void · flutes · wind.'],
+          ['Glue','Soft clip','tanh saturation on the master.']],
+  steps:['Render each organ to stereo (180 s).','Apply the breath-then-burst gate at the breakthrough.','Sum, scale ×0.6, soft-clip.','Archive as icarus-v003.'],
+  params:{Key:'A → Lydian',Tempo:'128 BPM',Source:'Jupiter ion-acoustic',Form:'struggle→break→pace'},
+  tags:['stereo','flight','cosmic horror','sampled']},
+ {key:'ic_clap', title:'Clap — the effort', stem:true, role:'pulse · effort',
+  meta:'flap / glide',
+  desc:'What keeps you aloft. A fast clap on the 16th grid; it drives during FLAPS and drops out entirely during GLIDES — the waves of effort that break the monotony.',
+  design:[['Osc','Synth clap','two band-passed noise bursts (1700 & 950 Hz), 22 ms decay.'],
+          ['Pattern','16th grid','gain follows the effort lane; silent during glides.'],
+          ['Space','Alt-pan + room','left/right per hit; tight reverb.']],
+  steps:['Synthesize one clap.','Place on the 16th grid.','Scale by the effort lane (zero on glides).','Pan + light reverb.'],
+  params:{Grid:'16th @128',Decay:'22 ms',Pan:'alt L/R'},
+  tags:['pulse','motoric','effort']},
+ {key:'ic_bass', title:'Bass — the drive', stem:true, role:'bass · momentum',
+  meta:'rests on glides',
+  desc:'Forward momentum during the flaps — a driving Lydian bass that rests when you glide, so the music surges and floats in waves.',
+  design:[['Osc','Saw bass','sawtooth → resonant lowpass; punchy envelope.'],
+          ['Pattern','8th-note riff','A–E–F♯–D motion; gated by the drive lane (= effort × base).'],
+          ['Filter','Altitude→cutoff','opens as you rise.']],
+  steps:['Sequence the 8th-note bass.','Gate by the drive lane (silent on glides).','Filter by altitude; light reverb.'],
+  params:{Root:'A1',Pattern:'8ths',Gate:'drive=effort×base'},
+  tags:['bass','drive','momentum']},
+ {key:'ic_pad', title:'Altitude — joy & strain', stem:true, role:'pad · soaring',
+  meta:'dark → bright',
+  desc:'The flight itself. A pad that crossfades from a dark, tense chord (the struggle) to bright Lydian at the breakthrough; its filter opens with altitude and it wavers when effort flags.',
+  design:[['Osc','Dark↔Lydian','two chords crossfaded by the brightness lane.'],
+          ['Filter','Altitude→cutoff','400→3900 Hz.'],
+          ['Mod','Strain waver','amplitude dips when effort drops.'],
+          ['Space','Phaser + reverb','wide and airy.']],
+  steps:['Build dark + Lydian chords.','Crossfade by brightness; sweep filter by altitude.','Apply the strain waver.','Phaser + stereo reverb.'],
+  params:{Modes:'minor→Lydian',Cutoff:'400→3900'},
+  tags:['lydian','soaring','strain']},
+ {key:'ic_lead', title:'Lead — the joy', stem:true, role:'lead · melody',
+  meta:'floats on glides',
+  desc:'The singing melody of flight. A rising Lydian line that keeps floating during the glides (it follows altitude, not the clap), and droops in pitch when the effort sags.',
+  design:[['Osc','Sine + saw','bright lead tone.'],
+          ['Notes','Rising Lydian motif','jumps an octave at height.'],
+          ['Mod','Pitch droop','~3% flat when tiring.']],
+  steps:['Sequence the rising motif.','Float its level on altitude.','Droop pitch with effort; stereo reverb.'],
+  params:{Mode:'Lydian',Sag:'pitch'},
+  tags:['lydian','joy','floating']},
+ {key:'ic_tension', title:'Tension — the struggle', stem:true, role:'drone · stress',
+  meta:'resolves at the break',
+  desc:'The stress of getting up: a low dissonant drone (root, ♭2, tritone) that builds through the struggle and RELEASES at the breakthrough.',
+  design:[['Osc','Dissonant drone','A1 + A♯1 (♭2) + D♯2 (tritone) — beating and unstable.'],
+          ['Filter','Dark LPF','520 Hz.'],
+          ['Mod','Tension lane','builds, then drops at the breakthrough.']],
+  steps:['Stack the dissonant low notes.','Low-pass; scale by the tension lane.','Stereo reverb.'],
+  params:{Notes:'A·A♯·D♯',Interval:'♭2 + tritone'},
+  tags:['dissonant','stress','drone']},
+ {key:'ic_riser', title:'Riser — into the break', stem:true, role:'fx · transition',
+  meta:'36→46 s',
+  desc:'The build into the breakthrough: a rising filtered-noise sweep plus a reversed Jupiter swell, climbing for ten seconds into the held breath.',
+  design:[['Noise','Rising sweep','noise through a lowpass whose cutoff rises 300→12 kHz.'],
+          ['Sample','Reversed Jupiter','the recording reversed and swelling.'],
+          ['Space','Reverb','blends them into one rise.']],
+  steps:['Build the rising noise sweep.','Reverse + swell the sample.','Mix, reverb, place at 36 s.'],
+  params:{Sweep:'300→12k',Length:'10 s'},
+  tags:['riser','reverse','transition']},
+ {key:'ic_void', title:'Void — the cosmos (Jupiter)', stem:true, role:'texture · abyss',
+  meta:'engineered from the sample',
+  desc:'The real ion-acoustic recording of Jupiter, engineered three ways and looming louder the higher you fly — cosmic horror made of actual cosmos.',
+  design:[['Sample','Varispeed abyss','resampled to 0.35× (down ~1.5 octaves), looped, low-passed.'],
+          ['Sample','Granular cloud','grains pitched ½, scattered wide — the churn.'],
+          ['Sample','Spectral drone','the sample\'s magnitude spectrum re-excited with noise.'],
+          ['Space','Huge reverb','5.5 s — vast and far.']],
+  steps:['Load the Jupiter mp3.','Make abyss + cloud + drone layers.','Scale by the void lane.','Long stereo reverb.'],
+  params:{Speed:'0.35×',Grain:'120 ms',Reverb:'5.5 s'},
+  tags:['granular','spectral','sampled','horror']},
+ {key:'ic_flutes', title:'Flutes — the wrongness', stem:true, role:'texture · alien',
+  meta:'whole-tone · at height',
+  desc:'Daemon-flutes: thin whole-tone piping that only appears at altitude. No semitones means no home — the alien sound of a cosmos that should not be.',
+  design:[['Osc','Thin pipe','sine + faint octave + air.'],
+          ['Notes','Whole-tone','erratic, no tonal home.'],
+          ['Space','Far reverb','6.5 s, wide.']],
+  steps:['Build a thin piping note.','Place erratic whole-tone notes at height.','Gate by the flute lane; far reverb.'],
+  params:{Scale:'whole-tone',Reverb:'6.5 s'},
+  tags:['whole-tone','alien','far']},
+ {key:'ic_wind', title:'Wind — the glide', stem:true, role:'texture · air',
+  meta:'only when gliding',
+  desc:'Air rushing past — present ONLY when the hands go still and you glide. It fills the silence the clap leaves, so the gliding feels like flight, not absence.',
+  design:[['Noise','Filtered air','low-passed noise, soft.'],
+          ['Mod','Inverse effort','loud when effort is low (gliding), silent when flapping.'],
+          ['Space','Reverb','airy, wide.']],
+  steps:['Filter noise into air.','Gate by (1 − effort) within the sustain.','Stereo reverb.'],
+  params:{Gate:'1−effort',Region:'sustain only'},
+  tags:['wind','glide','air']},
+];
+/* ---------- Creations hub (gallery) ---------- */
+const GALLERY=[
+ {key:'dream_mix', title:'The Black Theater', tab:'theater', accent:'#57E3C2',
+  brings:'Stillness &amp; dread. A dark-ambient dream (A Phrygian) in three movements as a watching crowd turns kind → envious → gone. <b>Brings:</b> the emotional use of stereo space, slow evolving texture, six organs in a 3-D field.'},
+ {key:'icarus_mix', title:'Icarus, or the Effort of Flight', tab:'icarus', accent:'#F4A659',
+  brings:'Drive &amp; dynamic contrast. A flying dream over a real Jupiter recording: struggle → breakthrough → flap-and-glide. <b>Brings:</b> rhythm, dramatic arc, and sample-based sound design (granular, spectral, varispeed).'},
+];
+const gal=document.getElementById('gallery');
+GALLERY.forEach(g=>{
+  const A=ASSETS[g.key]; if(!A) return;
+  const el=document.createElement('div'); el.className='creation featured';
+  el.innerHTML=`<div class="ctop"><h3>${g.title}</h3><div class="cmeta">${A.dur}s</div></div>
+    <p class="cdesc">${g.brings}</p>
+    <div class="player"><button class="play" aria-label="Play ${g.title}">${PLAY}</button>
+      <div class="wavewrap"><canvas></canvas></div></div>
+    <div class="tags"><button class="btn-open">Open ${g.title} →</button></div>`;
+  gal.appendChild(el);
+  buildPlayer(el.querySelector('.player'), A, g.accent);
+  el.querySelector('.btn-open').onclick=()=>{showTab(g.tab,true); nav.scrollIntoView({block:'start',behavior:RM?'auto':'smooth'});};
+});
+// the playable instrument — pride of place
+const liveCard=document.createElement('div'); liveCard.className='creation featured live-card';
+liveCard.innerHTML=`<div class="ctop"><h3>Signal Lab Live</h3><div class="cmeta">interactive · play it yourself</div></div>
+  <p class="cdesc">Not a recording — an <b>instrument</b>. A scale-locked step sequencer, a drone, a filter to sweep, reverb and a live oscilloscope, all built from this very engine. Place notes (nothing is ever out of key), then perform. It even has a small JS API, so a jam can be shared as a single link.</p>
+  <div class="tags"><a class="btn-open live" href="live.html">▶ Open the instrument →</a></div>`;
+gal.appendChild(liveCard);
+const studioCard=document.createElement('div'); studioCard.className='creation featured live-card';
+studioCard.innerHTML=`<div class="ctop"><h3>Signal Lab Studio</h3><div class="cmeta">interactive · multi-track</div></div>
+  <p class="cdesc">The enhanced instrument: <b>four tracks at once</b> — pad, arp, bass and a <b>portamento</b> lead — with presets for <b>Jarre</b> and <b>Vangelis</b>, a chord-progression editor, a live oscilloscope, <b>WAV export</b>, and a <b>MIDI engine</b> that renders any <code>.mid</code> you load through our own voices.</p>
+  <div class="tags"><a class="btn-open live" href="studio.html">▶ Open the studio →</a></div>`;
+gal.appendChild(studioCard);
+
+const rackI=document.getElementById('rack-icarus');
+addCreation(rackI, ICARUS[0], false);
+const ilabel=document.createElement('div'); ilabel.className='parts-label';
+ilabel.innerHTML='<span class="pl-dot">▾</span> five organs — play any on its own';
+rackI.appendChild(ilabel);
+const ipart=document.createElement('div'); ipart.className='parts'; rackI.appendChild(ipart);
+ICARUS.slice(1).forEach(cr=>addCreation(ipart, cr, true));
+
+/* ---------- signal-chain cards (method tab) ---------- */
+const STAGES=[
+ ['Osc','Oscillator','Band-limited saw / square / sine (additive) — the raw harmonic content.'],
+ ['Env','ADSR','Attack-decay-sustain-release shapes each note in time.'],
+ ['Filter','Resonant LPF','RBJ biquad lowpass — tames harmonics, adds body; cutoff can be swept.'],
+ ['Mod','LFO + drift','Slow modulation and analog pitch drift = movement and life.'],
+ ['FX','Phaser','Cascaded allpass notches swept by an LFO — the string-machine shimmer.'],
+ ['Space','Reverb / delay','Convolution reverb + ping-pong delay — depth and time.'],
+];
+document.getElementById('chainGrid').innerHTML=STAGES.map((s,i)=>
+ `<div class="card"><div class="ix">${String(i+1).padStart(2,'0')} · ${s[0]}</div><h3>${s[1]}</h3><p>${s[2]}</p></div>`).join('');
+
+/* ---------- editions ---------- */
+const EDITIONS=[
+ {v:'Theater · SC',cur:true,title:'The Black Theater — voiced on SuperCollider',
+  desc:'The three movements re-voiced through the full AI → patch → engine pipeline and rendered via synth.py. Reusable instruments saved in patches/theater/.',src:'theater_sc.mp3'},
+ {v:'Icarus v001',cur:false,title:'Icarus — flight & cosmic horror',
+  desc:'Second creation. A 3-minute flying dream over a real Jupiter recording (granular + spectral + varispeed). New sample-engineering tools added to the engine.',src:'icarus_mix.mp3'},
+ {v:'Theater v002',cur:false,title:'The Black Theater — stereo · six organs',
+  desc:'Stereo engine; three new organs (pedal, pulse, glint); voices placed in a 3D field; shimmer halo; width automated across the movements.',src:'dream_mix.mp3'},
+ {v:'Theater v001',cur:false,title:'The Black Theater — mono · three movements',
+  desc:'First full composition — the three-movement arc of the eyes. Mono, no spatialisation.',src:'versions/v001-mono-3movements/mix.mp3'},
+];
+const edRoot=document.getElementById('editions');
+EDITIONS.forEach(ed=>{
+  const el=document.createElement('div'); el.className='ed'+(ed.cur?'':' old');
+  el.innerHTML=`<div class="v">${ed.v}${ed.cur?' ◀':''}</div>
+    <div><h3>${ed.title}</h3><p>${ed.desc}</p></div>
+    <button class="play" aria-label="Play ${ed.v}">${PLAY}</button>`;
+  edRoot.appendChild(el);
+  const audio=new Audio(ed.src), btn=el.querySelector('.play');
+  btn.onclick=()=>{if(audio.paused){document.querySelectorAll('audio').forEach(a=>a!==audio&&a.pause());audio.play();btn.innerHTML=PAUSE;}else{audio.pause();btn.innerHTML=PLAY;}};
+  audio.onended=()=>btn.innerHTML=PLAY;
+});
+
+/* ---------- progress log ---------- */
+const LOG=[
+ ['done','Toolchain & engine','venv (numpy/scipy) + synth.py: band-limited oscillators, ADSR, resonant biquad/bandpass, FM, phaser, tape delay, reverb, scale-lock.'],
+ ['done','Found the source','The childhood dream — "The Black Theater" — chosen as the emotional source; key & tempo set from it.'],
+ ['done','Composition — 3 movements','Automation lanes (+ fast phaser, FFT reverb). 96 s through-composed: kind → adoration & envy → the eyes close.'],
+ ['done','Stereo & space (v002)','Stereo engine (pan, width, auto-pan, ping-pong, shimmer, stereo reverb). Six organs in a 3D field; width breathes with the movements.'],
+ ['done','Versioning','Every edition archived under versions/ with its exact code.'],
+ ['done','Space sound bank','Downloaded 12 real cosmic recordings (CC BY 4.0) into a Digital Library; added sample-engineering tools (granular, spectral, convolution, ring-mod, varispeed).'],
+ ['done','Second creation — Icarus','A 3-minute flying-dream-meets-cosmic-horror piece built on the Jupiter ion-acoustic sample. Archived as icarus-v001.'],
+ ['now','Refine both pieces','Balance and detail passes by ear on The Black Theater and Icarus.'],
+ ['next','MIDI export','Emit melodic organs as .mid for GarageBand instruments.'],
+ ['next','Arrange & mix in GarageBand','Stems on tracks; pan, EQ, automate; polish.'],
+ ['next','Master','Bus compression, final stereo masters.'],
+];
+document.getElementById('log').innerHTML=LOG.map(s=>
+ `<div class="step"><div class="st ${s[0]}"><span class="chk"></span>${s[0]==='now'?'in progress':s[0]}</div>
+   <div><h3>${s[1]}</h3><p>${s[2]}</p></div></div>`).join('');
+</script>

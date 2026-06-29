@@ -1,0 +1,46 @@
+{
+  "v": 1,
+  "name": "theater-pedal",
+  "osc": {
+    "type": "additive",
+    "harmonics": [
+      1,
+      0.6,
+      0.4,
+      0.22,
+      0,
+      0.1
+    ],
+    "wave": "saw",
+    "ratio": 2.0,
+    "index": 200.0,
+    "voices": 1,
+    "detune": 8.0
+  },
+  "filter": {
+    "type": "lowpass",
+    "cutoff": 600.0,
+    "q": 0.8,
+    "env_amt": 0
+  },
+  "env": {
+    "a": 3.0,
+    "d": 0,
+    "s": 1,
+    "r": 4.0
+  },
+  "lfo": {
+    "target": "none",
+    "rate": 5.0,
+    "depth": 0
+  },
+  "fx": {
+    "reverb": 0.35,
+    "delay": 0,
+    "delay_time": 0.3,
+    "width": 0.5,
+    "drive": 1.0
+  },
+  "dur": 3.0,
+  "note": "A3"
+}

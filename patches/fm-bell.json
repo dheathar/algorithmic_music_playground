@@ -1,0 +1,11 @@
+{
+  "v": 1,
+  "name": "fm-bell",
+  "dur": 3.5,
+  "note": "E4",
+  "osc": { "type": "fm", "ratio": 3.5, "index": 320 },
+  "filter": { "type": "lowpass", "cutoff": 4000, "q": 1.0 },
+  "env": { "a": 0.002, "d": 1.6, "s": 0.05, "r": 1.2 },
+  "lfo": { "target": "none", "rate": 5, "depth": 0 },
+  "fx": { "reverb": 0.55, "delay": 0.25, "delay_time": 0.375, "width": 0.6, "drive": 1.0 }
+}

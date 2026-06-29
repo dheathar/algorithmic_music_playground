@@ -1,0 +1,902 @@
+<title>Signal Lab — The Black Theater</title>
+<meta name="description" content="A working journal: synthesizing a childhood dream as electronic music, every sound built from first-principles DSP.">
+<style>
+  :root{
+    --bg:#0A0C18; --panel:#12152A; --panel-2:#181C36; --line:#272C4C;
+    --text:#E7E9F3; --muted:#8C92B2; --faint:#5A6088;
+    --amber:#F4A659; --amber-dim:#B97C3E;
+    --phosphor:#57E3C2; --phosphor-dim:#2E8C77;
+    --violet:#9B8CFF;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --body:-apple-system,system-ui,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);
+    line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  ::selection{background:var(--amber);color:#0A0C18}
+  h1,h2,h3,h4{text-wrap:balance}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--faint)}
+
+  /* ---------- HERO ---------- */
+  header{position:relative;border-bottom:1px solid var(--line);overflow:hidden}
+  #scope{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:.5}
+  .hero-in{position:relative;padding:72px 24px 60px;max-width:1180px;margin:0 auto}
+  .eyebrow{display:flex;gap:14px;align-items:center;margin-bottom:22px}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--phosphor);
+    box-shadow:0 0 12px var(--phosphor)}
+  h1{font-weight:800;letter-spacing:-.03em;line-height:.96;margin:0;
+    font-size:clamp(40px,7.5vw,84px)}
+  h1 .em{color:var(--amber)}
+  .sub{margin:20px 0 0;max-width:56ch;font-size:18px;color:var(--muted)}
+  .readout{margin-top:30px;display:flex;flex-wrap:wrap;gap:10px 26px;
+    font-family:var(--mono);font-size:12px;color:var(--phosphor)}
+  .readout span{color:var(--faint)}
+
+  /* ---------- TABS ---------- */
+  .tabbar{position:sticky;top:0;z-index:20;background:rgba(10,12,24,.86);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .tabbar-in{max-width:1180px;margin:0 auto;display:flex;gap:4px;padding:0 16px;
+    overflow-x:auto}
+  .tab{flex:none;background:none;border:none;color:var(--muted);cursor:pointer;
+    font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    padding:16px 16px 14px;border-bottom:2px solid transparent;transition:.16s}
+  .tab:hover{color:var(--text)}
+  .tab[aria-selected="true"]{color:var(--phosphor);border-bottom-color:var(--phosphor)}
+  .tab:focus-visible{outline:2px solid var(--amber);outline-offset:-4px;border-radius:4px}
+  .navspace{flex:1 0 16px}
+  .navlink{flex:none;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--violet);padding:16px 12px;border-bottom:2px solid transparent;white-space:nowrap}
+  .navlink:hover{color:var(--phosphor)}
+  .navlink.live{color:var(--amber)}.navlink.live:hover{color:#0A0C18;background:var(--amber);border-radius:6px}
+  .navlink:focus-visible{outline:2px solid var(--amber);outline-offset:-4px;border-radius:4px}
+
+  .panel{display:none;padding:56px 0 40px;animation:fade .35s ease}
+  .panel.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.panel{animation:none}#scope{opacity:.3}}
+
+  .phead{margin:0 0 8px;font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-.02em}
+  .lead{color:var(--muted);max-width:66ch;font-size:17px;margin:0 0 34px}
+  .lead.tight{margin-bottom:20px}
+  .subh{font-size:17px;font-weight:700;letter-spacing:-.01em;margin:42px 0 18px}
+  em{font-style:normal;color:var(--text)}
+
+  /* ---------- generic card grid ---------- */
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 16px}
+  .card .ix{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--phosphor)}
+  .card h3{margin:10px 0 6px;font-size:16px;letter-spacing:-.01em}
+  .card p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+
+  /* ---------- dream ---------- */
+  .dreamquote{margin:0 0 8px;padding:22px 26px;border-left:2px solid var(--amber);
+    background:linear-gradient(90deg,rgba(244,166,89,.06),transparent);
+    font-size:clamp(19px,2.6vw,25px);line-height:1.5;font-style:italic;color:var(--text);
+    border-radius:0 8px 8px 0}
+  .mvts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .mvt{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:18px;border-top:2px solid var(--line)}
+  .mvt.m1{border-top-color:#E7B27A}.mvt.m2{border-top-color:var(--phosphor)}.mvt.m3{border-top-color:#6A4FB0}
+  .mhd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .mnum{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--amber)}
+  .m2 .mnum{color:var(--phosphor)}.m3 .mnum{color:var(--violet)}
+  .mt{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--faint)}
+  .mvt h3{margin:0 0 6px;font-size:16px}.mvt p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+
+  /* ---------- creations / build sheets ---------- */
+  .rack{display:flex;flex-direction:column;gap:18px}
+  .creation{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}
+  .creation.featured{border-color:var(--phosphor-dim);
+    box-shadow:0 0 0 1px rgba(87,227,194,.16),0 18px 50px -22px rgba(87,227,194,.25)}
+  .creation.stem{border-left:2px solid var(--amber-dim)}
+  /* hierarchy: composed piece -> its parts */
+  .parts{margin-top:14px;padding-left:24px;border-left:2px solid var(--phosphor-dim);
+    display:flex;flex-direction:column;gap:12px;position:relative}
+  .parts::before{content:"";position:absolute;left:-2px;top:0;width:2px;height:26px;
+    background:linear-gradient(var(--phosphor),var(--phosphor-dim))}
+  .parts-label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--faint);margin:18px 0 0;display:flex;gap:8px;align-items:center}
+  .parts-label .pl-dot{color:var(--phosphor)}
+  .parts-label.std{margin-top:36px;padding-top:26px;border-top:1px solid var(--line)}
+  .creation.child{background:var(--panel-2);padding:18px 20px}
+  .creation.child .ctop h3{font-size:17px}
+  .creation.study{border-style:dashed;opacity:.92}
+  @media(max-width:600px){.parts{padding-left:14px}}
+  .ctop{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:baseline}
+  .ctop h3{margin:0;font-size:20px;letter-spacing:-.01em}
+  .featured .ctop h3{font-size:24px}
+  .role{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--phosphor);border:1px solid var(--phosphor-dim);border-radius:999px;padding:2px 9px;
+    margin-left:10px;vertical-align:middle}
+  .cmeta{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.06em}
+  .cdesc{margin:12px 0 16px;color:var(--muted);font-size:14px;max-width:78ch}
+  .player{display:flex;align-items:center;gap:16px}
+  .play{flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--phosphor-dim);
+    background:var(--panel-2);color:var(--phosphor);cursor:pointer;display:grid;place-items:center;transition:.18s}
+  .play:hover{background:var(--phosphor);color:#0A0C18;box-shadow:0 0 22px rgba(87,227,194,.4)}
+  .play:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .play svg{width:18px;height:18px}
+  .wavewrap{flex:1;height:60px}.wavewrap canvas{width:100%;height:100%;display:block}
+
+  details.sheet{margin-top:16px;border-top:1px solid var(--line);padding-top:4px}
+  details.sheet>summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:11px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:12px 0 4px;display:flex;
+    align-items:center;gap:8px}
+  details.sheet>summary::-webkit-details-marker{display:none}
+  details.sheet>summary::before{content:"▸";color:var(--phosphor);transition:.18s}
+  details.sheet[open]>summary::before{transform:rotate(90deg)}
+  .sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:14px 0 4px}
+  @media(max-width:680px){.sheet-grid{grid-template-columns:1fr;gap:18px}}
+  .sheet h4{margin:0 0 12px;font-size:12px;font-family:var(--mono);letter-spacing:.1em;
+    text-transform:uppercase;color:var(--phosphor)}
+  .stages{display:flex;flex-direction:column;gap:10px}
+  .stg{display:grid;grid-template-columns:18px 1fr;gap:10px;font-size:13.5px}
+  .stg .n{font-family:var(--mono);font-size:11px;color:var(--amber);padding-top:2px}
+  .stg b{font-weight:600}.stg span{color:var(--muted)}
+  ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px}
+  ol.steps li{font-size:13.5px;color:var(--muted);padding-left:4px}
+  ol.steps li::marker{color:var(--amber);font-family:var(--mono);font-size:12px}
+  .params{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .param{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--panel-2);
+    border:1px solid var(--line);border-radius:6px;padding:4px 9px}
+  .param b{color:var(--phosphor);font-weight:600}
+  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .tag{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--phosphor);
+    border:1px solid var(--phosphor-dim);border-radius:999px;padding:3px 11px}
+  .tag[title]{cursor:help;border-bottom-style:dashed}
+  .btn-open{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:#0A0C18;
+    background:var(--phosphor);border:none;border-radius:7px;padding:9px 16px;cursor:pointer;transition:.16s}
+  .btn-open:hover{box-shadow:0 0 22px rgba(87,227,194,.45)}
+  .btn-open:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  a.btn-open{display:inline-block;text-decoration:none}
+  .btn-open.live{background:var(--amber)}
+  .live-card{border-color:var(--amber-dim)!important;
+    box-shadow:0 0 0 1px rgba(244,166,89,.18),0 18px 50px -22px rgba(244,166,89,.28)!important}
+
+  /* ---------- field ---------- */
+  .field{position:relative;height:380px;border:1px solid var(--line);border-radius:12px;
+    background:radial-gradient(130% 90% at 50% 102%,rgba(244,166,89,.07),transparent 55%),var(--panel);overflow:hidden}
+  .axl{position:absolute;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+  .axl.top{top:12px;left:50%;transform:translateX(-50%)}.axl.bot{bottom:12px;left:50%;transform:translateX(-50%)}
+  .axl.lft{left:12px;top:12px}.axl.rgt{right:12px;top:12px}
+  .chip{position:absolute;transform:translate(-50%,-50%);background:var(--panel-2);border:1px solid var(--line);
+    border-radius:999px;padding:6px 12px;font-size:12.5px;white-space:nowrap;display:flex;gap:8px;align-items:center;
+    box-shadow:0 6px 18px -10px #000}
+  .chip .d{width:8px;height:8px;border-radius:50%;flex:none}
+  .chip small{font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .chip.you{background:var(--amber);color:#0A0C18;border-color:var(--amber);font-weight:700}
+  .field-key{margin-top:14px;font-size:13px;color:var(--muted)}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media(max-width:680px){.twocol{grid-template-columns:1fr}}
+  table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.t th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--faint);padding:10px 12px;border-bottom:1px solid var(--line)}
+  table.t td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top}
+  table.t td:first-child{color:var(--text);font-weight:600}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+
+  /* ---------- method ---------- */
+  .duo{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch}
+  .side{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+  .side .ix{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--phosphor)}
+  .side h3{margin:10px 0 6px;font-size:17px}.side p{margin:0;font-size:13px;color:var(--muted)}
+  .arrow{display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--amber)}
+  @media(max-width:600px){.duo{grid-template-columns:1fr}}
+
+  /* ---------- history ---------- */
+  .editions,.log{display:flex;flex-direction:column}
+  .ed{display:grid;grid-template-columns:64px 1fr auto;gap:18px;align-items:center;padding:16px 0;border-top:1px solid var(--line)}
+  .ed:first-child{border-top:none}
+  .ed .v{font-family:var(--mono);color:var(--phosphor);font-size:14px;font-weight:600}
+  .ed.old .v{color:var(--faint)}
+  .ed h3{margin:0;font-size:15px}.ed p{margin:3px 0 0;font-size:13px;color:var(--muted)}
+  .ed .play{width:40px;height:40px}.ed .play svg{width:15px;height:15px}
+  .step{display:grid;grid-template-columns:120px 1fr;gap:22px;padding:16px 0;border-top:1px solid var(--line);align-items:start}
+  .step:first-child{border-top:none}
+  .step .st{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding-top:3px}
+  .st.done{color:var(--phosphor)}.st.now{color:var(--amber)}.st.next{color:var(--faint)}
+  .step h3{margin:0 0 4px;font-size:15px;font-weight:700}.step p{margin:0;color:var(--muted);font-size:14px}
+  .chk{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle}
+  .done .chk{background:var(--phosphor);box-shadow:0 0 8px var(--phosphor)}
+  .now .chk{background:var(--amber);box-shadow:0 0 8px var(--amber)}.next .chk{background:var(--faint)}
+  @media(max-width:600px){.step{grid-template-columns:1fr;gap:6px}.ed{grid-template-columns:48px 1fr auto}}
+
+  .totop{position:fixed;right:22px;bottom:22px;z-index:40;width:48px;height:48px;border-radius:50%;
+    border:1px solid var(--line);background:rgba(18,21,42,.92);backdrop-filter:blur(8px);color:var(--phosphor);
+    cursor:pointer;display:grid;place-items:center;opacity:0;pointer-events:none;transition:.22s;
+    box-shadow:0 8px 24px -10px #000}
+  .totop.show{opacity:1;pointer-events:auto}
+  .totop:hover{background:var(--phosphor);color:#0A0C18;box-shadow:0 0 22px rgba(87,227,194,.4)}
+  .totop:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .totop svg{width:20px;height:20px}
+
+  footer{border-top:1px solid var(--line);padding:36px 0 64px;color:var(--faint);font-size:13px}
+  .stack{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.9;margin-top:10px}
+
+  /* =================================================================
+     HARDWARE / INSTRUMENT-PANEL REVAMP  (front-panel skin)
+     ================================================================= */
+  :root{--metal:#161a2c;--metal-2:#1d2236;--bevhi:rgba(255,255,255,.07);--bevlo:rgba(0,0,0,.6);}
+  body{background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(87,227,194,.05), transparent 70%),
+    repeating-linear-gradient(90deg,#0a0c16 0,#0a0c16 1px,#0b0d19 1px,#0b0d19 3px),
+    linear-gradient(180deg,#0b0d19,#080a12);}
+  /* brushed faceplates with bevel */
+  header,.creation,.card,.mvt,.side,.tablewrap,.field,.dreamquote,.scope-wrap{
+    background:linear-gradient(180deg,var(--metal-2),var(--metal))!important;
+    box-shadow:inset 0 1px 0 var(--bevhi), inset 0 -2px 7px var(--bevlo), 0 8px 22px -12px #000!important;}
+  /* engraved headings */
+  h1,.phead{text-shadow:0 1px 0 rgba(0,0,0,.7),0 -1px 0 rgba(255,255,255,.05)}
+  .label,.subh,.rl,.cmeta,.role{text-shadow:0 1px 0 rgba(0,0,0,.5)}
+  /* panel screws on modules */
+  .creation,.card,.mvt,.field{position:relative}
+  .creation::after,.card::after,.mvt::after,.field::after{content:"";position:absolute;inset:0;
+    border-radius:inherit;pointer-events:none;z-index:1;
+    background:
+     radial-gradient(circle 3.5px at 11px 11px,#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at calc(100% - 11px) 11px,#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at 11px calc(100% - 11px),#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at calc(100% - 11px) calc(100% - 11px),#05060c 45%,#2b3150 62%,transparent 66%);}
+  .creation>*,.card>*,.mvt>*,.field>*{position:relative;z-index:2}
+  /* LED-style readout */
+  .readout{padding:12px 16px;border-radius:8px;background:#0a0c16;
+    box-shadow:inset 0 2px 6px #000, inset 0 0 0 1px rgba(87,227,194,.08)}
+  .readout span{color:var(--phosphor);text-shadow:0 0 6px rgba(87,227,194,.6)}
+  /* tabs as illuminated panel buttons */
+  .tabbar{background:linear-gradient(180deg,#10121f,#0b0d18)!important}
+  .tab{margin:9px 3px;border:1px solid #0a0c14;border-radius:6px;
+    background:linear-gradient(180deg,#20243c,#161a2c);
+    box-shadow:inset 0 1px 0 var(--bevhi),0 2px 3px var(--bevlo)}
+  .tab[aria-selected="true"]{background:linear-gradient(180deg,#161a2c,#1d2236);
+    box-shadow:inset 0 2px 7px var(--bevlo),0 0 0 1px var(--phosphor-dim);color:var(--phosphor)}
+  .navlink{align-self:center;border:1px solid #0a0c14;border-radius:6px;margin:9px 3px;
+    background:linear-gradient(180deg,#20243c,#161a2c);box-shadow:inset 0 1px 0 var(--bevhi),0 2px 3px var(--bevlo)}
+  /* play buttons as metal knurled buttons */
+  .play{background:radial-gradient(120% 120% at 50% 30%,#222740,#10121f)!important;
+    box-shadow:inset 0 1px 0 var(--bevhi),0 3px 6px var(--bevlo)!important}
+  .btn-open{box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 3px 6px var(--bevlo)}
+
+  /* ---- the front-panel control row in the hero ---- */
+  .panelrow{display:flex;align-items:flex-end;gap:26px;margin-top:34px;flex-wrap:wrap;
+    padding:18px 20px 14px;border-radius:10px;
+    background:linear-gradient(180deg,#1d2236,#13172a);
+    box-shadow:inset 0 1px 0 var(--bevhi),inset 0 -2px 7px var(--bevlo),0 8px 22px -12px #000;position:relative}
+  .knob{--a:0deg;width:46px;height:46px;border-radius:50%;position:relative;
+    background:conic-gradient(from 0deg,#2a3050,#171b2e,#2a3050);
+    box-shadow:inset 0 2px 4px rgba(255,255,255,.12),inset 0 -3px 6px #000,0 4px 8px #000;
+    display:flex;align-items:flex-end;justify-content:center}
+  .knob::before{content:"";position:absolute;inset:7px;border-radius:50%;
+    background:radial-gradient(120% 120% at 50% 25%,#39415f,#11141f);
+    box-shadow:inset 0 2px 4px rgba(255,255,255,.1),inset 0 -3px 6px #000}
+  .knob::after{content:"";position:absolute;left:50%;top:9px;width:2px;height:12px;border-radius:2px;
+    background:var(--phosphor);box-shadow:0 0 6px var(--phosphor);
+    transform-origin:50% 14px;transform:translateX(-50%) rotate(var(--a))}
+  .kcap{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;color:var(--faint);white-space:nowrap}
+  .leds{position:relative;display:flex;gap:7px;align-items:center;padding-bottom:2px}
+  .led{width:8px;height:8px;border-radius:50%;background:#0c1018;box-shadow:inset 0 1px 2px #000}
+  .led.on{background:var(--amber);box-shadow:0 0 8px var(--amber),inset 0 0 2px rgba(255,255,255,.4)}
+  .panelrow .screws{position:absolute;inset:0;pointer-events:none;border-radius:10px;
+    background:
+     radial-gradient(circle 3.5px at 10px 10px,#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at calc(100% - 10px) 10px,#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at 10px calc(100% - 10px),#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at calc(100% - 10px) calc(100% - 10px),#05060c 45%,#2b3150 62%,transparent 66%)}
+  @media(prefers-reduced-motion:reduce){}
+</style>
+
+<header>
+  <canvas id="scope"></canvas>
+  <div class="hero-in">
+    <div class="eyebrow"><span class="dot"></span><span class="label">Signal Lab · an electronic-music studio, in the spirit of Jean-Michel Jarre</span></div>
+    <h1><span class="em">Signal</span> Lab</h1>
+    <p class="sub">What began as a childhood dream — synthesized from first principles in numpy, in the spirit of Jarre's <em>Oxygène</em> — has grown into a full studio: a from-scratch DSP engine <em>and</em> a realtime SuperCollider voice, an AI that turns words into patches, real recordings from space woven into the sound, and visuals that breathe with the music. Two finished pieces, and the tools to make more.</p>
+    <div class="readout">
+      <div>ENGINES <span>numpy · SuperCollider</span></div>
+      <div>VOICES <span>subtractive · additive · FM · granular</span></div>
+      <div>AI <span>text → patch</span></div>
+      <div>CREATIONS <span>2 + studies</span></div>
+      <div>STATUS <span>evolving</span></div>
+    </div>
+    <div class="panelrow" aria-hidden="true">
+      <div class="knob" style="--a:-120deg"><span class="kcap">CUTOFF</span></div>
+      <div class="knob" style="--a:40deg"><span class="kcap">RESO</span></div>
+      <div class="knob" style="--a:-30deg"><span class="kcap">DRIFT</span></div>
+      <div class="knob" style="--a:90deg"><span class="kcap">SPACE</span></div>
+      <div class="leds"><i class="led on"></i><i class="led on"></i><i class="led"></i><i class="led on"></i><i class="led"></i><span class="kcap">SIGNAL</span></div>
+      <div class="screws"></div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabbar"><div class="tabbar-in" role="tablist" id="tabs">
+  <button class="tab" role="tab" data-tab="creations">Creations</button>
+  <button class="tab" role="tab" data-tab="theater">The Black Theater</button>
+  <button class="tab" role="tab" data-tab="icarus">✦ Icarus</button>
+  <button class="tab" role="tab" data-tab="method">Method</button>
+  <button class="tab" role="tab" data-tab="history">History</button>
+  <span class="navspace"></span>
+  <a class="navlink live" href="studio.html">▶ Studio ↗</a>
+  <a class="navlink live" href="live.html">▶ Live ↗</a>
+  <a class="navlink" href="library.html">Library ↗</a>
+  <a class="navlink" href="toolkit.html">Toolkit ↗</a>
+  <a class="navlink" href="visualizer.html">Visualizer ↗</a>
+  <a class="navlink" href="music.html">Theory ↗</a>
+</div></nav>
+
+<main class="wrap">
+
+  <!-- ============ CREATIONS HUB ============ -->
+  <section class="panel" id="tab-gallery" data-group="creations" role="tabpanel">
+    <h2 class="phead">Creations</h2>
+    <p class="lead">The lab's finished pieces. Each is a complete world built from first-principles synthesis — no presets, no samples (except where noted). Open one to see its dream, its organs, and the exact build sheets.</p>
+    <div class="rack" id="gallery"></div>
+  </section>
+
+  <!-- ============ THE BLACK THEATER (dream + field + organs) ============ -->
+  <section class="panel" id="tab-dream" data-group="theater" role="tabpanel">
+    <h2 class="phead">The dream</h2>
+    <p class="lead tight">Every track needs a source. This one grows from a childhood dream — translated, element by element, into sound. You don't need to be a musician for this; you need a feeling and a way to map it.</p>
+    <blockquote class="dreamquote">A black theater, the audience at my back. I am a child alone on the dark stage, fishing into the black backdrop — abstract and lonely, in a big world full of eyes.</blockquote>
+
+    <h3 class="subh">The dream, as a score</h3>
+    <div class="grid3">
+      <div class="card"><div class="ix">CARPET</div><h3>Audience → drone</h3><p>The world full of eyes. An open-fifth drone — no third, so "black", undecided — breathing slowly. Everything rests on it.</p></div>
+      <div class="card"><div class="ix">VOICE</div><h3>Child → wind</h3><p>You: "an organ like a wind." A breathy, trembling flute voice, small and exposed above the dark.</p></div>
+      <div class="card"><div class="ix">GESTURE</div><h3>Fishing → soundings</h3><p>The experience that awaits. Deep soundings cast into the void, ringing out — lonely, probing, unanswered.</p></div>
+    </div>
+
+    <h3 class="subh">The arc — the eyes over a life</h3>
+    <p class="lead tight">The eyes are not one thing. They can be kind, adoring, envious — or they can close. The piece moves through three movements as the gaze changes; the drone itself carries the story.</p>
+    <div class="mvts">
+      <div class="mvt m1"><div class="mhd"><span class="mnum">I</span><span class="mt">0:00 – 0:30</span></div><h3>Kind eyes</h3><p>Childhood. Most eyes are warm and nice. A gentle third softens the black; the room is small and safe; the child sings simply.</p></div>
+      <div class="mvt m2"><div class="mhd"><span class="mnum">II</span><span class="mt">0:30 – 1:06</span></div><h3>Adoration &amp; envy</h3><p>Getting better. The crowd swells — a bright adoration shimmer and, beneath it, a dissonant envy cluster (Bb grinding on A). Grand, dazzling, unstable. The child soars and strains.</p></div>
+      <div class="mvt m3"><div class="mhd"><span class="mnum">III</span><span class="mt">1:06 – 1:36</span></div><h3>The eyes close</h3><p>The end is near. Voices fall away, the filter darkens (turning away), the room empties to silence. One last sounding into the void — unanswered.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ CREATIONS ============ -->
+  <section class="panel" id="tab-organs" data-group="theater" role="tabpanel">
+    <h2 class="phead">The organs</h2>
+    <p class="lead">The voices that make up The Black Theater — each waveform is the real signal. Open <em>Build sheet</em> on any organ for its exact signal chain and the steps that make it. 🎧 Headphones reveal the stereo field.</p>
+    <div class="rack" id="rack"></div>
+  </section>
+
+  <!-- ============ FIELD ============ -->
+  <section class="panel" id="tab-field" data-group="theater" role="tabpanel">
+    <h2 class="phead">Volume &amp; dimensions</h2>
+    <p class="lead tight">"Organs" are the voices of the piece. Each is given a <em>volume</em> and a <em>place</em> in a three-dimensional field: left↔right (stereo), high↔low (register), near↔far (reverb &amp; level). You are at the bottom centre, looking into the dark.</p>
+    <div class="field">
+      <span class="axl top">↑ high · far</span><span class="axl bot">↓ low · near</span>
+      <span class="axl lft">left</span><span class="axl rgt">right</span>
+      <div class="chip" style="left:50%;top:15%"><span class="d" style="background:var(--phosphor)"></span><b>Glint</b> <small>the line · top</small></div>
+      <div class="chip" style="left:21%;top:31%"><span class="d" style="background:var(--violet)"></span><b>Audience</b> <small>eyes · wide L</small></div>
+      <div class="chip" style="left:79%;top:31%"><span class="d" style="background:var(--violet)"></span><b>Audience</b> <small>eyes · wide R</small></div>
+      <div class="chip" style="left:68%;top:21%"><span class="d" style="background:var(--amber)"></span><b>Fishing</b> <small>roaming · far →</small></div>
+      <div class="chip" style="left:50%;top:55%"><span class="d" style="background:var(--phosphor)"></span><b>Child</b> <small>centre · near</small></div>
+      <div class="chip" style="left:50%;top:69%"><span class="d" style="background:var(--amber)"></span><b>Pulse</b> <small>heartbeat · time</small></div>
+      <div class="chip" style="left:50%;top:83%"><span class="d" style="background:var(--violet)"></span><b>Pedal</b> <small>stage floor · bottom</small></div>
+      <div class="chip you" style="left:50%;top:95%">YOU · the child on the stage</div>
+    </div>
+    <p class="field-key">Mix volumes: audience 0.90 · child 0.70 · fishing 0.60 · pedal 0.50 · pulse 0.40 · glint 0.30. The stereo width itself is automated — widest in movement II, collapsing to mono as the eyes close (measured side-energy 0.071 → 0.126 → 0.048).</p>
+
+    <h3 class="subh">How space &amp; time are made</h3>
+    <div class="twocol">
+      <div class="tablewrap"><table class="t"><thead><tr><th>Space</th><th>DSP</th></tr></thead><tbody>
+        <tr><td>Width</td><td>render twice, decorrelated; mid/side scaling</td></tr>
+        <tr><td>Placement</td><td>constant-power pan (L/R)</td></tr>
+        <tr><td>Depth</td><td>reverb amount + level (near ↔ far)</td></tr>
+        <tr><td>Motion</td><td>LFO auto-pan (the eyes drift)</td></tr>
+        <tr><td>Room</td><td>two decorrelated convolution IRs</td></tr>
+      </tbody></table></div>
+      <div class="tablewrap"><table class="t"><thead><tr><th>Time</th><th>DSP</th></tr></thead><tbody>
+        <tr><td>Ripples</td><td>tempo-synced ping-pong delay (1.5 s)</td></tr>
+        <tr><td>Pulse</td><td>the heartbeat organ — a thread of time</td></tr>
+        <tr><td>Drift</td><td>layered slow LFOs — never static</td></tr>
+        <tr><td>Halo</td><td>shimmer = octave-up reverb feedback</td></tr>
+        <tr><td>Arc</td><td>automation lanes across 3 movements</td></tr>
+      </tbody></table></div>
+    </div>
+  </section>
+
+  <!-- ============ ICARUS ============ -->
+  <section class="panel" id="tab-icarus" data-group="icarus" role="tabpanel">
+    <h2 class="phead">Icarus, or the Effort of Flight</h2>
+    <p class="lead">The project's second creation — a flying dream fused with cosmic horror, built on a <em>real recording of Jupiter</em>. You can fly, but only by clapping furiously; you rise above the safe rooftops into joy, and keep rising into the vast, indifferent churn of the cosmos. The higher the joy, the closer the horror.</p>
+    <blockquote class="dreamquote">I dreamt I could fly — but I had to clap my hands really fast. I flew just above the rooftops. The feeling was great… but the effort to keep the altitude was hard.</blockquote>
+
+    <h3 class="subh">The seeds, as organs</h3>
+    <div class="grid3">
+      <div class="card"><div class="ix">EFFORT</div><h3>Clapping → the Clap</h3><p>A fast motoric pulse (~8/sec). It <em>is</em> the effort; when it thins, you sag and fall.</p></div>
+      <div class="card"><div class="ix">JOY + STRAIN</div><h3>Flight → Altitude</h3><p>A soaring Lydian pad &amp; lead — the brightest mode, the "flight" mode. It sags and recovers with the effort.</p></div>
+      <div class="card"><div class="ix">HOME</div><h3>Rooftops → warmth</h3><p>A warm low chord below: safety, the human world, receding as you climb.</p></div>
+      <div class="card"><div class="ix">THE COSMOS</div><h3>Jupiter → the Void</h3><p>The ion-acoustic recording, engineered into the abyss — looming louder the higher you go.</p></div>
+      <div class="card"><div class="ix">WRONGNESS</div><h3>Horror → daemon flutes</h3><p>Alien whole-tone piping that appears at altitude — the cosmos is not empty.</p></div>
+      <div class="card"><div class="ix">TENSION</div><h3>Lydian vs whole-tone</h3><p>Human joy (bright, tonal) against the cosmos (floating, no home). The clash is the feeling.</p></div>
+    </div>
+
+    <h3 class="subh">The flight — four stages</h3>
+    <div class="mvts">
+      <div class="mvt m1"><div class="mhd"><span class="mnum">I</span><span class="mt">0:00–0:35</span></div><h3>Takeoff</h3><p>Warm rooftops, the clap begins, you lift into the first joy. The void is only a rumor.</p></div>
+      <div class="mvt m2"><div class="mhd"><span class="mnum">II</span><span class="mt">0:35–1:30</span></div><h3>Climb</h3><p>The clap drives hard, altitude rises and strains, the Jupiter churn creeps in from above.</p></div>
+      <div class="mvt m3"><div class="mhd"><span class="mnum">III</span><span class="mt">1:30–2:15</span></div><h3>The height</h3><p>High up: the void roars, daemon flutes pipe, beauty and terror at once — maximum effort.</p></div>
+      <div class="mvt" style="border-top-color:var(--amber-dim)"><div class="mhd"><span class="mnum" style="color:var(--amber)">IV</span><span class="mt">2:15–3:00</span></div><h3>Descent</h3><p>The clap tires, altitude sags, you sink back toward the rooftops — relief and loss, unresolved.</p></div>
+    </div>
+
+    <h3 class="subh">The piece &amp; its organs</h3>
+    <p class="lead tight">🎧 The Void is engineered live from the Jupiter sample — granular cloud + varispeed abyss + spectral drone. Open any build sheet for the recipe.</p>
+    <div class="rack" id="rack-icarus"></div>
+  </section>
+
+  <!-- ============ METHOD ============ -->
+  <section class="panel" id="tab-method" data-group="method" role="tabpanel">
+    <h2 class="phead">Method</h2>
+    <p class="lead">Two tools, one handshake. Python <em>invents</em> the sounds; GarageBand <em>arranges and mixes</em> them. They line up only if both agree on a few numbers.</p>
+    <div class="duo">
+      <div class="side"><div class="ix">PYTHON ENGINE</div><h3>Sound-design lab</h3><p>Unique oscillators, filters, phaser, drift, stereo space — written from scratch. Renders one WAV per organ.</p></div>
+      <div class="arrow">— stems →</div>
+      <div class="side"><div class="ix">GARAGEBAND</div><h3>Arrange &amp; mix</h3><p>Each stem on its own track: volume, pan, effects, mute / solo. Visualise the waveforms and polish.</p></div>
+    </div>
+
+    <h3 class="subh">The handshake — project convention</h3>
+    <div class="tablewrap"><table class="t"><thead><tr><th>Parameter</th><th>Value</th><th>Why</th></tr></thead><tbody>
+      <tr><td>Sample rate</td><td>44100 Hz</td><td>Studio standard; matches the engine.</td></tr>
+      <tr><td>Tempo</td><td>60 BPM</td><td>Suspended, dreamlike — set by the dream's stillness.</td></tr>
+      <tr><td>Key</td><td>A Phrygian</td><td>The darkest common mode — "the black of the theater".</td></tr>
+      <tr><td>Bar length</td><td>4.0 s</td><td>Derived: 4 · 60 / 60.</td></tr>
+      <tr><td>Length</td><td>96 s</td><td>24 bars · three movements.</td></tr>
+      <tr><td>Export</td><td>1 WAV / organ</td><td>All 96 s, stereo, starting at t = 0 → aligns in GarageBand.</td></tr>
+    </tbody></table></div>
+
+    <h3 class="subh">The signal chain (subtractive core)</h3>
+    <div class="grid3" id="chainGrid"></div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="panel" id="tab-history" data-group="history" role="tabpanel">
+    <h2 class="phead">Editions</h2>
+    <p class="lead tight">Every version is kept — nothing is overwritten. Each edition is archived with the exact code that made it, so we can always go back and compare.</p>
+    <div class="editions" id="editions"></div>
+
+    <h3 class="subh">Progress log</h3>
+    <div class="log" id="log"></div>
+
+    <footer>
+      <div class="label">Workbench</div>
+      <div class="stack">
+        ~/Workspace/music/jarre-synth/<br>
+        synth.py — DSP core · dream.py — composition · versions/ — every edition<br>
+        .venv — python 3.14 · numpy 2.5 · scipy 1.18
+      </div>
+    </footer>
+  </section>
+</main>
+
+<button class="totop" id="toTop" aria-label="Back to top" title="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<script>
+const ASSETS = __ASSETS_JSON__;
+const PLAY=`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+const PAUSE=`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>`;
+const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const VALID_TABS=['creations','theater','icarus','method','history'];
+const GLOSSARY={
+ 'supersaw':'Several detuned sawtooth oscillators stacked — a thick, wide ensemble.',
+ 'phaser':'Sweeping allpass notches — the shimmering string-machine effect.',
+ 'reverb':'Simulated space; here, convolution with a decaying-noise impulse.',
+ 'drone':'A sustained, unchanging tone underpinning the harmony.',
+ 'shimmer':'Reverb pitched up an octave and fed back — a rising halo.',
+ 'granular':'Chopping a sound into tiny grains and scattering them into a cloud.',
+ 'spectral':'Working in the frequency domain (FFT) — re-exciting a sample’s spectrum.',
+ 'sampled':'Built from a real recording rather than pure synthesis.',
+ 'lydian':'The brightest mode (raised 4th) — a floating, "flight" quality.',
+ 'whole-tone':'A 6-note scale of only whole steps — no home note, alien.',
+ 'phrygian':'A dark mode with a lowered 2nd — ancient, ominous.',
+ 'sonar':'A deep, round ping that drops in pitch, like sounding the depths.',
+ 'ping-pong':'A delay whose echoes alternate left and right.',
+ 'motoric':'A relentless, machine-like steady pulse.',
+ 'sub':'Very low bass frequencies, felt as much as heard.',
+ 'drawbars':'Organ-style additive synthesis — sine harmonics mixed like a Hammond.',
+ 'envy':'A dissonant cluster (the ♭2 beating against the root) = unease.',
+ 'breath':'Noise shaped to mimic the air of a flute/voice attack.',
+ 'strain':'The altitude line sagging in pitch/volume when effort flags.',
+ 'effort':'The clapping pulse that must be maintained to stay aloft.',
+ 'dissonant':'Notes that clash (a minor 2nd or tritone) — tension.',
+ 'glide':'Flight with no flapping — the percussion drops out and you float.',
+ 'drive':'Forward rhythmic momentum (here, the driving bass).',
+ 'cosmic horror':'Dread of the vast, indifferent, unknowable cosmos (Lovecraft).',
+ 'riser':'A building sweep that leads into a new section.',
+ 'reverse':'A sound played backwards — a swell/inhale.',
+ 'floating':'Sustained, unmoored tones with no strong pulse.',
+};
+function tagHTML(t){const g=GLOSSARY[t]; return '<span class="tag"'+(g?' title="'+g+'"':'')+'>'+t+'</span>';}
+
+/* ---------- tabs (grouped panels; browser Back moves between tabs) ---------- */
+const tabBtns=[...document.querySelectorAll('.tab')];
+const nav=document.querySelector('.tabbar');
+function showTab(id, push){
+  if(!VALID_TABS.includes(id)) id='creations';
+  tabBtns.forEach(b=>b.setAttribute('aria-selected', b.dataset.tab===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on', p.dataset.group===id));
+  if(push && location.hash!=='#'+id) history.pushState({tab:id},'','#'+id);
+  requestAnimationFrame(()=>dispatchEvent(new Event('resize')));  // redraw now-visible waveforms
+}
+tabBtns.forEach(b=>b.onclick=()=>{
+  showTab(b.dataset.tab, true);
+  nav.scrollIntoView({block:'start', behavior: RM?'auto':'smooth'});
+});
+addEventListener('popstate',()=>showTab((location.hash||'#creations').slice(1), false));
+showTab((location.hash||'#creations').slice(1), false);
+
+/* ---------- back to top ---------- */
+const toTop=document.getElementById('toTop');
+addEventListener('scroll',()=>toTop.classList.toggle('show', scrollY>500));
+toTop.onclick=()=>scrollTo({top:0, behavior: RM?'auto':'smooth'});
+
+/* ---------- oscilloscope ---------- */
+(function(){
+  const c=document.getElementById('scope'), x=c.getContext('2d');
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function size(){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;x.setTransform(d,0,0,d,0,0);return r;}
+  let r=size(); addEventListener('resize',()=>r=size()); let t=0;
+  function frame(){
+    x.clearRect(0,0,r.width,r.height); const midY=r.height*0.5;
+    for(let L=0;L<3;L++){
+      x.beginPath(); const amp=r.height*(0.10+L*0.05),f=(1.2+L*0.7),spd=(0.6+L*0.25);
+      for(let px=0;px<=r.width;px+=2){const u=px/r.width;
+        const y=midY+Math.sin(u*Math.PI*2*f+t*spd)*amp+Math.sin(u*Math.PI*2*(f*2.3)+t*spd*1.4)*amp*0.35;
+        px===0?x.moveTo(px,y):x.lineTo(px,y);}
+      const col=L===0?'87,227,194':(L===1?'244,166,89':'155,140,255');
+      x.strokeStyle='rgba('+col+','+(0.5-L*0.13)+')';x.lineWidth=L===0?1.6:1;x.stroke();
+    }
+    if(!reduce){t+=0.012;requestAnimationFrame(frame);}
+  }
+  reduce?frame():requestAnimationFrame(frame);
+})();
+
+/* ---------- a reusable player (button + waveform) ---------- */
+function buildPlayer(host, asset, accent){
+  const cv=host.querySelector('canvas'), g=cv.getContext('2d');
+  const audio=new Audio(asset.src), btn=host.querySelector('.play');
+  let progress=0;
+  function draw(){
+    const rect=cv.getBoundingClientRect(),d=devicePixelRatio||1;
+    cv.width=rect.width*d;cv.height=rect.height*d;g.setTransform(d,0,0,d,0,0);
+    const W=rect.width,H=rect.height,mid=H/2,n=asset.wave.length,bw=W/n;
+    for(let i=0;i<n;i++){const h=Math.max(1,asset.wave[i]*H*0.92),pos=i/n;
+      g.fillStyle=pos<=progress?accent:'#3A406A';g.fillRect(i*bw,mid-h/2,Math.max(1,bw*0.7),h);}
+  }
+  draw(); addEventListener('resize',draw);
+  btn.onclick=()=>{
+    if(audio.paused){document.querySelectorAll('audio').forEach(a=>a!==audio&&a.pause());audio.play();btn.innerHTML=PAUSE;}
+    else{audio.pause();btn.innerHTML=PLAY;}
+  };
+  audio.ontimeupdate=()=>{progress=audio.currentTime/(audio.duration||1);draw();};
+  audio.onended=()=>{btn.innerHTML=PLAY;progress=0;draw();};
+}
+
+/* ---------- creations data (build sheets) ---------- */
+const CREATIONS=[
+ {key:'dream_mix',title:'The Black Theater',featured:true,role:'full mix',
+  meta:'A Phrygian · 60 BPM · stereo · 96 s',
+  desc:'The six organs summed into one piece. Three movements follow the eyes — kind, then adoring & envious, then closing — driven by shared automation lanes; the stereo width swells and then collapses with them.',
+  design:[['Sum','Six organs','audience · child · fishing · pedal · pulse · glint, each at its own level.'],
+          ['Lanes','Automation','Shared curves drive amplitude, filter cutoff, warmth, adoration, envy & murmur across the 3 movements.'],
+          ['Glue','Soft clip','tanh saturation on the master for analog warmth and peak control.']],
+  steps:['Render each organ to a stereo buffer (96 s).','Sum at 0.9 / 0.7 / 0.6 / 0.5 / 0.4 / 0.3.','Scale ×0.7 and tanh soft-clip the master.','Write 16-bit stereo WAV; archive the whole edition under versions/.'],
+  params:{Key:'A Phrygian',Tempo:'60 BPM',Voices:'6',Out:'stereo WAV'}},
+
+ {key:'audience',title:'Audience — the eyes',stem:true,role:'drone · wide',
+  meta:'volume 0.90 · all around · moving',
+  desc:'The world full of eyes, and the protagonist of the piece. An open-fifth drone (no third → "black") that warms in childhood, then in movement II splits into a bright adoration shimmer and a dissonant envy cluster, before the eyes close.',
+  design:[['Osc','Open-fifth core','A1 + E2 + A2 sines with slow analog drift — no third, so the harmony stays "black".'],
+          ['Layer','Warm third','C3 + E3 sines, gated by the warmth lane — present in childhood, gone by mastery.'],
+          ['Layer','Adoration','detuned saws E3/A3/C4/E4, swelling in movement II.'],
+          ['Layer','Envy','detuned saws A#2/A#3/F3 — the Bb beats against A; grows late in II.'],
+          ['Texture','Crowd murmur','low-passed noise (260 Hz), faint, fading as the room empties.'],
+          ['Filter','Dark LPF sweep','resonant lowpass swept 430 → 1150 → 150 Hz across the movements.'],
+          ['Space','Width + motion','rendered twice (decorrelated) for width; auto-pan 0.025 Hz; width collapses to mono in III.'],
+          ['Space','Shimmer + reverb','octave-up shimmer halo (× adoration) + stereo convolution reverb (4.8 s).']],
+  steps:['Render the drone twice with different drift seeds → L and R.','Add warm / adoration / envy / murmur layers, each scaled by its automation lane.','Sweep the dark resonant lowpass with the cutoff lane.','Apply the breathing swell × master amplitude.','Mid/side width automation + slow auto-pan.','Add the shimmer halo, then stereo reverb.'],
+  params:{Core:'A1·E2·A2',Mode:'open 5th',Cutoff:'430→1150→150',Reverb:'4.8 s'}},
+
+ {key:'child',title:'Child — a wind',stem:true,role:'lead · centre',
+  meta:'volume 0.70 · centre · near',
+  desc:'You: small and exposed, dead centre and close. A hollow flute tone with breath on the attack and a vibrato that fades in — sighing Phrygian phrases that grow confident in movement II and resign in III.',
+  design:[['Osc','Hollow flute','sine fundamental + 0.14 × 3rd harmonic → a breathy, hollow timbre.'],
+          ['Mod','Vibrato','5 Hz, depth fading in after 0.4 s (how a held breath behaves).'],
+          ['Noise','Breath chiff','band-passed noise at 2.5× pitch, gated to the attack only.'],
+          ['Noise','Air','low-passed noise (2200 Hz) at low level — body of breath.'],
+          ['Notes','Phrygian phrases','tender (I) → soaring with a strained Bb (II) → low & resigned (III).'],
+          ['Space','Intimate','centre, dry core; stereo reverb tail (3.0 s) for a little air.']],
+  steps:['Build each note: hollow tone + fade-in vibrato.','Add the breath chiff (attack) and a touch of air.','Envelope and place each phrase on the timeline.','Keep it centred; add a short stereo reverb tail for intimacy.'],
+  params:{Vibrato:'5 Hz',Harm:'1 + 3rd',Reverb:'3.0 s',Pan:'centre'}},
+
+ {key:'pulse',title:'Pulse — the heartbeat',stem:true,role:'rhythm · time',
+  meta:'volume 0.40 · centre · near',
+  desc:'The thread of time through the timeless drone — a soft sub heartbeat. Calm lub-dub in childhood, quicker and fainter amid the crowd, slowing and fading as the end nears.',
+  design:[['Osc','Sub thump','sine at 72 Hz dropping to ~32 Hz in 80 ms — a soft kick.'],
+          ['Env','Fast decay','exponential, ~90 ms — a heartbeat, not a drum.'],
+          ['Pattern','Tempo by movement','calm lub-dub (I), steady & faint (II), slowing + dying (III).'],
+          ['Filter/space','Close','low-pass 200 Hz; minimal reverb (1.8 s) — kept near.']],
+  steps:['Synthesize a single soft thump (pitch-drop sine + fast decay).','Place lub-dub pairs with movement-dependent tempo & gain.','Low-pass to keep it sub; add a touch of close reverb.'],
+  params:{Pitch:'72→32 Hz',Decay:'90 ms',LPF:'200 Hz',Pan:'centre'}},
+
+ {key:'pedal',title:'Pedal — the stage floor',stem:true,role:'bass · bottom',
+  meta:'volume 0.50 · centre · bottom',
+  desc:'A deep drawbar-organ tone — the literal ground beneath everything, giving the world a floor. A nod to the "organ" you named the voices after.',
+  design:[['Osc','Drawbars','sines at harmonics 1·2·3·4·6 of A1 — additive, like an organ\'s drawbars.'],
+          ['Mod','Drift','slow per-harmonic drift for analog life.'],
+          ['Filter','Warm LPF','low-pass 600 Hz — round and dark.'],
+          ['Env','Floor arc','swells with the piece, strongest under the movement-II peak.'],
+          ['Space','Centre','centred, light stereo reverb (3.2 s).']],
+  steps:['Sum the drawbar harmonics of A1 with drift.','Low-pass for warmth.','Shape with the floor amplitude arc.','Centre-pan and add light reverb.'],
+  params:{Root:'A1',Drawbars:'1·2·3·4·6',LPF:'600 Hz',Pan:'centre'}},
+
+ {key:'glint',title:'Glint — the line',stem:true,role:'texture · top',
+  meta:'volume 0.30 · high · wide · far',
+  desc:'A high, glassy thread cast upward — the line into the dark, taut with hope through movement II. The top of the field: panned wide and set far back.',
+  design:[['Osc','Glassy','high sine + a 1.5× partial (a fifth above) for a glassy ring.'],
+          ['Mod','Slow vibrato','4.2 Hz, gentle.'],
+          ['Env','Slow swell','1.3 s attack — it appears rather than strikes.'],
+          ['Space','High & far','notes panned alternately L/R; long reverb (7.0 s) sets it far back.']],
+  steps:['Build glassy high notes with a slow swell.','Pan successive notes to alternating sides.','Place them mostly in movement II.','Drench in long reverb to push them far and high.'],
+  params:{Reg:'A5–E6',Vib:'4.2 Hz',Reverb:'7.0 s',Pan:'wide'}},
+
+ {key:'fishing',title:'Fishing — what awaits',stem:true,role:'gesture · far',
+  meta:'volume 0.60 · roaming · far',
+  desc:'Soundings cast into the dark: deep, round tones that drop in pitch and ring out, rippling left↔right and roaming into the distance — lonely, probing, unanswered.',
+  design:[['Osc','Sounding','sine + detuned octave (2.005×) + 3rd partial; pitch drops 3 % over 1 s.'],
+          ['Env','Long ring','fast attack, 2.5 s decay — a struck depth.'],
+          ['Filter','Round','low-pass 1200 Hz — dark, not bright; no clang.'],
+          ['Time','Ping-pong ripples','tempo-synced delay (1.5 s), echoes alternate L/R, feedback 0.45.'],
+          ['Space','Roam + far','auto-pan 0.02 Hz; long stereo reverb (6.0 s) = the void.']],
+  steps:['Synthesize each sounding (pitch-drop sine stack + long decay).','Low-pass for a round, dark tone.','Place sparse casts across the movements.','Ping-pong delay for ripples; auto-pan to roam; long reverb for distance.'],
+  params:{Drop:'3 % / 1 s',LPF:'1200 Hz',Delay:'1.5 s',Reverb:'6.0 s'}},
+
+ {key:'pad',title:'Oxygène-style pad',early:true,role:'study · mono',
+  meta:'early study · mono',
+  desc:'The very first voice of the project — a study of the subtractive signal chain, made before the dream gave the work its direction.',
+  design:[['Osc','Supersaw','7 detuned saws per note → a thick string ensemble (Am9 chord).'],
+          ['Env','Slow swell','slow-attack ADSR, like a string machine.'],
+          ['Filter','Resonant LPF','softens the buzz, adds body.'],
+          ['Space','Phaser + reverb','swept-allpass phaser shimmer + 3 s reverb. Mono.']],
+  steps:['Stack 7 detuned saws per chord note.','Swell with a slow ADSR.','Soften with a resonant lowpass.','Phaser, then reverb.'],
+  params:{Chord:'Am9',Voices:'7 saws',FX:'phaser+reverb',Out:'mono'}},
+];
+
+const C=Object.fromEntries(CREATIONS.map(c=>[c.key,c]));
+const rack=document.getElementById('rack');
+
+function addCreation(container, cr, nested){
+  const A=ASSETS[cr.key]; if(!A) return;
+  const accent=cr.featured?'#57E3C2':'#F4A659';
+  const el=document.createElement('div');
+  el.className='creation'+(cr.featured?' featured':'')+(nested?' child':'')+(cr.early?' study':'');
+  el.innerHTML=`
+    <div class="ctop"><h3>${cr.title}<span class="role">${cr.role}</span></h3>
+      <div class="cmeta">${cr.meta} · ${A.dur}s</div></div>
+    <p class="cdesc">${cr.desc}</p>
+    <div class="player"><button class="play" aria-label="Play ${cr.title}">${PLAY}</button>
+      <div class="wavewrap"><canvas></canvas></div></div>
+    <details class="sheet"><summary>Build sheet — signal chain &amp; steps</summary>
+      <div class="sheet-grid">
+        <div><h4>Signal chain</h4><div class="stages">${cr.design.map((s,i)=>
+          `<div class="stg"><span class="n">${String(i+1).padStart(2,'0')}</span><div><b>${s[1]}</b> <span>· ${s[0]}</span><br><span>${s[2]}</span></div></div>`).join('')}</div></div>
+        <div><h4>Build steps</h4><ol class="steps">${cr.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+          <div class="params">${Object.entries(cr.params).map(([k,v])=>`<span class="param">${k} <b>${v}</b></span>`).join('')}</div></div>
+      </div>
+    </details>
+    <div class="tags">${cr.tags?cr.tags.map(tagHTML).join(''):''}</div>`;
+  container.appendChild(el);
+  buildPlayer(el.querySelector('.player'), A, accent);
+}
+
+// 1) the composed piece, then 2) its parts nested beneath, then 3) studies
+const PART_ORDER=['audience','pedal','pulse','child','glint','fishing'];  // floor → top → gesture
+addCreation(rack, C['dream_mix'], false);
+
+const plabel=document.createElement('div'); plabel.className='parts-label';
+plabel.innerHTML='<span class="pl-dot">▾</span> assembled from six organs — play any part on its own';
+rack.appendChild(plabel);
+const parts=document.createElement('div'); parts.className='parts'; rack.appendChild(parts);
+PART_ORDER.forEach(k=>addCreation(parts, C[k], true));
+
+const slabel=document.createElement('div'); slabel.className='parts-label std';
+slabel.textContent='Studies — not part of the piece';
+rack.appendChild(slabel);
+addCreation(rack, C['pad'], false);
+
+/* ---------- Icarus creations ---------- */
+const ICARUS=[
+ {key:'icarus_mix', title:'Icarus, or the Effort of Flight', featured:true, role:'full mix',
+  meta:'A → A Lydian · 128 BPM · stereo · 3 min',
+  desc:'A flying dream fused with cosmic horror, on a real Jupiter recording. Struggle → breakthrough → keeping the pace. In the sustain the effort comes in waves: flap (clap + bass drive) then GLIDE (percussion drops, you float on rushing wind).',
+  design:[['Lanes','Effort in waves','an automation lane alternates flapping and gliding; the breakthrough is a master breath then a surge.'],
+          ['Sum','Nine organs','tension · clap · riser · pad · bass · lead · void · flutes · wind.'],
+          ['Glue','Soft clip','tanh saturation on the master.']],
+  steps:['Render each organ to stereo (180 s).','Apply the breath-then-burst gate at the breakthrough.','Sum, scale ×0.6, soft-clip.','Archive as icarus-v003.'],
+  params:{Key:'A → Lydian',Tempo:'128 BPM',Source:'Jupiter ion-acoustic',Form:'struggle→break→pace'},
+  tags:['stereo','flight','cosmic horror','sampled']},
+ {key:'ic_clap', title:'Clap — the effort', stem:true, role:'pulse · effort',
+  meta:'flap / glide',
+  desc:'What keeps you aloft. A fast clap on the 16th grid; it drives during FLAPS and drops out entirely during GLIDES — the waves of effort that break the monotony.',
+  design:[['Osc','Synth clap','two band-passed noise bursts (1700 & 950 Hz), 22 ms decay.'],
+          ['Pattern','16th grid','gain follows the effort lane; silent during glides.'],
+          ['Space','Alt-pan + room','left/right per hit; tight reverb.']],
+  steps:['Synthesize one clap.','Place on the 16th grid.','Scale by the effort lane (zero on glides).','Pan + light reverb.'],
+  params:{Grid:'16th @128',Decay:'22 ms',Pan:'alt L/R'},
+  tags:['pulse','motoric','effort']},
+ {key:'ic_bass', title:'Bass — the drive', stem:true, role:'bass · momentum',
+  meta:'rests on glides',
+  desc:'Forward momentum during the flaps — a driving Lydian bass that rests when you glide, so the music surges and floats in waves.',
+  design:[['Osc','Saw bass','sawtooth → resonant lowpass; punchy envelope.'],
+          ['Pattern','8th-note riff','A–E–F♯–D motion; gated by the drive lane (= effort × base).'],
+          ['Filter','Altitude→cutoff','opens as you rise.']],
+  steps:['Sequence the 8th-note bass.','Gate by the drive lane (silent on glides).','Filter by altitude; light reverb.'],
+  params:{Root:'A1',Pattern:'8ths',Gate:'drive=effort×base'},
+  tags:['bass','drive','momentum']},
+ {key:'ic_pad', title:'Altitude — joy & strain', stem:true, role:'pad · soaring',
+  meta:'dark → bright',
+  desc:'The flight itself. A pad that crossfades from a dark, tense chord (the struggle) to bright Lydian at the breakthrough; its filter opens with altitude and it wavers when effort flags.',
+  design:[['Osc','Dark↔Lydian','two chords crossfaded by the brightness lane.'],
+          ['Filter','Altitude→cutoff','400→3900 Hz.'],
+          ['Mod','Strain waver','amplitude dips when effort drops.'],
+          ['Space','Phaser + reverb','wide and airy.']],
+  steps:['Build dark + Lydian chords.','Crossfade by brightness; sweep filter by altitude.','Apply the strain waver.','Phaser + stereo reverb.'],
+  params:{Modes:'minor→Lydian',Cutoff:'400→3900'},
+  tags:['lydian','soaring','strain']},
+ {key:'ic_lead', title:'Lead — the joy', stem:true, role:'lead · melody',
+  meta:'floats on glides',
+  desc:'The singing melody of flight. A rising Lydian line that keeps floating during the glides (it follows altitude, not the clap), and droops in pitch when the effort sags.',
+  design:[['Osc','Sine + saw','bright lead tone.'],
+          ['Notes','Rising Lydian motif','jumps an octave at height.'],
+          ['Mod','Pitch droop','~3% flat when tiring.']],
+  steps:['Sequence the rising motif.','Float its level on altitude.','Droop pitch with effort; stereo reverb.'],
+  params:{Mode:'Lydian',Sag:'pitch'},
+  tags:['lydian','joy','floating']},
+ {key:'ic_tension', title:'Tension — the struggle', stem:true, role:'drone · stress',
+  meta:'resolves at the break',
+  desc:'The stress of getting up: a low dissonant drone (root, ♭2, tritone) that builds through the struggle and RELEASES at the breakthrough.',
+  design:[['Osc','Dissonant drone','A1 + A♯1 (♭2) + D♯2 (tritone) — beating and unstable.'],
+          ['Filter','Dark LPF','520 Hz.'],
+          ['Mod','Tension lane','builds, then drops at the breakthrough.']],
+  steps:['Stack the dissonant low notes.','Low-pass; scale by the tension lane.','Stereo reverb.'],
+  params:{Notes:'A·A♯·D♯',Interval:'♭2 + tritone'},
+  tags:['dissonant','stress','drone']},
+ {key:'ic_riser', title:'Riser — into the break', stem:true, role:'fx · transition',
+  meta:'36→46 s',
+  desc:'The build into the breakthrough: a rising filtered-noise sweep plus a reversed Jupiter swell, climbing for ten seconds into the held breath.',
+  design:[['Noise','Rising sweep','noise through a lowpass whose cutoff rises 300→12 kHz.'],
+          ['Sample','Reversed Jupiter','the recording reversed and swelling.'],
+          ['Space','Reverb','blends them into one rise.']],
+  steps:['Build the rising noise sweep.','Reverse + swell the sample.','Mix, reverb, place at 36 s.'],
+  params:{Sweep:'300→12k',Length:'10 s'},
+  tags:['riser','reverse','transition']},
+ {key:'ic_void', title:'Void — the cosmos (Jupiter)', stem:true, role:'texture · abyss',
+  meta:'engineered from the sample',
+  desc:'The real ion-acoustic recording of Jupiter, engineered three ways and looming louder the higher you fly — cosmic horror made of actual cosmos.',
+  design:[['Sample','Varispeed abyss','resampled to 0.35× (down ~1.5 octaves), looped, low-passed.'],
+          ['Sample','Granular cloud','grains pitched ½, scattered wide — the churn.'],
+          ['Sample','Spectral drone','the sample\'s magnitude spectrum re-excited with noise.'],
+          ['Space','Huge reverb','5.5 s — vast and far.']],
+  steps:['Load the Jupiter mp3.','Make abyss + cloud + drone layers.','Scale by the void lane.','Long stereo reverb.'],
+  params:{Speed:'0.35×',Grain:'120 ms',Reverb:'5.5 s'},
+  tags:['granular','spectral','sampled','horror']},
+ {key:'ic_flutes', title:'Flutes — the wrongness', stem:true, role:'texture · alien',
+  meta:'whole-tone · at height',
+  desc:'Daemon-flutes: thin whole-tone piping that only appears at altitude. No semitones means no home — the alien sound of a cosmos that should not be.',
+  design:[['Osc','Thin pipe','sine + faint octave + air.'],
+          ['Notes','Whole-tone','erratic, no tonal home.'],
+          ['Space','Far reverb','6.5 s, wide.']],
+  steps:['Build a thin piping note.','Place erratic whole-tone notes at height.','Gate by the flute lane; far reverb.'],
+  params:{Scale:'whole-tone',Reverb:'6.5 s'},
+  tags:['whole-tone','alien','far']},
+ {key:'ic_wind', title:'Wind — the glide', stem:true, role:'texture · air',
+  meta:'only when gliding',
+  desc:'Air rushing past — present ONLY when the hands go still and you glide. It fills the silence the clap leaves, so the gliding feels like flight, not absence.',
+  design:[['Noise','Filtered air','low-passed noise, soft.'],
+          ['Mod','Inverse effort','loud when effort is low (gliding), silent when flapping.'],
+          ['Space','Reverb','airy, wide.']],
+  steps:['Filter noise into air.','Gate by (1 − effort) within the sustain.','Stereo reverb.'],
+  params:{Gate:'1−effort',Region:'sustain only'},
+  tags:['wind','glide','air']},
+];
+/* ---------- Creations hub (gallery) ---------- */
+const GALLERY=[
+ {key:'dream_mix', title:'The Black Theater', tab:'theater', accent:'#57E3C2',
+  brings:'Stillness &amp; dread. A dark-ambient dream (A Phrygian) in three movements as a watching crowd turns kind → envious → gone. <b>Brings:</b> the emotional use of stereo space, slow evolving texture, six organs in a 3-D field.'},
+ {key:'icarus_mix', title:'Icarus, or the Effort of Flight', tab:'icarus', accent:'#F4A659',
+  brings:'Drive &amp; dynamic contrast. A flying dream over a real Jupiter recording: struggle → breakthrough → flap-and-glide. <b>Brings:</b> rhythm, dramatic arc, and sample-based sound design (granular, spectral, varispeed).'},
+];
+const gal=document.getElementById('gallery');
+GALLERY.forEach(g=>{
+  const A=ASSETS[g.key]; if(!A) return;
+  const el=document.createElement('div'); el.className='creation featured';
+  el.innerHTML=`<div class="ctop"><h3>${g.title}</h3><div class="cmeta">${A.dur}s</div></div>
+    <p class="cdesc">${g.brings}</p>
+    <div class="player"><button class="play" aria-label="Play ${g.title}">${PLAY}</button>
+      <div class="wavewrap"><canvas></canvas></div></div>
+    <div class="tags"><button class="btn-open">Open ${g.title} →</button></div>`;
+  gal.appendChild(el);
+  buildPlayer(el.querySelector('.player'), A, g.accent);
+  el.querySelector('.btn-open').onclick=()=>{showTab(g.tab,true); nav.scrollIntoView({block:'start',behavior:RM?'auto':'smooth'});};
+});
+// the playable instrument — pride of place
+const liveCard=document.createElement('div'); liveCard.className='creation featured live-card';
+liveCard.innerHTML=`<div class="ctop"><h3>Signal Lab Live</h3><div class="cmeta">interactive · play it yourself</div></div>
+  <p class="cdesc">Not a recording — an <b>instrument</b>. A scale-locked step sequencer, a drone, a filter to sweep, reverb and a live oscilloscope, all built from this very engine. Place notes (nothing is ever out of key), then perform. It even has a small JS API, so a jam can be shared as a single link.</p>
+  <div class="tags"><a class="btn-open live" href="live.html">▶ Open the instrument →</a></div>`;
+gal.appendChild(liveCard);
+const studioCard=document.createElement('div'); studioCard.className='creation featured live-card';
+studioCard.innerHTML=`<div class="ctop"><h3>Signal Lab Studio</h3><div class="cmeta">interactive · multi-track</div></div>
+  <p class="cdesc">The enhanced instrument: <b>four tracks at once</b> — pad, arp, bass and a <b>portamento</b> lead — with presets for <b>Jarre</b> and <b>Vangelis</b>, a chord-progression editor, a live oscilloscope, <b>WAV export</b>, and a <b>MIDI engine</b> that renders any <code>.mid</code> you load through our own voices.</p>
+  <div class="tags"><a class="btn-open live" href="studio.html">▶ Open the studio →</a></div>`;
+gal.appendChild(studioCard);
+
+const rackI=document.getElementById('rack-icarus');
+addCreation(rackI, ICARUS[0], false);
+const ilabel=document.createElement('div'); ilabel.className='parts-label';
+ilabel.innerHTML='<span class="pl-dot">▾</span> five organs — play any on its own';
+rackI.appendChild(ilabel);
+const ipart=document.createElement('div'); ipart.className='parts'; rackI.appendChild(ipart);
+ICARUS.slice(1).forEach(cr=>addCreation(ipart, cr, true));
+
+/* ---------- signal-chain cards (method tab) ---------- */
+const STAGES=[
+ ['Osc','Oscillator','Band-limited saw / square / sine (additive) — the raw harmonic content.'],
+ ['Env','ADSR','Attack-decay-sustain-release shapes each note in time.'],
+ ['Filter','Resonant LPF','RBJ biquad lowpass — tames harmonics, adds body; cutoff can be swept.'],
+ ['Mod','LFO + drift','Slow modulation and analog pitch drift = movement and life.'],
+ ['FX','Phaser','Cascaded allpass notches swept by an LFO — the string-machine shimmer.'],
+ ['Space','Reverb / delay','Convolution reverb + ping-pong delay — depth and time.'],
+];
+document.getElementById('chainGrid').innerHTML=STAGES.map((s,i)=>
+ `<div class="card"><div class="ix">${String(i+1).padStart(2,'0')} · ${s[0]}</div><h3>${s[1]}</h3><p>${s[2]}</p></div>`).join('');
+
+/* ---------- editions ---------- */
+const EDITIONS=[
+ {v:'Theater · SC',cur:true,title:'The Black Theater — voiced on SuperCollider',
+  desc:'The three movements re-voiced through the full AI → patch → engine pipeline and rendered via synth.py. Reusable instruments saved in patches/theater/.',src:'theater_sc.mp3'},
+ {v:'Icarus v001',cur:false,title:'Icarus — flight & cosmic horror',
+  desc:'Second creation. A 3-minute flying dream over a real Jupiter recording (granular + spectral + varispeed). New sample-engineering tools added to the engine.',src:'icarus_mix.mp3'},
+ {v:'Theater v002',cur:false,title:'The Black Theater — stereo · six organs',
+  desc:'Stereo engine; three new organs (pedal, pulse, glint); voices placed in a 3D field; shimmer halo; width automated across the movements.',src:'dream_mix.mp3'},
+ {v:'Theater v001',cur:false,title:'The Black Theater — mono · three movements',
+  desc:'First full composition — the three-movement arc of the eyes. Mono, no spatialisation.',src:'versions/v001-mono-3movements/mix.mp3'},
+];
+const edRoot=document.getElementById('editions');
+EDITIONS.forEach(ed=>{
+  const el=document.createElement('div'); el.className='ed'+(ed.cur?'':' old');
+  el.innerHTML=`<div class="v">${ed.v}${ed.cur?' ◀':''}</div>
+    <div><h3>${ed.title}</h3><p>${ed.desc}</p></div>
+    <button class="play" aria-label="Play ${ed.v}">${PLAY}</button>`;
+  edRoot.appendChild(el);
+  const audio=new Audio(ed.src), btn=el.querySelector('.play');
+  btn.onclick=()=>{if(audio.paused){document.querySelectorAll('audio').forEach(a=>a!==audio&&a.pause());audio.play();btn.innerHTML=PAUSE;}else{audio.pause();btn.innerHTML=PLAY;}};
+  audio.onended=()=>btn.innerHTML=PLAY;
+});
+
+/* ---------- progress log ---------- */
+const LOG=[
+ ['done','Toolchain & engine','venv (numpy/scipy) + synth.py: band-limited oscillators, ADSR, resonant biquad/bandpass, FM, phaser, tape delay, reverb, scale-lock.'],
+ ['done','Found the source','The childhood dream — "The Black Theater" — chosen as the emotional source; key & tempo set from it.'],
+ ['done','Composition — 3 movements','Automation lanes (+ fast phaser, FFT reverb). 96 s through-composed: kind → adoration & envy → the eyes close.'],
+ ['done','Stereo & space (v002)','Stereo engine (pan, width, auto-pan, ping-pong, shimmer, stereo reverb). Six organs in a 3D field; width breathes with the movements.'],
+ ['done','Versioning','Every edition archived under versions/ with its exact code.'],
+ ['done','Space sound bank','Downloaded 12 real cosmic recordings (CC BY 4.0) into a Digital Library; added sample-engineering tools (granular, spectral, convolution, ring-mod, varispeed).'],
+ ['done','Second creation — Icarus','A 3-minute flying-dream-meets-cosmic-horror piece built on the Jupiter ion-acoustic sample. Archived as icarus-v001.'],
+ ['now','Refine both pieces','Balance and detail passes by ear on The Black Theater and Icarus.'],
+ ['next','MIDI export','Emit melodic organs as .mid for GarageBand instruments.'],
+ ['next','Arrange & mix in GarageBand','Stems on tracks; pan, EQ, automate; polish.'],
+ ['next','Master','Bus compression, final stereo masters.'],
+];
+document.getElementById('log').innerHTML=LOG.map(s=>
+ `<div class="step"><div class="st ${s[0]}"><span class="chk"></span>${s[0]==='now'?'in progress':s[0]}</div>
+   <div><h3>${s[1]}</h3><p>${s[2]}</p></div></div>`).join('');
+</script>

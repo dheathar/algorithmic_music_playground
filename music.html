@@ -1,0 +1,369 @@
+<title>Music Theory — for an engineer</title>
+<meta name="description" content="Keys, notes, intervals and the modes — explained from first principles, with the Phrygian story. Interactive: every note synthesized live.">
+<style>
+  :root{
+    --bg:#0B0A12; --panel:#15131F; --panel-2:#1C1A2A; --line:#2B2740;
+    --text:#EDEAF3; --muted:#9A93AE; --faint:#615A78;
+    --amber:#F4A659; --amber-dim:#B97C3E; --phosphor:#57E3C2; --violet:#B79BFF;
+    --rose:#E78AA8;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --body:-apple-system,system-ui,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px}
+  a{color:var(--phosphor)}
+  ::selection{background:var(--amber);color:#0B0A12}
+  h1,h2,h3,h4{text-wrap:balance}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+
+  header{position:relative;border-bottom:1px solid var(--line);
+    background:radial-gradient(120% 120% at 80% -10%,rgba(183,155,255,.10),transparent 50%)}
+  .hero-in{padding:60px 24px 48px;max-width:980px;margin:0 auto}
+  .back{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--muted);margin-bottom:22px}
+  .back:hover{color:var(--phosphor)}
+  h1{font-weight:800;letter-spacing:-.03em;line-height:1.02;margin:0;font-size:clamp(34px,6vw,62px)}
+  h1 .em{color:var(--violet)}
+  .sub{margin:18px 0 0;max-width:60ch;font-size:18px;color:var(--muted)}
+
+  .tabbar{position:sticky;top:0;z-index:20;background:rgba(11,10,18,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .tabbar-in{max-width:980px;margin:0 auto;display:flex;gap:4px;padding:0 16px;overflow-x:auto}
+  .tab{flex:none;background:none;border:none;color:var(--muted);cursor:pointer;font-family:var(--mono);font-size:12px;
+    letter-spacing:.1em;text-transform:uppercase;padding:16px 14px 14px;border-bottom:2px solid transparent;transition:.16s}
+  .tab:hover{color:var(--text)}
+  .tab[aria-selected="true"]{color:var(--violet);border-bottom-color:var(--violet)}
+  .tab:focus-visible{outline:2px solid var(--amber);outline-offset:-4px;border-radius:4px}
+
+  .panel{display:none;padding:48px 0 64px;animation:fade .3s ease}.panel.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+  @media(prefers-reduced-motion:reduce){.panel{animation:none}}
+
+  .phead{margin:0 0 8px;font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-.02em}
+  .lead{color:var(--muted);max-width:68ch;font-size:17px;margin:0 0 26px}
+  p{max-width:72ch}
+  .subh{font-size:13px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--violet);margin:40px 0 16px;display:flex;align-items:center;gap:10px}
+  .subh::after{content:"";flex:1;height:1px;background:var(--line)}
+  em{font-style:normal;color:var(--text)}
+  code{font-family:var(--mono);font-size:.9em;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--phosphor)}
+
+  .note{border-left:2px solid var(--amber);background:linear-gradient(90deg,rgba(244,166,89,.06),transparent);
+    padding:14px 18px;border-radius:0 8px 8px 0;color:var(--muted);font-size:14.5px;margin:22px 0}
+  .note b{color:var(--amber)}
+
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:8px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:460px}
+  th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:11px 14px;border-bottom:1px solid var(--line)}
+  td{padding:11px 14px;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top}
+  td:first-child{color:var(--text);font-weight:600;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  .mono-td td{font-family:var(--mono)}
+
+  /* piano */
+  .piano{position:relative;height:180px;max-width:560px;margin:8px 0 6px;user-select:none}
+  .wk{position:absolute;top:0;bottom:0;border:1px solid var(--line);border-radius:0 0 6px 6px;background:linear-gradient(#23202F,#15131F);
+    cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;font-family:var(--mono);font-size:11px;color:var(--faint);transition:.08s}
+  .wk:hover{background:linear-gradient(#2C2840,#1C1A2A)}
+  .wk.on{background:linear-gradient(var(--violet),#8E74E0);color:#0B0A12}
+  .bk{position:absolute;top:0;height:62%;width:26px;margin-left:-13px;background:linear-gradient(#100E18,#221F30);
+    border:1px solid #000;border-radius:0 0 5px 5px;cursor:pointer;z-index:3;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font-family:var(--mono);font-size:9px;color:#6A6388;transition:.08s}
+  .bk:hover{background:linear-gradient(#1A1726,#2C2840)}
+  .bk.on{background:linear-gradient(var(--violet),#7E63D0);color:#0B0A12}
+  .readf{font-family:var(--mono);font-size:13px;color:var(--phosphor);min-height:20px;margin:4px 0 0}
+
+  .btn{font-family:var(--mono);font-size:12px;letter-spacing:.06em;background:var(--panel-2);color:var(--text);
+    border:1px solid var(--line);border-radius:7px;padding:8px 13px;cursor:pointer;transition:.14s}
+  .btn:hover{border-color:var(--violet);color:var(--violet)}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .btn .pat{color:var(--faint);margin-left:8px}
+  .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+
+  .modes{display:flex;flex-direction:column;gap:8px}
+  .mode{display:grid;grid-template-columns:130px 1fr auto;gap:14px;align-items:center;background:var(--panel);
+    border:1px solid var(--line);border-radius:9px;padding:12px 16px}
+  .mode .nm{font-weight:700;font-size:15px}.mode .nm small{display:block;font-family:var(--mono);font-size:10px;color:var(--faint);font-weight:400;letter-spacing:.06em;margin-top:2px}
+  .steps{display:flex;gap:4px;flex-wrap:wrap}
+  .stp{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:2px 7px}
+  .stp.half{color:var(--rose);border-color:var(--rose)}
+  .bright{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  @media(max-width:620px){.mode{grid-template-columns:1fr;gap:8px}}
+
+  footer{border-top:1px solid var(--line);padding:30px 0 60px;color:var(--faint);font-size:12.5px}
+  footer a{color:var(--muted)}
+
+  .totop{position:fixed;right:22px;bottom:22px;z-index:40;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);
+    background:rgba(21,19,31,.92);backdrop-filter:blur(8px);color:var(--violet);cursor:pointer;display:grid;place-items:center;
+    opacity:0;pointer-events:none;transition:.22s;box-shadow:0 8px 24px -10px #000}
+  .totop.show{opacity:1;pointer-events:auto}.totop:hover{background:var(--violet);color:#0B0A12}
+  .totop svg{width:20px;height:20px}
+</style>
+
+<header>
+  <div class="hero-in">
+    <a class="back" href="index.html">← Back to The Black Theater</a>
+    <div class="label" style="margin-bottom:14px">Signal Lab · Reference</div>
+    <h1>Music theory,<br>for an <span class="em">engineer</span></h1>
+    <p class="sub">Keys, notes, intervals and the modes — from first principles, in the language of ratios and semitones. Every example is <em>synthesized live</em> in your browser: click to hear it. 🔊</p>
+  </div>
+</header>
+
+<nav class="tabbar"><div class="tabbar-in" role="tablist" id="tabs">
+  <button class="tab" role="tab" data-tab="notes">Notes &amp; Keys</button>
+  <button class="tab" role="tab" data-tab="modes">The Modes</button>
+  <button class="tab" role="tab" data-tab="phrygian">Phrygian</button>
+  <button class="tab" role="tab" data-tab="electronic">Electronic &amp; Algorithmic</button>
+</div></nav>
+
+<main class="wrap">
+
+  <!-- NOTES & KEYS -->
+  <section class="panel" id="tab-notes" role="tabpanel">
+    <h2 class="phead">Notes, octaves &amp; keys</h2>
+    <p class="lead">Pitch is logarithmic. Western music slices each octave — a <em>doubling</em> of frequency — into 12 equal steps. That's the whole foundation; everything else is which steps you pick.</p>
+
+    <div class="subh">The octave &amp; equal temperament</div>
+    <p>An <b>octave</b> is a 2:1 frequency ratio: A4 = 440 Hz, A5 = 880 Hz, A3 = 220 Hz — the "same note", doubled. <b>12-tone equal temperament</b> divides that ratio into 12 equal multiplicative steps, so one <b>semitone</b> = the twelfth root of two:</p>
+    <p style="font-family:var(--mono);color:var(--phosphor);font-size:15px">ratio per semitone = 2<sup>1/12</sup> ≈ 1.05946 &nbsp;·&nbsp; f(n) = 440 · 2<sup>(n−69)/12</sup> Hz &nbsp;<span style="color:var(--faint)">(n = MIDI number)</span></p>
+    <p>Equal steps in <em>log</em> frequency = equal musical intervals. (Just intonation uses small whole-number ratios like 3:2; equal temperament trades pure ratios for the freedom to play in every key — a classic engineering compromise.)</p>
+
+    <div class="subh">The twelve notes — click to hear</div>
+    <div class="piano" id="piano"></div>
+    <div class="readf" id="readf">— click a key —</div>
+    <p style="margin-top:14px">Seven "natural" notes (white keys) <code>C D E F G A B</code> and five "accidentals" (black keys). A black key has two names — <code>C♯ = D♭</code> — these <em>enharmonic</em> spellings sound identical in equal temperament but mean different things in a key.</p>
+
+    <div class="subh">A key = a tonic + a scale</div>
+    <p>A <b>key</b> picks a home note (the <b>tonic</b>) and a 7-note pattern from the 12. <b>Major</b> = bright; <b>minor</b> = darker. There are 12 of each (15 written, counting enharmonic spellings like F♯/G♭ major).</p>
+    <div class="btnrow" id="keyDemo"></div>
+    <div class="note"><b>The "comb".</b> Because a key is a fixed, octave-repeating subset of the 12 pitches, locking a synth to it means you literally cannot pick a wrong note — the gaps where wrong notes live are unreachable. That's the safety net behind <em>The Black Theater</em>.</div>
+
+    <div class="subh">The circle of fifths</div>
+    <p>Stack perfect fifths (×3/2, the strongest consonance after the octave) and after 12 steps you cycle through all 12 notes and back home. Order them in a circle and adjacent keys differ by just one sharp/flat — which is why it organizes key signatures and chord relationships.</p>
+    <div class="btnrow"><button class="btn" data-seq="fifths">▶ Hear a stack of fifths<span class="pat">C · G · D · A · E …</span></button></div>
+
+    <div class="subh">Intervals</div>
+    <div class="tablewrap"><table><thead><tr><th>Interval</th><th>Semitones</th><th>Just ratio ≈</th><th>Feel</th></tr></thead><tbody class="mono-td">
+      <tr><td>Unison</td><td>0</td><td>1:1</td><td>same</td></tr>
+      <tr><td>Minor 2nd</td><td>1</td><td>16:15</td><td>tense, dark</td></tr>
+      <tr><td>Major 2nd</td><td>2</td><td>9:8</td><td>step</td></tr>
+      <tr><td>Minor 3rd</td><td>3</td><td>6:5</td><td>sad</td></tr>
+      <tr><td>Major 3rd</td><td>4</td><td>5:4</td><td>happy</td></tr>
+      <tr><td>Perfect 4th</td><td>5</td><td>4:3</td><td>open</td></tr>
+      <tr><td>Tritone</td><td>6</td><td>45:32</td><td>unstable</td></tr>
+      <tr><td>Perfect 5th</td><td>7</td><td>3:2</td><td>strong, hollow</td></tr>
+      <tr><td>Major 6th</td><td>9</td><td>5:3</td><td>warm</td></tr>
+      <tr><td>Octave</td><td>12</td><td>2:1</td><td>same, higher</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- MODES -->
+  <section class="panel" id="tab-modes" role="tabpanel">
+    <h2 class="phead">The modes</h2>
+    <p class="lead">Play the white keys from C to C and you get the major scale. Start and end on a <em>different</em> white key — same notes, new home — and the pattern of steps rotates, giving a different color. Those seven rotations are the <b>diatonic modes</b>.</p>
+
+    <div class="subh">The seven modes — brightest to darkest · click to hear (root A)</div>
+    <p style="margin-bottom:6px"><span class="stp">2</span> = whole step (tone) &nbsp; <span class="stp half">1</span> = half step (semitone). The position of the half-steps is what gives each mode its character.</p>
+    <div class="modes" id="modeList"></div>
+    <div class="note">Brightness is literally how many notes are raised vs. lowered relative to the others. <b>Lydian</b> (raised 4th) is the brightest; <b>Locrian</b> (flat 2nd <em>and</em> flat 5th) the darkest. <b>Phrygian</b> sits second-darkest — dark enough to feel ancient, but with a stable home, unlike the unusable-as-a-home Locrian.</p></div>
+
+    <div class="subh">Where the names come from</div>
+    <p>The modal names are ancient Greek, after peoples and regions around the Aegean and Anatolia. Medieval theorists borrowed the Greek terms for the church modes — and, famously, <em>misassigned</em> them: the scale the ancient Greeks called Phrygian is not the one we call Phrygian today. The modern set of names was finally codified by Heinrich Glarean in his <em>Dodecachordon</em> (1547).</p>
+    <div class="tablewrap"><table><thead><tr><th>Mode</th><th>Named after</th><th>Where</th></tr></thead><tbody>
+      <tr><td>Ionian</td><td>the Ionians (Greek people)</td><td>Ionia, Aegean coast of Anatolia</td></tr>
+      <tr><td>Dorian</td><td>the Dorians (Greek people)</td><td>mainland / Peloponnese</td></tr>
+      <tr><td>Phrygian</td><td>the Phrygians</td><td>Phrygia, central Anatolia</td></tr>
+      <tr><td>Lydian</td><td>the Lydians</td><td>Lydia, western Anatolia</td></tr>
+      <tr><td>Mixolydian</td><td>"mixed Lydian"</td><td>a Greek descriptive term</td></tr>
+      <tr><td>Aeolian</td><td>the Aeolians (Greek people)</td><td>Aeolis, NW Anatolia</td></tr>
+      <tr><td>Locrian</td><td>the Locrians (Greek people)</td><td>Locris, central Greece</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <!-- PHRYGIAN -->
+  <section class="panel" id="tab-phrygian" role="tabpanel">
+    <h2 class="phead">Phrygian — the black of the theater</h2>
+    <p class="lead">The mode we chose for the piece. Here is exactly what it is, why it sounds the way it does, and the strange history behind its name.</p>
+
+    <div class="subh">What it is</div>
+    <p>Phrygian is the third mode — the white keys from <b>E to E</b>, or transposed to our root, <b>A Phrygian</b>: <code>A B♭ C D E F G</code>. Its step pattern leads with a <em>half step</em>:</p>
+    <div class="steps" style="margin:6px 0 14px"><span class="stp half">1</span><span class="stp">2</span><span class="stp">2</span><span class="stp">2</span><span class="stp half">1</span><span class="stp">2</span><span class="stp">2</span></div>
+    <div class="btnrow">
+      <button class="btn" data-cmp="phryg">▶ A Phrygian<span class="pat">A B♭ C D E F G</span></button>
+      <button class="btn" data-cmp="minor">▶ A natural minor<span class="pat">A B C D E F G</span></button>
+      <button class="btn" data-cmp="major">▶ A major<span class="pat">bright, for contrast</span></button>
+    </div>
+    <p>Play them back to back. The only difference between Phrygian and natural minor is one note — the <b>second degree</b> is lowered (B → B♭). That single flat-2nd, just a semitone above the tonic, is the whole character.</p>
+
+    <div class="subh">Why it sounds dark</div>
+    <p>That <b>♭2</b> a half-step above the home note is the most tense interval in the scale, and it's right next to "home" — so the tension never resolves comfortably. The ear reads it as ancient, foreboding, "Eastern" or flamenco (Spanish music leans hard on Phrygian and its raised-3rd cousin, the <em>Phrygian dominant</em>). It's dark without being unusable: unlike Locrian, the 5th is still perfect, so the tonic chord is stable enough to rest on. Perfect for a vast, lonely, slightly threatening space — <em>a black theater full of eyes</em>.</p>
+
+    <div class="note"><b>The naming twist.</b> The ancient Greek "Phrygian" <em>tónos</em> was, in its diatonic octave species, what we'd now call <em>Dorian</em>. Medieval theorists (via Boethius) reapplied the Greek names to a different system, so the modern Phrygian is a historical reassignment, not a continuation of the Greek one. The name traveled from a people in Anatolia, through a thousand years of misattribution, to the flat-2nd scale we use today.</p>
+
+    <div class="subh">Why we chose it</div>
+    <p>"Make the key the black of the theater." Phrygian is the darkest mode you can still build a home in — and over an open-fifth drone (root + 5th, no third), the harmony stays "black" and undecided, while that ♭2 (the B♭ in our <em>envy</em> cluster) supplies the unease of being watched. The mode <em>is</em> the dream's mood, encoded.</p>
+    <div class="btnrow"><button class="btn" data-seq="theblack">▶ Hear the open fifth + ♭2<span class="pat">A · E · B♭</span></button></div>
+  </section>
+
+  <!-- ELECTRONIC & ALGORITHMIC -->
+  <section class="panel" id="tab-electronic" role="tabpanel">
+    <h2 class="phead">Electronic &amp; algorithmic music</h2>
+    <p class="lead">Two ideas underpin this whole project. <em>Electronic</em> music makes sound from circuits and code instead of vibrating wood and string. <em>Algorithmic</em> music composes by <em>rules and processes</em> instead of placing every note by hand. Our pieces are both.</p>
+
+    <div class="subh">Synthesis — how a sound is built</div>
+    <p>Most electronic sound is one of a few synthesis methods. Each starts from a way of <em>generating</em> a waveform, then shaping it.</p>
+    <div class="tablewrap"><table><thead><tr><th>Method</th><th>Idea</th><th>Character</th><th>In our engine</th></tr></thead><tbody>
+      <tr><td>Subtractive</td><td>start harmonically rich, carve with a filter</td><td>warm, classic, analog</td><td>saw → <code>resonant_lpf</code></td></tr>
+      <tr><td>Additive</td><td>sum many sine partials</td><td>pure, precise</td><td><code>_harmonic_sum</code>, the Pedal drawbars</td></tr>
+      <tr><td>FM / phase mod</td><td>one oscillator modulates another's frequency</td><td>metallic, bell, sharp</td><td><code>fm2</code></td></tr>
+      <tr><td>Granular</td><td>clouds of tiny sound grains</td><td>textural, evolving</td><td><code>granular_cloud</code> (the Void)</td></tr>
+      <tr><td>Sampling</td><td>record reality, then mangle it</td><td>concrete, real-world</td><td><code>load_audio</code> (Jupiter)</td></tr>
+      <tr><td>Spectral</td><td>work in the frequency domain (FFT)</td><td>ghostly, frozen</td><td><code>spectral_drone</code></td></tr>
+      <tr><td>Wavetable / Physical</td><td>scan stored shapes / simulate physics</td><td>modern / lifelike</td><td><em>not yet</em></td></tr>
+    </tbody></table></div>
+
+    <div class="subh">The signal flow</div>
+    <p>The classic synth voice — and ours — is a chain, with <em>modulators</em> bending it over time:</p>
+    <p style="font-family:var(--mono);color:var(--phosphor);font-size:14px;line-height:2">
+      OSCILLATOR → FILTER → AMPLIFIER → EFFECTS<br>
+      <span style="color:var(--faint)">&nbsp;&nbsp;&nbsp;&nbsp;↑ pitch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑ cutoff&nbsp;&nbsp;&nbsp;↑ volume</span><br>
+      <span style="color:var(--amber)">modulated by ENVELOPES (ADSR) &amp; LFOs</span>
+    </p>
+    <p>An <b>envelope</b> shapes one event in time (attack→decay→sustain→release); an <b>LFO</b> is a slow oscillator that wobbles a parameter (vibrato, tremolo, filter sweeps). <b>Effects</b> — reverb, delay, distortion — add space, time, and grit.</p>
+
+    <div class="subh">Algorithmic music — composing with rules</div>
+    <p>Instead of writing every note, you define a <em>process</em> and let it generate the music. Crucially, a <b>seed</b> makes randomness <em>reproducible</em> — the same seed always yields the same "random" result, so a generative piece is repeatable, like any deterministic system.</p>
+    <div class="tablewrap"><table><thead><tr><th>Technique</th><th>Idea</th><th>Here</th></tr></thead><tbody>
+      <tr><td>Constraint (scale-lock)</td><td>restrict choices to a legal set</td><td>the key as a "comb" — no wrong notes</td></tr>
+      <tr><td>Automation functions</td><td>a parameter as a function of time</td><td><code>curve()</code> lanes drive the movements</td></tr>
+      <tr><td>Seeded randomness</td><td>controlled, repeatable chance</td><td><code>drift()</code>, the granular cloud's grains</td></tr>
+      <tr><td>Euclidean rhythm</td><td>spread k pulses over n steps as evenly as possible</td><td>see the demo below</td></tr>
+      <tr><td>Markov chains</td><td>pick the next note by probability</td><td>concept (a future organ)</td></tr>
+      <tr><td>L-systems / fractals</td><td>recursive rewriting → self-similar structure</td><td>concept</td></tr>
+    </tbody></table></div>
+
+    <div class="subh">Hear it — generate music from rules</div>
+    <p>Live in your browser: a melody generated by a constrained random walk (locked to A minor — always "correct"), and a Euclidean rhythm.</p>
+    <div class="btnrow">
+      <button class="btn" id="genMel">▶ Generate a melody<span class="pat">random walk · A minor</span></button>
+      <button class="btn" id="genEuc">▶ Euclidean rhythm<span class="pat">E(5,8)</span></button>
+    </div>
+    <div class="note"><b>This is the project's method.</b> The Black Theater and Icarus are algorithmic: automation lanes, scale-locked notes, seeded granular clouds, and a real sample reshaped by code. Imagination sets the rules; the engine renders them.</div>
+  </section>
+
+  <footer class="wrap">
+    Synthesized live with the Web Audio API — no files, just oscillators. Pitch model: A4 = 440 Hz, equal temperament.<br>
+    Sources: <a href="https://en.wikipedia.org/wiki/Phrygian_mode">Phrygian mode (Wikipedia)</a> · <a href="https://en.wikipedia.org/wiki/Mode_(music)">Mode (music)</a> · Glarean, <em>Dodecachordon</em> (1547).
+  </footer>
+</main>
+
+<button class="totop" id="toTop" aria-label="Back to top" title="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<script>
+const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const VALID=['notes','modes','phrygian','electronic'];
+const tabBtns=[...document.querySelectorAll('.tab')];
+const nav=document.querySelector('.tabbar');
+function showTab(id,push){ if(!VALID.includes(id))id='notes';
+  tabBtns.forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='tab-'+id));
+  if(push&&location.hash!=='#'+id)history.pushState({t:id},'','#'+id);
+}
+tabBtns.forEach(b=>b.onclick=()=>{showTab(b.dataset.tab,true);nav.scrollIntoView({block:'start',behavior:RM?'auto':'smooth'});});
+addEventListener('popstate',()=>showTab((location.hash||'#notes').slice(1),false));
+showTab((location.hash||'#notes').slice(1),false);
+
+const toTop=document.getElementById('toTop');
+addEventListener('scroll',()=>toTop.classList.toggle('show',scrollY>500));
+toTop.onclick=()=>scrollTo({top:0,behavior:RM?'auto':'smooth'});
+
+/* ---------- Web Audio ---------- */
+let AC;
+function ac(){ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended')AC.resume(); return AC; }
+function midiToFreq(m){ return 440*Math.pow(2,(m-69)/12); }
+const NAMES=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+function midiName(m){ return NAMES[m%12]+(Math.floor(m/12)-1); }
+function tone(freq,dur=0.7,type='triangle',when=0){
+  const c=ac(),t=c.currentTime+when,o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.28,t+0.015);
+  g.gain.exponentialRampToValueAtTime(0.22,t+0.1);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(c.destination);o.start(t);o.stop(t+dur+0.05);
+}
+function sequence(midis,gap=0.34,dur=0.5){ midis.forEach((m,i)=>tone(midiToFreq(m),dur,'triangle',i*gap)); }
+function chord(midis,dur=1.6){ midis.forEach(m=>tone(midiToFreq(m),dur,'triangle',0)); }
+function fromSteps(root,steps){ const out=[root];let m=root;for(const s of steps){m+=s;out.push(m);}return out; }
+
+/* ---------- piano (C4..C5) ---------- */
+const piano=document.getElementById('piano'), readf=document.getElementById('readf');
+const WHITE=[0,2,4,5,7,9,11,12], BLACK=[1,3,-1,6,8,10]; // -1 = gap (no black between E,F)
+const wkW=100/8;
+WHITE.forEach((semi,i)=>{
+  const m=60+semi, k=document.createElement('div'); k.className='wk';
+  k.style.left=(i*wkW)+'%'; k.style.width=wkW+'%';
+  k.textContent=NAMES[m%12];
+  k.onclick=()=>{tone(midiToFreq(m),0.8);flash(k);readf.textContent=midiName(m)+'  =  '+midiToFreq(m).toFixed(2)+' Hz';};
+  piano.appendChild(k);
+});
+BLACK.forEach((semi,i)=>{
+  if(semi<0) return; const m=60+semi, k=document.createElement('div'); k.className='bk';
+  k.style.left=((i+1)*wkW)+'%';
+  k.textContent=NAMES[m%12];
+  k.onclick=(e)=>{e.stopPropagation();tone(midiToFreq(m),0.8);flash(k);readf.textContent=midiName(m)+'  =  '+midiToFreq(m).toFixed(2)+' Hz';};
+  piano.appendChild(k);
+});
+function flash(k){k.classList.add('on');setTimeout(()=>k.classList.remove('on'),180);}
+
+/* ---------- key demos ---------- */
+const MAJOR=[2,2,1,2,2,2,1], NMINOR=[2,1,2,2,1,2,2];
+const keyDemo=document.getElementById('keyDemo');
+[['C major',60,MAJOR],['A minor',57,NMINOR],['E major',64,MAJOR],['F♯ minor',66,NMINOR]].forEach(([nm,root,st])=>{
+  const b=document.createElement('button');b.className='btn';b.innerHTML='▶ '+nm;
+  b.onclick=()=>sequence(fromSteps(root,st));keyDemo.appendChild(b);
+});
+
+/* ---------- modes (root A3 = 57) ---------- */
+const MODES=[
+ ['Lydian','#4 · brightest',[2,2,2,1,2,2,1]],
+ ['Ionian','major',[2,2,1,2,2,2,1]],
+ ['Mixolydian','♭7',[2,2,1,2,2,1,2]],
+ ['Dorian','♭3 ♭7',[2,1,2,2,2,1,2]],
+ ['Aeolian','natural minor',[2,1,2,2,1,2,2]],
+ ['Phrygian','♭2 ♭3 ♭6 ♭7',[1,2,2,2,1,2,2]],
+ ['Locrian','♭2 ♭5 · darkest',[1,2,2,1,2,2,2]],
+];
+const modeList=document.getElementById('modeList');
+MODES.forEach(([nm,desc,steps],idx)=>{
+  const row=document.createElement('div');row.className='mode';
+  row.innerHTML=`<div class="nm">${nm}<small>${desc}</small></div>
+    <div class="steps">${steps.map(s=>`<span class="stp${s===1?' half':''}">${s}</span>`).join('')}</div>
+    <button class="btn" aria-label="Play ${nm}">▶ play</button>`;
+  row.querySelector('button').onclick=()=>sequence(fromSteps(57,steps));
+  modeList.appendChild(row);
+});
+
+/* ---------- sequence + comparison buttons ---------- */
+document.querySelectorAll('[data-seq]').forEach(b=>b.onclick=()=>{
+  const k=b.dataset.seq;
+  if(k==='fifths'){let m=60,arr=[60];for(let i=0;i<7;i++){m=(m+7);arr.push(m);}sequence(arr,0.3,0.45);}
+  if(k==='theblack'){chord([45,52]);setTimeout(()=>tone(midiToFreq(58),1.4),700);} // A2,E3 + Bb3
+});
+const CMP={phryg:[1,2,2,2,1,2,2],minor:[2,1,2,2,1,2,2],major:[2,2,1,2,2,2,1]};
+document.querySelectorAll('[data-cmp]').forEach(b=>b.onclick=()=>sequence(fromSteps(57,CMP[b.dataset.cmp])));
+
+/* ---------- algorithmic demos ---------- */
+const AMIN=[57,59,60,62,64,65,67,69,71,72]; // A minor, A3..C5
+const gm=document.getElementById('genMel');
+if(gm) gm.onclick=()=>{
+  let i=2; const seq=[];
+  for(let k=0;k<11;k++){ i=Math.max(0,Math.min(AMIN.length-1, i+(Math.floor(Math.random()*3)-1)+(Math.random()<0.25?1:0))); seq.push(AMIN[i]); }
+  seq.forEach((m,k)=>tone(midiToFreq(m),0.5,'triangle',k*0.32));
+};
+function euclid(k,n){const p=[];let b=0;for(let i=0;i<n;i++){b+=k;if(b>=n){b-=n;p.push(1);}else p.push(0);}return p;}
+const ge=document.getElementById('genEuc');
+if(ge) ge.onclick=()=>{
+  const pat=euclid(5,8),gap=0.17;
+  for(let rep=0;rep<2;rep++) pat.forEach((h,i)=>{ if(h) tone(196,0.13,'square',(i+rep*8)*gap); });
+};
+</script>

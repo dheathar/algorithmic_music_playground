@@ -1,0 +1,304 @@
+<title>Signal Lab — Live</title>
+<meta name="description" content="A playable in-browser instrument built from the Signal Lab engine: scale-locked step sequencer, drone, filter, reverb, oscilloscope.">
+<style>
+  :root{
+    --bg:#0A0C18;--panel:#12152A;--panel-2:#181C36;--line:#272C4C;
+    --text:#E7E9F3;--muted:#8C92B2;--faint:#5A6088;
+    --amber:#F4A659;--phosphor:#57E3C2;--phosphor-dim:#2E8C77;--violet:#9B8CFF;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--body:-apple-system,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+  a{color:var(--phosphor);text-decoration:none}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  header{border-bottom:1px solid var(--line);padding:26px 0 22px}
+  .back{font-family:var(--mono);font-size:12px;color:var(--muted)}.back:hover{color:var(--phosphor)}
+  h1{font-weight:800;letter-spacing:-.03em;margin:14px 0 0;font-size:clamp(28px,5vw,44px)}
+  h1 .em{color:var(--amber)}
+  .sub{color:var(--muted);margin:8px 0 0;font-size:15px}
+
+  .scope-wrap{border:1px solid var(--line);border-radius:12px;background:#0B0E1C;margin:22px 0;overflow:hidden}
+  #scope{width:100%;height:120px;display:block}
+
+  .transport{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+  .big{font-family:var(--mono);font-size:14px;letter-spacing:.06em;border:1px solid var(--phosphor-dim);
+    background:var(--panel-2);color:var(--phosphor);border-radius:9px;padding:12px 22px;cursor:pointer;transition:.15s}
+  .big:hover{background:var(--phosphor);color:#0A0C18;box-shadow:0 0 22px rgba(87,227,194,.4)}
+  .big.alt{border-color:var(--line);color:var(--muted)}.big.alt:hover{background:var(--panel-2);color:var(--text);box-shadow:none}
+  .big:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px}
+  .ctl{display:flex;flex-direction:column;gap:7px}
+  .ctl label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .ctl .val{color:var(--phosphor)}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:4px;background:var(--line);border-radius:3px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:var(--amber);cursor:pointer;box-shadow:0 0 10px rgba(244,166,89,.5)}
+  select{font-family:var(--mono);font-size:13px;background:var(--panel-2);color:var(--text);
+    border:1px solid var(--line);border-radius:7px;padding:7px 9px}
+
+  .grid-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px}
+  .grid{display:grid;gap:4px;min-width:560px}
+  .row{display:grid;grid-template-columns:42px repeat(16,1fr);gap:4px;align-items:center}
+  .rl{font-family:var(--mono);font-size:10px;color:var(--faint);text-align:right;padding-right:4px}
+  .cell{height:26px;border-radius:4px;background:var(--panel-2);border:1px solid var(--line);cursor:pointer;transition:.06s}
+  .cell:hover{border-color:var(--phosphor-dim)}
+  .cell.on{background:var(--phosphor);border-color:var(--phosphor);box-shadow:0 0 10px rgba(87,227,194,.4)}
+  .cell.beat{background:#1E2340}
+  .cell.on.beat{background:var(--phosphor)}
+  .cell.playhead{outline:2px solid var(--amber)}
+  .row.acc .cell{background:#15192f}.row.acc .cell.on{background:var(--phosphor)}
+
+  .hint{color:var(--faint);font-size:13px;margin:16px 0 40px}
+  .hint b{color:var(--amber)}
+</style>
+
+<header class="wrap">
+  <a class="back" href="index.html">← The Black Theater</a>
+  <div class="label" style="margin-top:14px">Signal Lab</div>
+  <h1>Signal Lab <span class="em">Live</span></h1>
+  <p class="sub">An instrument, not a player. Place notes on the grid — they're locked to the key, so nothing is ever wrong — then sweep, drift, and perform. 🔊 Turn it up.</p>
+</header>
+
+<main class="wrap">
+  <div class="scope-wrap"><canvas id="scope"></canvas></div>
+
+  <div class="transport">
+    <button class="big" id="play">▶ Play</button>
+    <button class="big alt" id="rand">⚄ Generate</button>
+    <button class="big alt" id="clear">✕ Clear</button>
+    <button class="big alt" id="exp">⬇ Patch</button>
+    <button class="big alt" id="eng">▶ Engine</button>
+    <span id="engmsg" style="font-family:var(--mono);font-size:11px;color:var(--faint);align-self:center"></span>
+    <select id="preset" class="big alt" style="padding:12px 14px">
+      <option value="">⊕ Presets…</option>
+      <option value="oxygene">Oxygène (homage)</option>
+      <option value="theater">The Black Theater — Phrygian</option>
+      <option value="icarus">Icarus — Lydian flight</option>
+    </select>
+  </div>
+
+  <div class="controls">
+    <div class="ctl"><label>Key / scale</label>
+      <select id="scale">
+        <option value="phrygian">A Phrygian — dark</option>
+        <option value="minor">A Minor</option>
+        <option value="lydian">A Lydian — bright/flight</option>
+        <option value="major">A Major</option>
+        <option value="wholetone">A Whole-tone — alien</option>
+      </select></div>
+    <div class="ctl"><label>Tempo <span class="val" id="vT">96</span> BPM</label><input type="range" id="tempo" min="50" max="160" value="96"></div>
+    <div class="ctl"><label>Filter cutoff <span class="val" id="vC">2200</span> Hz</label><input type="range" id="cut" min="200" max="9000" value="2200"></div>
+    <div class="ctl"><label>Resonance <span class="val" id="vQ">4</span></label><input type="range" id="res" min="0.5" max="18" step="0.5" value="4"></div>
+    <div class="ctl"><label>Reverb <span class="val" id="vR">35</span>%</label><input type="range" id="rev" min="0" max="80" value="35"></div>
+    <div class="ctl"><label>Drone <span class="val" id="vD">20</span>%</label><input type="range" id="drone" min="0" max="70" value="20"></div>
+    <div class="ctl"><label>Wave</label><select id="wave"><option value="sawtooth">saw</option><option value="square">square</option><option value="triangle">triangle</option></select></div>
+  </div>
+
+  <div class="grid-wrap"><div class="grid" id="grid"></div></div>
+
+  <p class="hint"><b>Play</b> starts the sequencer · click cells to place notes · <b>Generate</b> fills a random scale-locked pattern · sweep the <b>filter</b> while it runs — that's the performance. Built from the same engine as the pieces: <a href="index.html">the studio</a> · <a href="music.html">theory</a> · <a href="library.html">library</a>.</p>
+</main>
+
+<script>
+const SCALES={phrygian:[0,1,3,5,7,8,10],minor:[0,2,3,5,7,8,10],lydian:[0,2,4,6,7,9,11],major:[0,2,4,5,7,9,11],wholetone:[0,2,4,6,8,10]};
+const ROOT=57, ROWS=8, STEPS=16;            // A3 root
+let AC=null, master, analyser, conv, revGain, droneNodes=null;
+let playing=false, step=0, nextT=0, timer=null;
+let grid=Array.from({length:ROWS},()=>Array(STEPS).fill(false));
+
+const $=id=>document.getElementById(id);
+const P={tempo:96,cut:2200,res:4,rev:0.35,drone:0.2,wave:'sawtooth',scale:'phrygian'};
+
+function midiToFreq(m){return 440*Math.pow(2,(m-69)/12);}
+function scaleMidis(){const ints=SCALES[P.scale];const out=[];let i=0;
+  while(out.length<ROWS){const o=Math.floor(i/ints.length);out.push(ROOT+ints[i%ints.length]+12*o);i++;}return out;}
+let SMIDIS=scaleMidis();
+
+/* ---- audio graph ---- */
+function makeIR(dur){const n=Math.floor(48000*dur),b=new AudioContext().sampleRate; // tmp
+  const buf=AC.createBuffer(2,Math.floor(AC.sampleRate*dur),AC.sampleRate);
+  for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.6);}
+  return buf;}
+function initAudio(){
+  AC=new (window.AudioContext||window.webkitAudioContext)();
+  master=AC.createGain();master.gain.value=0.85;
+  analyser=AC.createAnalyser();analyser.fftSize=2048;
+  master.connect(analyser);analyser.connect(AC.destination);
+  conv=AC.createConvolver();conv.buffer=makeIR(2.6);
+  revGain=AC.createGain();revGain.gain.value=P.rev;
+  conv.connect(revGain);revGain.connect(master);
+}
+function voice(freq,time,dur){
+  const o1=AC.createOscillator(),o2=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();
+  o1.type=o2.type=P.wave;o1.frequency.value=freq;o2.frequency.value=freq*1.006;
+  f.type='lowpass';f.Q.value=P.res;
+  f.frequency.setValueAtTime(Math.min(P.cut*2.2,11000),time);
+  f.frequency.exponentialRampToValueAtTime(Math.max(P.cut,200),time+0.18);
+  g.gain.setValueAtTime(0.0001,time);g.gain.linearRampToValueAtTime(0.22,time+0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001,time+dur);
+  o1.connect(f);o2.connect(f);f.connect(g);g.connect(master);g.connect(conv);
+  o1.start(time);o2.start(time);o1.stop(time+dur+0.05);o2.stop(time+dur+0.05);
+}
+function startDrone(){
+  stopDrone();
+  const g=AC.createGain();g.gain.value=P.drone*0.5;
+  const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=P.cut;f.Q.value=0.7;
+  const root=midiToFreq(ROOT-12),fifth=midiToFreq(ROOT-12+7);
+  const oscs=[root*0.997,root*1.003,fifth].map(fr=>{const o=AC.createOscillator();o.type='sawtooth';o.frequency.value=fr;o.connect(f);o.start();return o;});
+  f.connect(g);g.connect(master);g.connect(conv);
+  droneNodes={g,f,oscs};
+}
+function stopDrone(){if(droneNodes){droneNodes.oscs.forEach(o=>{try{o.stop()}catch(e){}});droneNodes=null;}}
+
+/* ---- scheduler ---- */
+function scheduler(){
+  const stepDur=60/P.tempo/4;
+  while(nextT < AC.currentTime+0.12){
+    const col=step;
+    for(let r=0;r<ROWS;r++) if(grid[r][col]) voice(midiToFreq(SMIDIS[ROWS-1-r]),nextT,stepDur*1.6);
+    const c=col; requestAnimationFrame(()=>highlight(c));
+    nextT+=stepDur; step=(step+1)%STEPS;
+  }
+}
+function play(){
+  if(!AC) initAudio(); if(AC.state==='suspended') AC.resume();
+  playing=true; step=0; nextT=AC.currentTime+0.05;
+  if(P.drone>0) startDrone();
+  timer=setInterval(scheduler,25); $('play').textContent='⏸ Stop'; drawScope();
+}
+function stop(){playing=false;clearInterval(timer);stopDrone();$('play').textContent='▶ Play';clearHighlight();}
+$('play').onclick=()=>playing?stop():play();
+
+/* ---- grid UI ---- */
+const gridEl=$('grid');
+function buildGrid(){
+  gridEl.innerHTML=''; const names=SMIDIS.map(m=>['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][m%12]);
+  for(let r=0;r<ROWS;r++){
+    const row=document.createElement('div');row.className='row';
+    const lab=document.createElement('div');lab.className='rl';lab.textContent=names[ROWS-1-r];row.appendChild(lab);
+    for(let c=0;c<STEPS;c++){
+      const cell=document.createElement('div');cell.className='cell'+(c%4===0?' beat':'');
+      if(grid[r][c])cell.classList.add('on');
+      cell.onclick=()=>{grid[r][c]=!grid[r][c];cell.classList.toggle('on');if(AC&&AC.state!=='suspended'&&grid[r][c])voice(midiToFreq(SMIDIS[ROWS-1-r]),AC.currentTime,0.3);};
+      row.appendChild(cell);
+    }
+    gridEl.appendChild(row);
+  }
+}
+function highlight(col){clearHighlight();document.querySelectorAll('.row').forEach(row=>{const c=row.children[col+1];if(c)c.classList.add('playhead');});}
+function clearHighlight(){document.querySelectorAll('.cell.playhead').forEach(c=>c.classList.remove('playhead'));}
+
+$('rand').onclick=()=>{
+  for(let c=0;c<STEPS;c++){const hit=Math.random()<0.32;for(let r=0;r<ROWS;r++)grid[r][c]=false;
+    if(hit)grid[Math.floor(Math.random()*ROWS)][c]=true;}
+  buildGrid();
+};
+$('clear').onclick=()=>{grid=Array.from({length:ROWS},()=>Array(STEPS).fill(false));buildGrid();};
+
+/* ---- controls ---- */
+function bind(id,key,fn,disp){const el=$(id);el.oninput=()=>{P[key]=fn(el.value);if(disp)disp(el.value);
+  if(key==='rev'&&revGain)revGain.gain.value=P.rev;
+  if(key==='drone'&&droneNodes)droneNodes.g.gain.value=P.drone*0.5;
+  if(key==='cut'&&droneNodes)droneNodes.f.frequency.value=P.cut;};}
+bind('tempo','tempo',Number,v=>$('vT').textContent=v);
+bind('cut','cut',Number,v=>$('vC').textContent=v);
+bind('res','res',Number,v=>$('vQ').textContent=v);
+bind('rev','rev',v=>v/100,v=>$('vR').textContent=v);
+bind('drone','drone',v=>v/100,v=>$('vD').textContent=v);
+$('wave').onchange=e=>P.wave=e.target.value;
+$('scale').onchange=e=>{P.scale=e.target.value;SMIDIS=scaleMidis();buildGrid();};
+
+/* ---- oscilloscope ---- */
+function drawScope(){
+  const cv=$('scope'),x=cv.getContext('2d');
+  const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;x.setTransform(d,0,0,d,0,0);
+  const buf=new Uint8Array(analyser.fftSize);
+  function frame(){
+    if(!playing)return;
+    analyser.getByteTimeDomainData(buf);
+    x.clearRect(0,0,r.width,r.height);
+    x.beginPath();x.lineWidth=1.6;x.strokeStyle='rgba(87,227,194,.9)';
+    for(let i=0;i<buf.length;i++){const xx=i/buf.length*r.width,yy=(buf[i]/128-1)*r.height*0.45+r.height/2;i?x.lineTo(xx,yy):x.moveTo(xx,yy);}
+    x.stroke();requestAnimationFrame(frame);
+  }
+  frame();
+}
+/* ---- API: so a mentor (or a link) can drive the instrument ----
+   In the browser console:  SL.scale('lydian'); SL.tempo(120); SL.play()
+   Share a whole jam as a URL:  SL.toURL()  -> paste/open to load it. */
+function applyParams(o){
+  if('tempo' in o){P.tempo=+o.tempo;$('tempo').value=P.tempo;$('vT').textContent=P.tempo;}
+  if('cut' in o){P.cut=+o.cut;$('cut').value=P.cut;$('vC').textContent=P.cut;if(droneNodes)droneNodes.f.frequency.value=P.cut;}
+  if('res' in o){P.res=+o.res;$('res').value=P.res;$('vQ').textContent=P.res;}
+  if('rev' in o){P.rev=+o.rev;$('rev').value=Math.round(P.rev*100);$('vR').textContent=Math.round(P.rev*100);if(revGain)revGain.gain.value=P.rev;}
+  if('drone' in o){P.drone=+o.drone;$('drone').value=Math.round(P.drone*100);$('vD').textContent=Math.round(P.drone*100);if(droneNodes)droneNodes.g.gain.value=P.drone*0.5;}
+  if('wave' in o){P.wave=o.wave;$('wave').value=o.wave;}
+  if('scale' in o){P.scale=o.scale;$('scale').value=o.scale;SMIDIS=scaleMidis();}
+}
+function gridToBits(){let s='';for(let r=0;r<ROWS;r++)for(let c=0;c<STEPS;c++)s+=grid[r][c]?'1':'0';
+  let hex='';for(let i=0;i<s.length;i+=4)hex+=parseInt(s.substr(i,4),2).toString(16);return hex;}
+function bitsToGrid(hex){let s='';for(const ch of hex)s+=parseInt(ch,16).toString(2).padStart(4,'0');
+  for(let r=0;r<ROWS;r++)for(let c=0;c<STEPS;c++)grid[r][c]=s[r*STEPS+c]==='1';}
+function toURL(){const p=new URLSearchParams({t:P.tempo,c:P.cut,q:P.res,r:Math.round(P.rev*100),
+  d:Math.round(P.drone*100),w:P.wave,s:P.scale,g:gridToBits()});
+  return location.origin+location.pathname+'#'+p.toString();}
+function loadHash(h){if(!h||h.length<2)return false;const p=new URLSearchParams(h.replace(/^#/,''));const o={};
+  if(p.has('t'))o.tempo=p.get('t');if(p.has('c'))o.cut=p.get('c');if(p.has('q'))o.res=p.get('q');
+  if(p.has('r'))o.rev=+p.get('r')/100;if(p.has('d'))o.drone=+p.get('d')/100;
+  if(p.has('w'))o.wave=p.get('w');if(p.has('s'))o.scale=p.get('s');
+  applyParams(o);if(p.has('g'))bitsToGrid(p.get('g'));buildGrid();return true;}
+window.SL={
+  play, stop, set:applyParams, state:()=>({...P,grid:grid.map(r=>r.slice())}),
+  tempo:v=>applyParams({tempo:v}), cutoff:v=>applyParams({cut:v}),
+  reverb:pct=>applyParams({rev:pct/100}), drone:pct=>applyParams({drone:pct/100}),
+  scale:s=>{applyParams({scale:s});buildGrid();}, wave:w=>applyParams({wave:w}),
+  cell:(r,c,on=true)=>{if(grid[r]){grid[r][c]=on;buildGrid();}},
+  pattern:cells=>{grid=Array.from({length:ROWS},()=>Array(STEPS).fill(false));cells.forEach(([r,c])=>{if(grid[r])grid[r][c]=true;});buildGrid();},
+  generate:()=>$('rand').click(), clear:()=>$('clear').click(),
+  toURL, load:loadHash,
+};
+
+/* ---- presets (Oxygène homage + our two pieces) ---- */
+const PRESETS={
+ oxygene:{t:100,c:2600,q:4,r:48,d:32,w:'sawtooth',s:'minor',
+   cells:[[7,0],[5,1],[3,2],[0,3],[1,4],[3,5],[5,6],[4,7],[3,8],[4,9],[5,10],[6,11],[7,12],[5,13],[3,14],[4,15]]},
+ theater:{t:60,c:900,q:2,r:60,d:48,w:'sawtooth',s:'phrygian',
+   cells:[[7,0],[6,4],[4,6],[5,8],[3,10],[7,12],[2,14]]},
+ icarus:{t:128,c:3200,q:5,r:38,d:24,w:'sawtooth',s:'lydian',
+   cells:[[7,0],[4,2],[2,4],[0,6],[3,8],[1,10],[4,12],[0,14],[5,15]]},
+};
+function applyPreset(name){const p=PRESETS[name];if(!p)return;
+  applyParams({tempo:p.t,cut:p.c,res:p.q,rev:p.r/100,drone:p.d/100,wave:p.w,scale:p.s});
+  grid=Array.from({length:ROWS},()=>Array(STEPS).fill(false));
+  p.cells.forEach(([r,c])=>{if(grid[r])grid[r][c]=true;});buildGrid();}
+$('preset').onchange=e=>{if(e.target.value)applyPreset(e.target.value);};
+SL.preset=applyPreset;
+
+/* ---- patch bridge: export the jam, or render it through the Python engine ---- */
+const ENGINE='http://127.0.0.1:7700';
+function livePatch(){
+  const seq=[];
+  for(let c=0;c<STEPS;c++)for(let r=0;r<ROWS;r++)if(grid[r][c])seq.push({step:c,deg:ROWS-1-r});
+  return {v:1,name:'live-jam',tempo:P.tempo,root:'A',scale:P.scale,
+    osc:{type:'wave',wave:(P.wave==='sawtooth'?'saw':P.wave)},
+    filter:{type:'lowpass',cutoff:P.cut,q:P.res,env_amt:0.4},
+    env:{a:0.01,d:0.12,s:0.3,r:0.15},
+    fx:{reverb:P.rev,delay:0,delay_time:0.3,width:0.5,drive:1},
+    sequence:seq};
+}
+$('exp').onclick=()=>{const p=livePatch();const b=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='live-jam.json';a.click();};
+$('eng').onclick=async()=>{const msg=$('engmsg');msg.textContent='rendering…';
+  try{const r=await fetch(ENGINE+'/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(livePatch())});
+    if(!r.ok)throw 0;new Audio(URL.createObjectURL(await r.blob())).play();msg.textContent='engine ✓';}
+  catch(e){msg.textContent='engine offline — run server.py';}};
+
+// open with a shared jam if present, otherwise a gentle A-Phrygian starter
+if(!loadHash(location.hash)){
+  [[7,0],[5,4],[6,8],[4,10],[7,12]].forEach(([r,c])=>{if(grid[r])grid[r][c]=true;});
+  buildGrid();
+}
+</script>

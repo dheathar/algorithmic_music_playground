@@ -1,0 +1,429 @@
+<title>Sound-Design Toolkit — Signal Lab</title>
+<meta name="description" content="The DSP toolkit, grouped logically, each family with a hands-on workbench: additive & FM oscillators, filters, envelopes & modulation, space & time.">
+<style>
+  :root{
+    --bg:#0A0C18;--metal:#161a2c;--metal-2:#1d2236;--panel-2:#181C36;--line:#272C4C;
+    --text:#E7E9F3;--muted:#8C92B2;--faint:#5A6088;
+    --amber:#F4A659;--phosphor:#57E3C2;--phosphor-dim:#2E8C77;--violet:#9B8CFF;
+    --bevhi:rgba(255,255,255,.07);--bevlo:rgba(0,0,0,.6);
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--body:-apple-system,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased;
+    background:radial-gradient(1100px 380px at 50% -120px,rgba(87,227,194,.05),transparent 70%),
+      repeating-linear-gradient(90deg,#0a0c16 0,#0a0c16 1px,#0b0d19 1px,#0b0d19 3px),linear-gradient(180deg,#0b0d19,#080a12);}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+  a{color:var(--phosphor);text-decoration:none}
+  h1,h2,h3{text-wrap:balance}
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .plate{background:linear-gradient(180deg,var(--metal-2),var(--metal));border:1px solid #0a0c14;border-radius:12px;
+    box-shadow:inset 0 1px 0 var(--bevhi),inset 0 -2px 7px var(--bevlo),0 8px 22px -12px #000;position:relative}
+  .plate::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:
+     radial-gradient(circle 3.5px at 12px 12px,#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at calc(100% - 12px) 12px,#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at 12px calc(100% - 12px),#05060c 45%,#2b3150 62%,transparent 66%),
+     radial-gradient(circle 3.5px at calc(100% - 12px) calc(100% - 12px),#05060c 45%,#2b3150 62%,transparent 66%)}
+  .plate>*{position:relative;z-index:2}
+
+  header{border-bottom:1px solid var(--line);padding:24px 0 20px}
+  .back{font-family:var(--mono);font-size:12px;color:var(--muted)}.back:hover{color:var(--phosphor)}
+  h1{font-weight:800;letter-spacing:-.03em;margin:12px 0 0;font-size:clamp(26px,4.5vw,42px);text-shadow:0 1px 0 rgba(0,0,0,.7),0 -1px 0 rgba(255,255,255,.05)}
+  h1 .em{color:var(--amber)}
+  .sub{color:var(--muted);margin:10px 0 0;max-width:66ch;font-size:15px}
+
+  .tabbar{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#10121f,#0b0d18);
+    border-bottom:1px solid var(--line);margin-top:16px}
+  .tabbar-in{max-width:1100px;margin:0 auto;display:flex;gap:4px;padding:0 14px;overflow-x:auto}
+  .tab{flex:none;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    cursor:pointer;padding:11px 14px;margin:8px 2px;border:1px solid #0a0c14;border-radius:6px;
+    background:linear-gradient(180deg,#20243c,#161a2c);box-shadow:inset 0 1px 0 var(--bevhi),0 2px 3px var(--bevlo)}
+  .tab[aria-selected=true]{color:var(--phosphor);box-shadow:inset 0 2px 7px var(--bevlo),0 0 0 1px var(--phosphor-dim)}
+  .panel{display:none;padding:26px 0 40px}.panel.on{display:block}
+
+  h2{font-size:clamp(19px,3vw,26px);font-weight:800;letter-spacing:-.02em;margin:0 0 6px}
+  .lead{color:var(--muted);max-width:72ch;margin:0 0 18px;font-size:15px}
+  code{font-family:var(--mono);font-size:.9em;background:#0a0c16;border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--phosphor)}
+
+  .wb{padding:20px;margin-bottom:18px}
+  .wb h3{margin:0 0 4px;font-size:16px}.wb .x{color:var(--muted);font-size:13px;margin:0 0 16px}
+  .row{display:flex;gap:22px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .btn{font-family:var(--mono);font-size:12px;border:1px solid #0a0c14;border-radius:7px;padding:9px 13px;cursor:pointer;color:var(--text);
+    background:linear-gradient(180deg,#20243c,#161a2c);box-shadow:inset 0 1px 0 var(--bevhi),0 2px 3px var(--bevlo)}
+  .btn:hover{color:var(--phosphor)} .btn.play{border-color:var(--phosphor-dim);color:var(--phosphor)} .btn.play.on{background:var(--phosphor);color:#0A0C18}
+  .ctl{display:flex;flex-direction:column;gap:5px;min-width:120px}
+  .ctl label{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .ctl .v{color:var(--phosphor)} select{font-family:var(--mono);font-size:12px;background:#181c2e;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:7px}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:4px;background:var(--line);border-radius:3px;width:100%;accent-color:var(--amber)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--amber);cursor:pointer}
+  .scope{background:#0a0c16;border-radius:10px;box-shadow:inset 0 2px 8px #000;overflow:hidden;margin-top:8px}
+  .scope canvas{width:100%;height:130px;display:block}.scope .cap{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:7px 10px 0}
+  .formula{font-family:var(--mono);font-size:13px;color:var(--phosphor);background:#0a0c16;border-radius:8px;padding:12px 14px;margin-top:12px;box-shadow:inset 0 2px 6px #000;overflow-x:auto}
+  .note{font-size:12.5px;color:var(--muted);margin-top:10px}.note b{color:var(--amber)}
+
+  /* drawbars (additive) */
+  .bars{display:flex;gap:7px;align-items:flex-end;justify-content:space-between;background:#0a0c16;border-radius:10px;padding:14px 12px 7px;box-shadow:inset 0 2px 8px #000;overflow-x:auto}
+  .drawbar{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:30px}
+  .fader{height:130px} .fader input{writing-mode:vertical-lr;direction:rtl;-webkit-appearance:slider-vertical;width:16px;height:130px;accent-color:var(--amber)}
+  .drawbar.over input{accent-color:#3a3f5c} .drawbar small{font-family:var(--mono);font-size:9px;color:var(--faint)} .drawbar.over small,.drawbar.over b{color:#3a3f5c} .drawbar b{font-family:var(--mono);font-size:10px;color:var(--phosphor)}
+
+  .subh{font-size:12px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--violet);margin:26px 0 13px;display:flex;align-items:center;gap:10px}
+  .subh::after{content:"";flex:1;height:1px;background:var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .ref{padding:15px}.ref .fn{font-family:var(--mono);font-size:12px;color:var(--phosphor);margin-bottom:4px}
+  .ref h3{margin:0 0 6px;font-size:14px}.ref p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.5}
+  .ref .for{margin-top:8px;font-size:12px}.ref .for b{color:var(--amber);font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;display:block}
+  footer{border-top:1px solid var(--line);padding:24px 0 56px;color:var(--faint);font-size:12.5px;margin-top:18px}
+</style>
+
+<header class="wrap">
+  <a class="back" href="index.html">← The Black Theater</a>
+  <div class="label" style="margin-top:12px">Signal Lab · Reference & Workbenches</div>
+  <h1>The Sound-Design <span class="em">Toolkit</span></h1>
+  <p class="sub">Every family of synthesis with a hands-on station and its reference, grouped the way a synth actually flows: <b>oscillators → filters → envelopes & modulation → space & time</b>. All band-limited, all from first principles — the browser twins of <code>synth.py</code>.</p>
+</header>
+
+<nav class="tabbar"><div class="tabbar-in" role="tablist" id="tabs">
+  <button class="tab" role="tab" data-tab="osc">1 · Oscillators</button>
+  <button class="tab" role="tab" data-tab="filt">2 · Filters</button>
+  <button class="tab" role="tab" data-tab="env">3 · Envelopes &amp; Mod</button>
+  <button class="tab" role="tab" data-tab="space">4 · Space &amp; Time</button>
+</div></nav>
+
+<div class="wrap" style="margin-top:16px"><div class="plate" style="padding:16px 18px">
+  <div class="label" style="margin-bottom:10px">✨ Describe a sound — or extract a description from one of our creations, then let the AI write a patch</div>
+  <div class="row" style="margin:0 0 10px;gap:10px">
+    <select id="ai_src" style="font-family:var(--mono);font-size:12px;background:#181c2e;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:8px">
+      <option value="">⤵ extract from a creation…</option>
+      <option value="dream_mix.wav">The Black Theater (mix)</option>
+      <option value="icarus_mix.wav">Icarus (mix)</option>
+      <option value="oxygene_mix.wav">Homage to Oxygène (mix)</option>
+      <option value="ic_void.wav">Icarus — Void</option>
+      <option value="stem_audience.wav">Theater — Audience</option>
+      <option value="space_library/jupiter_ion_acoustic.mp3">Jupiter — ion acoustic</option>
+      <option value="space_library/earth_chorus.mp3">Earth — chorus</option>
+    </select>
+    <button class="btn" id="ai_extract">⤵ extract → prompt</button>
+    <span id="ai_feat" style="font-family:var(--mono);font-size:11px;color:var(--phosphor)"></span>
+  </div>
+  <div class="row" style="margin:0;gap:10px">
+    <input id="ai_in" placeholder="e.g. a glassy bell with long shimmer · a fat detuned analog bass · an eerie metallic drone"
+      style="flex:1;min-width:220px;font-family:var(--body);font-size:14px;background:#0a0c16;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:11px 13px">
+    <button class="btn play" id="ai_go">✨ Generate</button>
+    <button class="btn" id="ai_sc">▶ SC realtime</button>
+    <button class="btn" id="ai_dl">⬇ patch</button>
+    <span id="ai_msg" style="font-family:var(--mono);font-size:11px;color:var(--faint)"></span>
+  </div>
+</div></div>
+
+<main class="wrap">
+  <!-- ============ OSCILLATORS ============ -->
+  <section class="panel" id="tab-osc" data-group="osc">
+    <h2>Oscillators — the raw tone</h2>
+    <p class="lead">Where sound begins. Build a tone by stacking sine <em>harmonics</em> (additive), or by letting one oscillator bend another's pitch (FM). Both are band-limited, so they never alias.</p>
+
+    <div class="plate wb">
+      <h3>Additive workbench — drawbars</h3>
+      <p class="x">Pull each harmonic's amplitude. The waveform forms as you go; above Nyquist, harmonics grey out and drop.</p>
+      <div class="row">
+        <button class="btn play" id="ad_play">▶ Hold</button>
+        <div class="ctl"><label>Fundamental <span class="v" id="ad_vf">110</span> Hz</label><input type="range" id="ad_freq" min="40" max="660" value="110"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn" data-ap="sine">sine</button><button class="btn" data-ap="saw">saw</button>
+          <button class="btn" data-ap="square">square</button><button class="btn" data-ap="triangle">tri</button>
+          <button class="btn" data-ap="organ">organ</button><button class="btn" data-ap="clear">clear</button>
+        </div>
+      </div>
+      <div class="bars" id="ad_bars"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="ad_ex">⬇ Export patch</button><button class="btn play" id="ad_en">▶ Render in engine</button><span id="ad_msg" style="font-family:var(--mono);font-size:11px;color:var(--faint)"></span></div>
+      <div class="scope"><div class="cap">waveform (one period)</div><canvas id="ad_wave"></canvas></div>
+      <div class="formula">x(t) = Σ aₖ·sin(2π·k·f·t)&nbsp;&nbsp;for k·f &lt; 22050 Hz</div>
+      <div class="note" id="ad_nyq"></div>
+    </div>
+
+    <div class="plate wb">
+      <h3>FM workbench — two operators</h3>
+      <p class="x">A modulator bends the carrier's frequency. Whole-number ratios stay harmonic; odd ratios go metallic/bell-like. Raise the index for more sidebands.</p>
+      <div class="row">
+        <button class="btn play" id="fm_play">▶ Hold</button>
+        <div class="ctl"><label>Carrier <span class="v" id="fm_vc">220</span> Hz</label><input type="range" id="fm_car" min="55" max="660" value="220"></div>
+        <div class="ctl"><label>Ratio <span class="v" id="fm_vr">2.0</span></label><input type="range" id="fm_ratio" min="0.5" max="8" step="0.5" value="2"></div>
+        <div class="ctl"><label>Index <span class="v" id="fm_vi">200</span></label><input type="range" id="fm_index" min="0" max="900" value="200"></div>
+      </div>
+      <div class="row" style="margin-top:4px"><button class="btn" id="fm_ex">⬇ Export patch</button><button class="btn play" id="fm_en">▶ Render in engine</button><span id="fm_msg" style="font-family:var(--mono);font-size:11px;color:var(--faint)"></span></div>
+      <div class="scope"><div class="cap">live output</div><canvas id="fm_scope"></canvas></div>
+    </div>
+
+    <div class="subh">Reference · oscillators</div><div class="grid" id="ref_osc"></div>
+  </section>
+
+  <!-- ============ FILTERS ============ -->
+  <section class="panel" id="tab-filt" data-group="filt">
+    <h2>Filters — carving the tone</h2>
+    <p class="lead">Subtractive synthesis: start rich, then <em>remove</em>. A resonant lowpass is the soul of analog. Sweep the cutoff while it plays — that gesture is half of electronic music.</p>
+    <div class="plate wb">
+      <h3>Filter workbench</h3>
+      <p class="x">Pick a waveform, choose a filter type, and sweep. Resonance emphasizes the cutoff frequency.</p>
+      <div class="row">
+        <button class="btn play" id="ft_play">▶ Hold</button>
+        <div class="ctl"><label>Source</label><select id="ft_wave"><option value="sawtooth">saw</option><option value="square">square</option><option value="triangle">triangle</option></select></div>
+        <div class="ctl"><label>Filter</label><select id="ft_type"><option value="lowpass">lowpass</option><option value="highpass">highpass</option><option value="bandpass">bandpass</option><option value="notch">notch</option></select></div>
+        <div class="ctl"><label>Cutoff <span class="v" id="ft_vc">1200</span> Hz</label><input type="range" id="ft_cut" min="80" max="9000" value="1200"></div>
+        <div class="ctl"><label>Resonance <span class="v" id="ft_vq">6</span></label><input type="range" id="ft_q" min="0.5" max="22" step="0.5" value="6"></div>
+      </div>
+      <div class="row" style="margin-top:4px"><button class="btn" id="ft_ex">⬇ Export patch</button><button class="btn play" id="ft_en">▶ Render in engine</button><span id="ft_msg" style="font-family:var(--mono);font-size:11px;color:var(--faint)"></span></div>
+      <div class="scope"><div class="cap">live output</div><canvas id="ft_scope"></canvas></div>
+      <div class="note">Try a <b>saw</b> through a <b>lowpass</b> with resonance ~12, and drag the cutoff slowly. That's the classic sweep.</div>
+    </div>
+    <div class="subh">Reference · filters</div><div class="grid" id="ref_filt"></div>
+  </section>
+
+  <!-- ============ ENVELOPES & MOD ============ -->
+  <section class="panel" id="tab-env" data-group="env">
+    <h2>Envelopes &amp; modulation — shape &amp; motion</h2>
+    <p class="lead">An envelope shapes one event over time (attack→decay→sustain→release). An LFO is a slow oscillator that moves a parameter — vibrato, tremolo, a filter that breathes. Motion is what makes a sound alive.</p>
+    <div class="plate wb">
+      <h3>Envelope &amp; LFO workbench</h3>
+      <p class="x">Set the ADSR (it shapes the volume), then add an LFO and choose what it modulates. Press Trigger to hear one note.</p>
+      <div class="row">
+        <button class="btn play" id="en_trig">▶ Trigger</button>
+        <div class="ctl"><label>Attack <span class="v" id="en_va">0.02</span>s</label><input type="range" id="en_a" min="0" max="2" step="0.01" value="0.02"></div>
+        <div class="ctl"><label>Decay <span class="v" id="en_vd">0.2</span>s</label><input type="range" id="en_d" min="0" max="2" step="0.01" value="0.2"></div>
+        <div class="ctl"><label>Sustain <span class="v" id="en_vs">0.6</span></label><input type="range" id="en_s" min="0" max="1" step="0.01" value="0.6"></div>
+        <div class="ctl"><label>Release <span class="v" id="en_vr">0.4</span>s</label><input type="range" id="en_r" min="0" max="3" step="0.01" value="0.4"></div>
+      </div>
+      <div class="row">
+        <div class="ctl"><label>LFO target</label><select id="en_tgt"><option value="none">none</option><option value="filter">filter</option><option value="pitch">pitch (vibrato)</option><option value="amp">amp (tremolo)</option></select></div>
+        <div class="ctl"><label>LFO rate <span class="v" id="en_vlr">5</span> Hz</label><input type="range" id="en_lr" min="0.1" max="14" step="0.1" value="5"></div>
+        <div class="ctl"><label>LFO depth <span class="v" id="en_vld">40</span>%</label><input type="range" id="en_ld" min="0" max="100" value="40"></div>
+      </div>
+      <div class="row" style="margin-top:4px"><button class="btn" id="en_ex">⬇ Export patch</button><button class="btn play" id="en_en">▶ Render in engine</button><span id="en_msg" style="font-family:var(--mono);font-size:11px;color:var(--faint)"></span></div>
+      <div class="scope"><div class="cap">envelope shape</div><canvas id="en_env"></canvas></div>
+      <div class="scope"><div class="cap">live output</div><canvas id="en_scope"></canvas></div>
+    </div>
+    <div class="subh">Reference · envelopes & modulation</div><div class="grid" id="ref_env"></div>
+  </section>
+
+  <!-- ============ SPACE & TIME ============ -->
+  <section class="panel" id="tab-space" data-group="space">
+    <h2>Space &amp; time — depth &amp; movement</h2>
+    <p class="lead">Where a sound <em>is</em>, and how it moves: stereo width, the depth of reverb, and rhythmic echoes. This is the dimension that turns a tone into a place.</p>
+    <div class="plate wb">
+      <h3>Space workbench</h3>
+      <p class="x">A repeating pluck through width, reverb and a ping-pong delay. 🎧 Headphones reveal the stereo field.</p>
+      <div class="row">
+        <button class="btn play" id="sp_play">▶ Play</button>
+        <div class="ctl"><label>Width <span class="v" id="sp_vw">60</span>%</label><input type="range" id="sp_w" min="0" max="100" value="60"></div>
+        <div class="ctl"><label>Reverb <span class="v" id="sp_vr">35</span>%</label><input type="range" id="sp_r" min="0" max="90" value="35"></div>
+        <div class="ctl"><label>Delay <span class="v" id="sp_vd">30</span>%</label><input type="range" id="sp_d" min="0" max="80" value="30"></div>
+        <div class="ctl"><label>Delay time <span class="v" id="sp_vt">0.30</span>s</label><input type="range" id="sp_t" min="0.1" max="0.7" step="0.01" value="0.3"></div>
+      </div>
+      <div class="row" style="margin-top:4px"><button class="btn" id="sp_ex">⬇ Export patch</button><button class="btn play" id="sp_en">▶ Render in engine</button><span id="sp_msg" style="font-family:var(--mono);font-size:11px;color:var(--faint)"></span></div>
+      <div class="scope"><div class="cap">live output</div><canvas id="sp_scope"></canvas></div>
+    </div>
+    <div class="subh">Reference · space & time</div><div class="grid" id="ref_space"></div>
+  </section>
+
+  <footer>Each bench is the browser twin of a tool in <code>synth.py</code>. Built with the Web Audio API. More: <a href="index.html">studio</a> · <a href="music.html">theory</a> · <a href="library.html">library</a></footer>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+let AC=null;
+function ensure(){if(!AC)AC=new(window.AudioContext||webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC;}
+function makeIR(dur){const b=AC.createBuffer(2,Math.floor(AC.sampleRate*dur),AC.sampleRate);
+  for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.6);}return b;}
+function scopeOf(cv){const x=cv.getContext('2d');function res(){const r=cv.getBoundingClientRect(),dp=devicePixelRatio||1;cv.width=r.width*dp;cv.height=r.height*dp;x.setTransform(dp,0,0,dp,0,0);return r;}
+  return {x,res};}
+function liveScope(cv,analyser,isOn){const {x,res}=scopeOf(cv);let r=res();const buf=new Uint8Array(analyser.fftSize);
+  function fr(){if(!isOn())return;analyser.getByteTimeDomainData(buf);r=cv.getBoundingClientRect();x.clearRect(0,0,r.width,r.height);
+    x.strokeStyle='#57E3C2';x.lineWidth=1.5;x.beginPath();for(let i=0;i<buf.length;i++){const xx=i/buf.length*r.width,yy=(buf[i]/128-1)*r.height*0.45+r.height/2;i?x.lineTo(xx,yy):x.moveTo(xx,yy);}x.stroke();requestAnimationFrame(fr);}fr();}
+
+/* ---- patch bridge: export a .json, or render through the Python engine ---- */
+const ENGINE='http://127.0.0.1:7700';
+const wmap=w=>w==='sawtooth'?'saw':w;
+function dlPatch(p){const b=new Blob([JSON.stringify(p,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=(p.name||'patch')+'.json';a.click();}
+async function engineRender(p,msg){if(msg)msg.textContent='rendering…';
+  try{const r=await fetch(ENGINE+'/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+    if(!r.ok)throw 0;const a=new Audio(URL.createObjectURL(await r.blob()));a.play();if(msg)msg.textContent='engine ✓ (real render)';}
+  catch(e){if(msg)msg.textContent='engine offline — run server.py';}}
+function wireBench(id,patchOf){const ex=$(id+'_ex'),en=$(id+'_en'),msg=$(id+'_msg');
+  if(ex)ex.onclick=()=>dlPatch(patchOf());if(en)en.onclick=()=>engineRender(patchOf(),msg);}
+
+/* tabs */
+const tabBtns=[...document.querySelectorAll('.tab')];const VALID=['osc','filt','env','space'];
+const stops=[];function stopAll(){stops.forEach(f=>{try{f()}catch(e){}});}
+function showTab(id,push){if(!VALID.includes(id))id='osc';stopAll();
+  tabBtns.forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.dataset.group===id));
+  if(push&&location.hash!=='#'+id)history.pushState({},'', '#'+id);}
+tabBtns.forEach(b=>b.onclick=()=>showTab(b.dataset.tab,true));
+addEventListener('popstate',()=>showTab((location.hash||'#osc').slice(1),false));
+showTab((location.hash||'#osc').slice(1),false);
+
+/* ============ 1 · ADDITIVE ============ */
+(function(){const NH=16,amps=new Array(NH+1).fill(0);amps[1]=1;let osc,gain,an,playing=false,freq=110;
+ const PRE={sine:k=>k===1?1:0,saw:k=>1/k,square:k=>k%2?1/k:0,triangle:k=>k%2?(1/(k*k))*((k%4===1)?1:-1):0,organ:k=>[0,1,.6,.4,0,.25,0,0,.12][k]||0,clear:k=>0};
+ const bars=$('ad_bars');
+ function build(){bars.innerHTML='';for(let k=1;k<=NH;k++){const d=document.createElement('div');d.className='drawbar';
+   d.innerHTML=`<b>0</b><div class="fader"><input type="range" min="0" max="100" value="0"></div><small>${k}</small>`;
+   d.querySelector('input').oninput=e=>{amps[k]=e.target.value/100;d.querySelector('b').textContent=Math.round(amps[k]*100);wave();push();};
+   bars.appendChild(d);}}
+ function sync(){[...bars.children].forEach((d,i)=>{d.querySelector('input').value=Math.round(amps[i+1]*100);d.querySelector('b').textContent=Math.round(amps[i+1]*100);});}
+ function nyq(){const mx=Math.floor(22050/freq);[...bars.children].forEach((d,i)=>d.classList.toggle('over',(i+1)>mx));
+   $('ad_nyq').innerHTML=`At <b>${freq} Hz</b>, harmonics to <b>#${Math.min(mx,NH)}</b> survive; higher ones would alias, so they're dropped — "band-limited".`;}
+ function preset(n){for(let k=1;k<=NH;k++)amps[k]=PRE[n](k);sync();wave();push();}
+ function wave(){const cv=$('ad_wave'),{x,res}=scopeOf(cv),r=res(),W=r.width,H=r.height,mid=H/2;x.clearRect(0,0,W,H);
+   x.strokeStyle='rgba(87,227,194,.25)';x.beginPath();x.moveTo(0,mid);x.lineTo(W,mid);x.stroke();
+   let p=[],m=1e-6;for(let i=0;i<=W;i++){const t=i/W;let v=0;for(let k=1;k<=NH;k++)v+=amps[k]*Math.sin(2*Math.PI*k*t);p.push(v);if(Math.abs(v)>m)m=Math.abs(v);}
+   x.strokeStyle='#F4A659';x.lineWidth=2;x.beginPath();p.forEach((v,i)=>{const y=mid-(v/m)*mid*0.86;i?x.lineTo(i,y):x.moveTo(i,y);});x.stroke();}
+ function periodic(){const re=new Float32Array(NH+1),im=new Float32Array(NH+1);for(let k=1;k<=NH;k++)im[k]=amps[k];return AC.createPeriodicWave(re,im,{disableNormalization:true});}
+ function push(){if(playing&&osc){osc.setPeriodicWave(periodic());osc.frequency.value=freq;}}
+ function start(){ensure();an=AC.createAnalyser();an.fftSize=2048;gain=AC.createGain();gain.gain.value=0;
+   osc=AC.createOscillator();osc.setPeriodicWave(periodic());osc.frequency.value=freq;osc.connect(gain);gain.connect(an);an.connect(AC.destination);osc.start();
+   gain.gain.linearRampToValueAtTime(0.18,AC.currentTime+0.02);playing=true;$('ad_play').classList.add('on');$('ad_play').textContent='⏸ Stop';liveScope($('ad_wave'),an,()=>false);}
+ function stop(){if(!osc)return;try{osc.stop()}catch(e){}playing=false;$('ad_play').classList.remove('on');$('ad_play').textContent='▶ Hold';wave();}
+ stops.push(stop);
+ $('ad_play').onclick=()=>playing?stop():start();
+ $('ad_freq').oninput=e=>{freq=+e.target.value;$('ad_vf').textContent=freq;push();nyq();};
+ document.querySelectorAll('[data-ap]').forEach(b=>b.onclick=()=>preset(b.dataset.ap));
+ build();preset('saw');nyq();
+ wireBench('ad',()=>({v:1,name:'additive',freq:freq,osc:{type:'additive',harmonics:amps.slice(1)},env:{a:0.05,d:0.1,s:0.85,r:0.3},fx:{reverb:0.25,width:0.5,drive:1}}));
+})();
+
+/* ============ 1 · FM ============ */
+(function(){let car,mod,mg,gain,an,playing=false;const P={car:220,ratio:2,index:200};
+ function start(){ensure();an=AC.createAnalyser();an.fftSize=2048;gain=AC.createGain();gain.gain.value=0;
+   car=AC.createOscillator();mod=AC.createOscillator();mg=AC.createGain();
+   car.frequency.value=P.car;mod.frequency.value=P.car*P.ratio;mg.gain.value=P.index;
+   mod.connect(mg);mg.connect(car.frequency);car.connect(gain);gain.connect(an);an.connect(AC.destination);
+   car.start();mod.start();gain.gain.linearRampToValueAtTime(0.16,AC.currentTime+0.02);
+   playing=true;$('fm_play').classList.add('on');$('fm_play').textContent='⏸ Stop';liveScope($('fm_scope'),an,()=>playing);}
+ function stop(){if(!car)return;try{car.stop();mod.stop()}catch(e){}playing=false;$('fm_play').classList.remove('on');$('fm_play').textContent='▶ Hold';}
+ function upd(){if(!playing)return;car.frequency.value=P.car;mod.frequency.value=P.car*P.ratio;mg.gain.value=P.index;}
+ stops.push(stop);
+ $('fm_play').onclick=()=>playing?stop():start();
+ $('fm_car').oninput=e=>{P.car=+e.target.value;$('fm_vc').textContent=P.car;upd();};
+ $('fm_ratio').oninput=e=>{P.ratio=+e.target.value;$('fm_vr').textContent=P.ratio.toFixed(1);upd();};
+ $('fm_index').oninput=e=>{P.index=+e.target.value;$('fm_vi').textContent=P.index;upd();};
+ wireBench('fm',()=>({v:1,name:'fm',freq:P.car,osc:{type:'fm',ratio:P.ratio,index:P.index},env:{a:0.005,d:1.2,s:0.1,r:1.0},fx:{reverb:0.4,width:0.5}}));
+})();
+
+/* ============ 2 · FILTER ============ */
+(function(){let osc,filt,gain,an,playing=false;const P={wave:'sawtooth',type:'lowpass',cut:1200,q:6};
+ function start(){ensure();an=AC.createAnalyser();an.fftSize=2048;gain=AC.createGain();gain.gain.value=0;
+   osc=AC.createOscillator();osc.type=P.wave;osc.frequency.value=110;
+   filt=AC.createBiquadFilter();filt.type=P.type;filt.frequency.value=P.cut;filt.Q.value=P.q;
+   osc.connect(filt);filt.connect(gain);gain.connect(an);an.connect(AC.destination);osc.start();
+   gain.gain.linearRampToValueAtTime(0.16,AC.currentTime+0.02);playing=true;$('ft_play').classList.add('on');$('ft_play').textContent='⏸ Stop';liveScope($('ft_scope'),an,()=>playing);}
+ function stop(){if(!osc)return;try{osc.stop()}catch(e){}playing=false;$('ft_play').classList.remove('on');$('ft_play').textContent='▶ Hold';}
+ stops.push(stop);
+ $('ft_play').onclick=()=>playing?stop():start();
+ $('ft_wave').onchange=e=>{P.wave=e.target.value;if(playing)osc.type=P.wave;};
+ $('ft_type').onchange=e=>{P.type=e.target.value;if(playing)filt.type=P.type;};
+ $('ft_cut').oninput=e=>{P.cut=+e.target.value;$('ft_vc').textContent=P.cut;if(playing)filt.frequency.value=P.cut;};
+ $('ft_q').oninput=e=>{P.q=+e.target.value;$('ft_vq').textContent=P.q;if(playing)filt.Q.value=P.q;};
+ wireBench('ft',()=>({v:1,name:'filter',note:'A3',osc:{type:'wave',wave:wmap(P.wave)},filter:{type:P.type,cutoff:P.cut,q:P.q},env:{a:0.02,d:0.2,s:0.7,r:0.3},fx:{reverb:0.3,width:0.5}}));
+})();
+
+/* ============ 3 · ENVELOPE & LFO ============ */
+(function(){const P={a:0.02,d:0.2,s:0.6,r:0.4,tgt:'none',lr:5,ld:0.4};let an;
+ function drawEnv(){const cv=$('en_env'),{x,res}=scopeOf(cv),rc=res(),W=rc.width,H=rc.height,pad=10;
+   x.clearRect(0,0,W,H);const total=P.a+P.d+1.0+P.r,sx=v=>pad+(v/total)*(W-2*pad),sy=v=>H-pad-v*(H-2*pad);
+   x.strokeStyle='#F4A659';x.lineWidth=2;x.beginPath();x.moveTo(sx(0),sy(0));x.lineTo(sx(P.a),sy(1));
+   x.lineTo(sx(P.a+P.d),sy(P.s));x.lineTo(sx(P.a+P.d+1.0),sy(P.s));x.lineTo(sx(total),sy(0));x.stroke();}
+ function trig(){ensure();an=AC.createAnalyser();an.fftSize=2048;
+   const t=AC.currentTime,g=AC.createGain(),f=AC.createBiquadFilter(),o=AC.createOscillator();
+   o.type='sawtooth';o.frequency.value=160;f.type='lowpass';f.frequency.value=2200;f.Q.value=4;
+   g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.22,t+P.a);
+   g.gain.linearRampToValueAtTime(0.22*P.s,t+P.a+P.d);const susEnd=t+P.a+P.d+0.7;g.gain.setValueAtTime(0.22*P.s,susEnd);
+   g.gain.exponentialRampToValueAtTime(0.0001,susEnd+P.r);
+   o.connect(f);f.connect(g);g.connect(an);an.connect(AC.destination);
+   if(P.tgt!=='none'&&P.ld>0){const lfo=AC.createOscillator(),la=AC.createGain();lfo.frequency.value=P.lr;
+     if(P.tgt==='pitch'){la.gain.value=P.ld*20;lfo.connect(la);la.connect(o.frequency);}
+     else if(P.tgt==='filter'){la.gain.value=P.ld*2000;lfo.connect(la);la.connect(f.frequency);}
+     else if(P.tgt==='amp'){la.gain.value=P.ld*0.15;lfo.connect(la);la.connect(g.gain);}
+     lfo.start(t);lfo.stop(susEnd+P.r+0.1);}
+   o.start(t);o.stop(susEnd+P.r+0.1);liveScope($('en_scope'),an,()=>AC.currentTime<susEnd+P.r);}
+ stops.push(()=>{});
+ $('en_trig').onclick=trig;
+ const bind=(id,k,el,fix)=>{$(id).oninput=e=>{P[k]=+e.target.value;$(el).textContent=fix?(+e.target.value).toFixed(2):e.target.value;drawEnv();};};
+ bind('en_a','a','en_va',1);bind('en_d','d','en_vd',1);bind('en_s','s','en_vs',1);bind('en_r','r','en_vr',1);
+ $('en_lr').oninput=e=>{P.lr=+e.target.value;$('en_vlr').textContent=e.target.value;};
+ $('en_ld').oninput=e=>{P.ld=e.target.value/100;$('en_vld').textContent=e.target.value;};
+ $('en_tgt').onchange=e=>P.tgt=e.target.value;
+ wireBench('en',()=>({v:1,name:'env',note:'A3',osc:{type:'wave',wave:'saw'},filter:{type:'lowpass',cutoff:2200,q:4},env:{a:P.a,d:P.d,s:P.s,r:P.r},lfo:{target:P.tgt,rate:P.lr,depth:P.ld},fx:{reverb:0.25,width:0.4}}));
+ drawEnv();
+})();
+
+/* ============ 4 · SPACE ============ */
+(function(){let timer,an,conv,revG,dly,dlyG,playing=false,bus,master;const P={w:0.6,r:0.35,d:0.3,t:0.3};
+ function start(){ensure();master=AC.createGain();master.gain.value=0.9;an=AC.createAnalyser();an.fftSize=2048;master.connect(an);an.connect(AC.destination);
+   conv=AC.createConvolver();conv.buffer=makeIR(2.4);revG=AC.createGain();revG.gain.value=P.r;conv.connect(revG);revG.connect(master);
+   dly=AC.createDelay();dly.delayTime.value=P.t;const fb=AC.createGain();fb.gain.value=0.35;dlyG=AC.createGain();dlyG.gain.value=P.d;
+   dly.connect(fb);fb.connect(dly);dly.connect(dlyG);dlyG.connect(master);
+   bus={conv,dly};playing=true;$('sp_play').classList.add('on');$('sp_play').textContent='⏸ Stop';
+   let i=0;const notes=[220,277,330,277];
+   timer=setInterval(()=>{const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(),pan=AC.createStereoPanner();
+     o.type='sawtooth';o.frequency.value=notes[i%notes.length];pan.pan.value=(i%2?1:-1)*P.w;
+     g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.14,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+     o.connect(g);g.connect(pan);pan.connect(master);pan.connect(conv);pan.connect(dly);o.start(t);o.stop(t+0.55);i++;},420);
+   liveScope($('sp_scope'),an,()=>playing);}
+ function stop(){clearInterval(timer);playing=false;$('sp_play').classList.remove('on');$('sp_play').textContent='▶ Play';}
+ stops.push(stop);
+ $('sp_play').onclick=()=>playing?stop():start();
+ $('sp_w').oninput=e=>{P.w=e.target.value/100;$('sp_vw').textContent=e.target.value;};
+ $('sp_r').oninput=e=>{P.r=e.target.value/100;$('sp_vr').textContent=e.target.value;if(revG)revG.gain.value=P.r;};
+ $('sp_d').oninput=e=>{P.d=e.target.value/100;$('sp_vd').textContent=e.target.value;if(dlyG)dlyG.gain.value=P.d;};
+ $('sp_t').oninput=e=>{P.t=+e.target.value;$('sp_vt').textContent=(+e.target.value).toFixed(2);if(dly)dly.delayTime.value=P.t;};
+ wireBench('sp',()=>({v:1,name:'space',note:'A3',osc:{type:'wave',wave:'saw'},filter:{type:'lowpass',cutoff:2200,q:2},env:{a:0.01,d:0.3,s:0.4,r:0.4},fx:{width:P.w,reverb:P.r,delay:P.d,delay_time:P.t,drive:1}}));
+})();
+
+/* ============ reference cards ============ */
+const REFS={
+ ref_osc:[['saw/square/sine','Band-limited additive','Sum harmonics up to Nyquist — the bench above.','raw harmonic content'],
+   ['supersaw()','Detuned ensemble','Several detuned saws beat together.','pads, strings'],
+   ['fm2()','Two-operator FM','One sine bends another\'s pitch.','bells, metallic, glints'],
+   ['noise()','White noise','Stochastic raw material.','breath, wind, risers']],
+ ref_filt:[['resonant_lpf()','Resonant lowpass','Removes highs; resonance peaks the cutoff.','body, warmth, the sweep'],
+   ['resonant_bpf()','Resonant bandpass','Passes a narrow band; pitches noise.','wind/whistle voice'],
+   ['(subtractive)','Start rich, carve','Saw/square → filter → amp.','the classic analog path']],
+ ref_env:[['adsr()','Attack-decay-sustain-release','Shapes amplitude (or any param) over time.','swells, plucks'],
+   ['lfo()','Low-freq oscillator','A slow wave that moves a parameter.','vibrato, tremolo, sweeps'],
+   ['drift()','Analog drift','Smoothed random wander.','the "alive" quality'],
+   ['curve()','Automation lane','Breakpoints → parameter path over time.','movements/structure']],
+ ref_space:[['pan()/stereo_width()','Place & widen','Constant-power pan; mid/side width.','position in the field'],
+   ['autopan()','Moving image','LFO sweeps L↔R.','the eyes drifting'],
+   ['reverb_st()','Stereo reverb','Two decorrelated impulse responses.','depth, the void'],
+   ['pingpong()','Tempo delay','Echoes alternate L/R.','ripples in the dark'],
+   ['shimmer_halo()','Octave shimmer','Reverb → +1 octave → reverb.','the adoration glow'],
+   ['soft_clip()','Saturation','tanh nonlinearity rounds peaks.','warmth, glue']],
+};
+Object.entries(REFS).forEach(([id,items])=>{const host=$(id);items.forEach(([fn,nm,idea,fr])=>{const el=document.createElement('div');el.className='ref plate';
+  el.innerHTML=`<div class="fn">${fn}</div><h3>${nm}</h3><p>${idea}</p><div class="for"><b>for</b>${fr}</div>`;host.appendChild(el);});});
+/* ---- ✨ Describe a sound (LLM patch-generator → engine render) ---- */
+const aiIn=$('ai_in'),aiMsg=$('ai_msg');let _aiPatch=null;
+async function aiGenerate(){const p=(aiIn.value||'').trim();if(!p){aiMsg.textContent='type a description';return;}
+  aiMsg.textContent='thinking…';
+  try{const r=await fetch(ENGINE+'/ai/patch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:p})});
+    const j=await r.json();if(j.error){aiMsg.textContent='AI: '+j.error;return;}
+    _aiPatch=j.patch;aiMsg.textContent='✓ '+(j.patch.name||'patch')+' — rendering…';engineRender(j.patch,aiMsg);}
+  catch(e){aiMsg.textContent='AI/engine offline — run server.py (and set OPENROUTER_API_KEY)';}}
+$('ai_go').onclick=aiGenerate;
+aiIn.addEventListener('keydown',e=>{if(e.key==='Enter')aiGenerate();});
+$('ai_dl').onclick=()=>{ if(_aiPatch)dlPatch(_aiPatch); else aiMsg.textContent='generate a sound first'; };
+$('ai_sc').onclick=async()=>{ if(!_aiPatch){aiMsg.textContent='generate a sound first';return;}
+  aiMsg.textContent='→ SuperCollider…';
+  try{const r=await fetch(ENGINE+'/sc/play',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(_aiPatch)});
+    const j=await r.json();aiMsg.textContent=j.ok?'▶ realtime via SuperCollider':'SC: '+(j.error||'?');}
+  catch(e){aiMsg.textContent='engine offline — run server.py';}};
+$('ai_extract').onclick=async()=>{const f=$('ai_src').value;const fe=$('ai_feat');
+  if(!f){fe.textContent='pick a creation';return;} fe.textContent='analyzing…';
+  try{const r=await fetch(ENGINE+'/ai/describe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file:f})});
+    const j=await r.json();if(j.error){fe.textContent=j.error;return;}
+    aiIn.value=j.prompt;fe.textContent='✓ '+j.features.descriptor+' · centroid '+j.features.centroid_hz+'Hz — edit & Generate';}
+  catch(e){fe.textContent='engine offline — run server.py';}};
+
+addEventListener('resize',()=>{});
+</script>
