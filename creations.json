@@ -23,6 +23,53 @@
 
   "creations": [
     {
+      "id": "phoenix",
+      "title": "Coin-Up",
+      "tagline": "A cyberpunk arcade chiptune — Romance Anónimo on gritty PSG voices, in the spirit of Phoenix (1980), with the egg-breaking stage.",
+      "tag": "arcade",
+      "stage": "growing",
+      "key": "E minor → E major",
+      "tempo": "104 BPM · 3/4",
+      "duration": "44 s",
+      "audio": "phoenix_mix.mp3",
+      "score": "phoenix.py",
+      "source_material": "Phoenix (1980, Amstar/Centuri) — a landmark arcade shooter whose hardware was an SN76496-style PSG (square/pulse + a noise channel) playing the public-domain 'Romance Anónimo' (Spanish Romance) and Beethoven's 'Für Elise'. We reuse no ROM audio; the theme is public domain and the sound is synthesized from scratch.",
+      "story": [
+        {"h": "The first game that sang", "body": "Phoenix was among the first arcade games with continuous background music — the Romance playing under the opening stage. We rebuild that idea on our own PSG voices."},
+        {"h": "Pulse, arpeggio, noise", "body": "A vibrato pulse lead carries the melody; a fast broken-chord arpeggio (the Romance's triplet figure) and a square bass hold it up; the noise channel becomes laser zaps and explosions."}
+      ],
+      "ingredients": [
+        {"name": "pulse(duty) — PWM", "role": "band-limited pulse via its Fourier series; duty 0.5/0.25 = the hollow/nasal chip voices"},
+        {"name": "lead_note + vibrato", "role": "the Romance melody, a singing pulse lead"},
+        {"name": "arp_note", "role": "the broken-chord accompaniment (the triplet étude figure)"},
+        {"name": "bitcrush grit + detune", "role": "cyberpunk edge — bitcrushed, detuned lead and sub bass, a driving drum kit"},
+        {"name": "egg_break + screech", "role": "the egg-breaking stage: a sharp crack, the shell splitting, and a bird hatching"},
+        {"name": "square sweeps + noise", "role": "the rest of the SFX: laser zaps, explosions, a UFO swoop, the coin jingle"}
+      ],
+      "supercollider": [],
+      "transformations": [
+        {"verb": "pulse-width", "feeling": "the cold/bright plastic of the chip"},
+        {"verb": "minor → major", "feeling": "the Romance lifting"},
+        {"verb": "noise burst", "feeling": "the arcade's violence over the song"}
+      ],
+      "visualization": {"track": "phoenix_mix.mp3", "page": "visualizer.html"},
+      "editions": [
+        {"version": "v002 (current)", "dir": "versions/phoenix-v002/", "note": "cyberpunk — bitcrushed/detuned lead & sub bass, a driving kit, noise, and the egg-breaking stage (cracks + screeches)"},
+        {"version": "v001", "dir": "versions/phoenix-v001/", "note": "Romance Anónimo arranged for PSG pulse/arp/bass + SFX"}
+      ],
+      "path": [
+        {"who": "panos", "kind": "idea", "text": "Wants a piece on early-80s video games resembling the Phoenix coin-op's music and special effects; asks to find/download the sounds."},
+        {"who": "jarre", "kind": "decision", "text": "We can't reuse the copyrighted ROM audio — but Phoenix's music (Romance Anónimo / Für Elise) is public domain and its sound is a PSG we synthesize. Chose to arrange Romance Anónimo on pulse voices with the arcade SFX."},
+        {"who": "jarre", "kind": "fix", "text": "Built a chiptune engine (pulse/PWM, arpeggio, laser/explosion/UFO/coin) and rendered the Romance, E minor → E major, with stems."},
+        {"who": "panos", "kind": "idea", "text": "Make it noisier and livelier — cyberpunk-themed — and add the sounds of breaking eggs (Phoenix's hatching stage)."},
+        {"who": "jarre", "kind": "fix", "text": "v002: bitcrushed/detuned lead and sub bass, a driving drum kit and noise texture; added egg_break (crack + shell-split) and a hatching screech, with a flurry of them over the major section."}
+      ],
+      "links": [
+        {"label": "The score — phoenix.py", "href": "phoenix.py"},
+        {"label": "See it — visualizer", "href": "visualizer.html"}
+      ]
+    },
+    {
       "id": "vitrine",
       "title": "Vitrine",
       "tagline": "The soul put through an ADC, and never fully recovered.",
@@ -49,7 +96,7 @@
         {"name": "reflect() — Haas delay", "role": "the glass reflection (Jarre's Revox trick: dry one side, delayed the other)"},
         {"name": "seam_split()", "role": "the split middle mannequin: bright in the left ear, dark in the right"},
         {"name": "stardust twinkles", "role": "the conserved matter — free pitches, never converted, shining through at the end"},
-        {"name": "sine pips + grid clicks", "role": "the Ikeda/Noto glitch field — the aesthetics of error"}
+        {"name": "continuous AD/DA (v002)", "role": "anti-alias close + sample-and-hold + per-sample quantize + reconstruction filter — the loss of fidelity is intrinsic to the signal, not added noise"}
       ],
       "supercollider": [],
       "transformations": [
@@ -60,7 +107,8 @@
       ],
       "visualization": {"track": "vitrine_mix.mp3", "page": "visualizer.html"},
       "editions": [
-        {"version": "v001", "dir": "versions/vitrine-v001/", "note": "first render of the converter loop; stardust substrate; unresolved ending"}
+        {"version": "v002 (current)", "dir": "versions/vitrine-v002/", "note": "rewritten as ONE continuous AD/DA conversion — anti-alias/sample-rate/bit-depth fall on smooth curves so the loss is intrinsic; no added clock/pips/hiss; molded as a whole"},
+        {"version": "v001", "dir": "versions/vitrine-v001/", "note": "first render — discrete converter passes + clock/glitch layers (felt like labelled steps, not a flow)"}
       ],
       "path": [
         {"who": "panos", "kind": "idea", "text": "Shares the mannequin photo: 'stylized soulless souls… we have digitized our lives and our image and forgotten our analog roots. We need to find the ingredients to make this recipe work.'"},
@@ -69,7 +117,9 @@
         {"who": "panos", "kind": "idea", "text": "Hands over the true structure: 'follow the AD conversion — start analog, lose quality each step (error), then DA tries to recapture what was lost… but it is lossy, so we keep going.'"},
         {"who": "panos", "kind": "idea", "text": "'What the hardware does and what we do in life — we lose and try to regain, endlessly. People who lose their youth and try to reconstruct it. We are all made of stardust, as one great said.'"},
         {"who": "jarre", "kind": "fix", "text": "Web-searches the lineage (Basinski / Ikeda / Noto / Jarre); maps each technique onto an engine function; writes vitrine.py as the converter loop with a stardust substrate that does not quantize."},
-        {"who": "jarre", "kind": "fix", "text": "First render fails on a length mismatch (the pad's release grew the phrase); aligns lengths in source(); re-renders 300 s. Levels verified — loudest point is the DA reach-back at 3:34, exactly where it should be."}
+        {"who": "jarre", "kind": "fix", "text": "First render fails on a length mismatch (the pad's release grew the phrase); aligns lengths in source(); re-renders 300 s."},
+        {"who": "panos", "kind": "feedback", "text": "v001 felt like 'ingredients to characterise the steps, not a flow' — the loss rendered as irrelevant noise and a strange sine; 'this is not AD and DA.' Asks for an organic AD/DA with organic transitions, molded as a whole."},
+        {"who": "jarre", "kind": "fix", "text": "v002: rewrote as ONE continuous converter — anti-alias, sample-rate and bit-depth fall on smooth curves so the loss is intrinsic (darkening, aliasing, grit, the freezing of quiet detail); removed the clock, glitch pips and added hiss; the DAC reaches back once and fails; stardust emerges at the end."}
       ],
       "links": [
         {"label": "The full story — VITRINE.md", "href": "VITRINE.md"},

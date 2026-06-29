@@ -80,7 +80,8 @@
   <span class="lab">track</span>
   <select id="track">
     <optgroup label="Vitrine">
-      <option value="vitrine_mix.mp3">v001 — the converter loop</option>
+      <option value="vitrine_mix.mp3">v002 — continuous conversion (current)</option>
+      <option value="versions/vitrine-v001/vitrine_mix.mp3">v001 — converter passes</option>
     </optgroup>
     <optgroup label="The Black Theater · organs">
       <option value="dream_mix.mp3">v005 — vox child (current)</option>
@@ -99,6 +100,10 @@
     </optgroup>
     <optgroup label="Homage to Oxygène">
       <option value="oxygene_mix.mp3">v001</option>
+    </optgroup>
+    <optgroup label="Coin-Up · Phoenix homage">
+      <option value="phoenix_mix.mp3">v002 — cyberpunk (egg stage) (current)</option>
+      <option value="versions/phoenix-v001/phoenix_mix.mp3">v001 — Romance Anónimo (chiptune)</option>
     </optgroup>
   </select>
   <span class="lab">layout</span>
@@ -156,14 +161,14 @@ const CUES = {
     {t:66, h:'III · The eyes close', n:'Voices recede, the room darkens, the last sounding fades. Stardust, then silence.'},
   ],
   'vitrine_mix.mp3': [
-    {t:0,   h:'Pass 0 · Analog', n:'The soul intact: a phased D-minor pad, warm and wide, drifting — alive.'},
-    {t:46,  h:'The ADC engages', n:'Sampling begins. The clock fades in; the first quantization. The gate closes.'},
-    {t:92,  h:'Quantizing', n:'Bits falling. The lead starts snapping from D-minor toward the whole-tone grid.'},
-    {t:140, h:'Collapsing', n:'Stereo narrows, the drift dies. The form hardening.'},
-    {t:186, h:'Pass 4 · The mannequin', n:'2-bit, gridded, frozen. The Ikeda glitch field. The seam held — bright left, dark right.'},
-    {t:214, h:'The DAC reaches back', n:'Reconstruction blooms toward warmth — almost the soul again — but thin, with hiss beneath. Lossy.'},
-    {t:244, h:'…we keep going', n:'The converter re-engages a notch lower. The loss is irreversible.'},
-    {t:286, h:'Unresolved', n:'A held D against a whole-tone cluster — and the stardust, the matter that never quantized, shining through.'},
+    {t:0,   h:'Analog', n:'The soul intact: a phased D-minor pad, warm and wide, drifting — alive, full-bandwidth.'},
+    {t:46,  h:'Sampling begins', n:'The anti-alias filter starts to close and the sample rate falls — the sound darkens; the first aliasing folds in.'},
+    {t:92,  h:'Bits falling', n:'Quantization grit; quiet detail freezes below the least bit. The lead drifts from D-minor toward the whole-tone grid.'},
+    {t:140, h:'Collapsing', n:'Bandwidth, sample rate and stereo all narrowing together. The form hardening.'},
+    {t:186, h:'The mannequin', n:'Near 2-bit, gridded, almost mono — the soul reduced to plastic.'},
+    {t:214, h:'The DAC reaches back', n:'The filter reopens, the bits rise — it almost becomes warm again — but re-converting the converted cannot restore what is gone. Lossy.'},
+    {t:244, h:'…we keep going', n:'It falls again, a notch lower. The loss is irreversible.'},
+    {t:286, h:'What remains', n:'The soul gridded to almost nothing — and the stardust, the matter that never quantized, shining through.'},
   ],
   'icarus_mix.mp3': [
     {t:0,   h:'I · Struggle', n:'Dissonant tension; fighting to rise. Jupiter’s plasma-wave void beneath.'},
@@ -176,6 +181,12 @@ const CUES = {
     {t:0,  h:'Pads', n:'Detuned strings through a phaser — the Eminent-310 into a Small Stone. The Jarre signature.'},
     {t:7,  h:'Arp & bass', n:'A bubbling 16th-note arpeggio over a pulsing octave bass — the hypnotic motion.'},
     {t:28, h:'The lead sings', n:'A portamento melody glides between notes — the soul of the machine.'},
+  ],
+  'phoenix_mix.mp3': [
+    {t:0,  h:'Insert coin', n:'A two-note coin jingle — the machine wakes.'},
+    {t:1,  h:'Romance · E minor', n:'Cyberpunk chiptune: a bitcrushed, detuned pulse lead over a busy arpeggio, gritty sub bass, and a driving kit.'},
+    {t:15, h:'The egg stage', n:'The theme turns major as the eggs crack — a flurry of shell-splits and the screech of birds hatching.'},
+    {t:29, h:'Reprise + explosions', n:'Back to the minor, lasers and explosions over the melody — the arcade burns down.'},
   ],
 };
 let curFile = null, trackStart = 0, trackDur = 1, lastCueIdx = -1;
@@ -198,13 +209,16 @@ const STEMS = {
     ['lead','ox_lead.mp3'],['perc','ox_perc.mp3'],
   ],
   'vitrine_mix.mp3': [
-    ['converter','vit_converter.mp3'],['clock','vit_clock.mp3'],['glitch','vit_glitch.mp3'],
-    ['seam','vit_seam.mp3'],['stardust','vit_stardust.mp3'],
+    ['converter','vit_converter.mp3'],['stardust','vit_stardust.mp3'],
   ],
   'theater_sc.mp3': [
     ['audience','tsc_audience.mp3'],['child','tsc_child.mp3'],['pedal','tsc_pedal.mp3'],
     ['fishing','tsc_fishing.mp3'],['footsteps','tsc_footsteps.mp3'],['stardust','tsc_stardust.mp3'],
     ['adore','tsc_adore.mp3'],['envy','tsc_envy.mp3'],['glint','tsc_glint.mp3'],
+  ],
+  'phoenix_mix.mp3': [
+    ['lead','ph_lead.mp3'],['arp','ph_arp.mp3'],['bass','ph_bass.mp3'],
+    ['drums','ph_drums.mp3'],['sfx','ph_sfx.mp3'],
   ],
 };
 
