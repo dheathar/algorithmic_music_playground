@@ -1,0 +1,41 @@
+{
+  "v": 1,
+  "name": "ai-patch",
+  "osc": {
+    "type": "wave",
+    "harmonics": [
+      1
+    ],
+    "wave": "saw",
+    "ratio": 2.0,
+    "index": 200.0,
+    "voices": 5,
+    "detune": 12.0
+  },
+  "filter": {
+    "type": "lowpass",
+    "cutoff": 1800.0,
+    "q": 0.9,
+    "env_amt": 0
+  },
+  "env": {
+    "a": 0.8,
+    "d": 0.2,
+    "s": 0.9,
+    "r": 1.2
+  },
+  "lfo": {
+    "target": "none",
+    "rate": 5.0,
+    "depth": 0
+  },
+  "fx": {
+    "reverb": 0.55,
+    "delay": 0,
+    "delay_time": 0.3,
+    "width": 1,
+    "drive": 1.0
+  },
+  "dur": 3.0,
+  "note": "A3"
+}

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Lab — Patch Library</title>
+<meta name="description" content="A bank of synth patches in the lab's own format (organ, Jarre, Vangelis, bass, bells…) with audio previews, plus the rules of harmony & combination for building with them.">
+<style>
+  :root{
+    --bg:#0A0C18;--panel:#12152A;--panel2:#0E1124;--line:#272C4C;--line2:#1B1F3A;
+    --text:#E7E9F3;--muted:#9298B8;--faint:#5A6088;--amber:#F4A659;--phosphor:#57E3C2;--phosphor-dim:#2E8C77;--violet:#9B8CFF;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--body:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(1100px 560px at 82% -10%,rgba(155,140,255,.08),transparent 60%),
+      radial-gradient(900px 460px at -10% 8%,rgba(87,227,194,.06),transparent 55%),var(--bg);
+    color:var(--text);font-family:var(--body);line-height:1.6;padding-bottom:100px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  a{color:var(--phosphor)}
+  .top{position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);background:linear-gradient(180deg,rgba(10,12,24,.92),rgba(10,12,24,.6));border-bottom:1px solid var(--line2)}
+  .top .wrap{display:flex;align-items:center;gap:16px;padding:12px 22px}
+  .top a.home{font-family:var(--mono);font-size:12px;color:var(--faint);text-decoration:none}
+  .top a.home:hover{color:var(--phosphor)} .top .spacer{flex:1}
+  .top nav{display:flex;gap:14px;flex-wrap:wrap}
+  .top nav a{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);text-decoration:none;text-transform:uppercase}
+  .top nav a:hover{color:var(--amber)}
+
+  header.hero{padding:54px 0 8px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--phosphor-dim)}
+  h1{font-size:clamp(30px,5vw,48px);letter-spacing:-.02em;margin:.3em 0 .25em;font-weight:800}
+  h1 .em{color:var(--amber)}
+  .lede{color:var(--muted);max-width:66ch}
+  .lede code{font-family:var(--mono);font-size:13px;color:var(--phosphor);background:rgba(87,227,194,.08);padding:1px 6px;border-radius:5px}
+
+  h2{font-size:13px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);
+    margin:40px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
+  h3.fam{font-size:18px;margin:26px 0 12px;font-weight:750;color:var(--text)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .card{border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--panel),var(--panel2));padding:16px 17px;display:flex;flex-direction:column;gap:7px}
+  .card .row{display:flex;align-items:baseline;gap:8px;justify-content:space-between}
+  .card .nm{font-size:17px;font-weight:750}
+  .card .ev{font-family:var(--mono);font-size:10.5px;color:var(--violet);white-space:nowrap}
+  .card .rng{font-family:var(--mono);font-size:10px;color:var(--bg);background:var(--phosphor);padding:2px 7px;border-radius:999px;align-self:flex-start}
+  .card .desc{color:var(--muted);font-size:14px}
+  .card .recipe{font-size:12.5px;color:var(--faint);border-left:2px solid var(--line);padding-left:9px}
+  .card audio{width:100%;height:34px;margin-top:2px}
+  .card .pairs{font-size:12px;color:var(--muted)}
+  .card .pairs b{color:var(--phosphor-dim);font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase}
+  .card details{margin-top:2px}
+  .card summary{font-family:var(--mono);font-size:11px;color:var(--faint);cursor:pointer}
+  .card summary:hover{color:var(--phosphor)}
+  .card pre{font-family:var(--mono);font-size:11px;color:#cfd3ee;background:#0b0e1c;border:1px solid var(--line);border-radius:8px;padding:10px;overflow-x:auto;margin:8px 0 0}
+
+  .rule{border:1px solid var(--line2);border-left:3px solid var(--phosphor-dim);border-radius:0 12px 12px 0;background:var(--panel2);padding:12px 16px;margin:10px 0}
+  .rule h4{margin:0 0 4px;font-size:15px;color:var(--text)}
+  .rule p{margin:0;color:var(--muted);font-size:14px;max-width:80ch}
+  .rule code{font-family:var(--mono);font-size:12px;color:var(--phosphor)}
+  .lanes{overflow-x:auto;margin:10px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line2)}
+  thead th{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--panel2)}
+  td code{font-family:var(--mono);color:var(--phosphor)}
+  footer{padding:40px 0;color:var(--faint);font-family:var(--mono);font-size:12px;border-top:1px solid var(--line2);margin-top:34px}
+  footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <a class="home" href="index.html">← Signal Lab</a>
+  <span class="spacer"></span>
+  <nav>
+    <a href="#bank">Patches</a><a href="#rules">Rules</a>
+    <a href="toolkit.html">Toolkit</a><a href="creations.html">Creations</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Signal Lab · the patch library</div>
+  <h1>Patches <span class="em">&amp; harmony</span></h1>
+  <p class="lede">A bank of ready voices in our own engine format — organ, Jarre leads, Vangelis brass, bass, bells —
+  each with an audio preview and the recipe. Synthesized from scratch (no presets/samples); the usable JSON lives in
+  <code>patches/bank/</code>. Below the bank: the <a href="#rules">rules of harmony &amp; combination</a> for building with them.
+  Render any patch live with the server: <code>POST /render</code>, or
+  <code>render_patch(load_patch('patches/bank/&lt;id&gt;.json'))</code>.</p>
+</div></header>
+
+<main class="wrap">
+  <h2 id="bank">The bank</h2>
+  <div id="families"></div>
+
+  <h2 id="rules">Rules of harmony &amp; combination</h2>
+  <div class="lanes">
+    <table>
+      <thead><tr><th>Lane</th><th>Hz</th><th>Who lives here</th></tr></thead>
+      <tbody>
+        <tr><td>sub</td><td>&lt;80</td><td><code>sub-bass</code> (one voice only)</td></tr>
+        <tr><td>bass</td><td>80–250</td><td><code>saw-bass</code></td></tr>
+        <tr><td>low-mid</td><td>250–550</td><td>pads, strings, organ, brass, ping</td></tr>
+        <tr><td>high-mid</td><td>550–2k</td><td>leads, arp, drawbar organ</td></tr>
+        <tr><td>presence</td><td>2k–6k</td><td>glass lead, bells</td></tr>
+        <tr><td>air</td><td>&gt;6k</td><td>stardust, reverb tails</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="rules-list"></div>
+</main>
+
+<footer><div class="wrap">
+  Source of truth: <a href="patches.json">patches.json</a> → built by <code>build_patches.py</code> (writes <code>patches/bank/*.json</code> + previews).
+  Schema: <a href="PATCH-FORMAT.md">PATCH-FORMAT.md</a>.
+</div></footer>
+
+<script id="data" type="application/json">__PATCHES_JSON__</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function card(p){
+  return `<div class="card">
+    <div class="row"><span class="nm">${esc(p.name)}</span><span class="ev">${esc(p.evokes||'')}</span></div>
+    <span class="rng">${esc(p.range||'')}</span>
+    <div class="desc">${esc(p.desc||'')}</div>
+    ${p.preview?`<audio controls preload="none" src="${esc(p.preview)}"></audio>`:''}
+    <div class="recipe">${esc(p.recipe||'')}</div>
+    ${p.pairs_with?`<div class="pairs"><b>pairs</b> ${esc(p.pairs_with)}</div>`:''}
+    <details><summary>patch JSON · patches/bank/${esc(p.id)}.json</summary><pre>${esc(JSON.stringify(p.patch,null,1))}</pre></details>
+  </div>`;
+}
+function render(){
+  const fams = DATA.families || [];
+  document.getElementById('families').innerHTML = fams.map(f=>{
+    const items = (DATA.patches||[]).filter(p=>p.family===f);
+    if(!items.length) return '';
+    return `<h3 class="fam">${esc(f)}</h3><div class="grid">${items.map(card).join('')}</div>`;
+  }).join('');
+  document.getElementById('rules-list').innerHTML = (DATA.rules||[]).map(r=>
+    `<div class="rule"><h4>${esc(r.h)}</h4><p>${esc(r.body)}</p></div>`).join('');
+}
+render();
+</script>
+</body>
+</html>
