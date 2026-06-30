@@ -147,6 +147,24 @@ jarre-synth/
   `VITRINE.md`. Edition **v001 (current)**.
 - *Catalogued in `creations.json` → Library (`creations.html`); engine/method in `process.html`.*
 
+## 5b. Run on Mac & Windows (same project / same external disk)
+
+The project files are shared; the **virtualenv is per-OS** (a venv is not portable),
+so keep two side by side — both gitignored, both fine on the same disk:
+
+```
+signal-lab/
+  .venv/        # macOS/Linux  -> ./setup.sh   then ./run.sh
+  .venv-win/    # Windows      -> setup.bat     then run.bat
+```
+
+- **macOS:** `./setup.sh` (once) → `./run.sh` → http://127.0.0.1:7700/
+- **Windows:** `setup.bat` (once) → `run.bat` → http://127.0.0.1:7700/
+- Per-machine, install **ffmpeg** (on PATH) and optionally **SuperCollider**; these
+  are never on the disk. Code uses relative paths, so it runs from either OS as long
+  as you're inside the project folder. Disk format must be writable on both: **exFAT**
+  (native both, no driver) or **NTFS + macFUSE/ntfs-3g** on the Mac.
+
 ## 6. How to work (commands)
 
 ```bash

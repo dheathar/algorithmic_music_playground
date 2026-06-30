@@ -2,8 +2,9 @@
 .env
 .mcp.json
 
-# python envs
+# python envs (one per OS — both live on the project folder / external disk)
 .venv/
+.venv-win/
 .venv-ml/
 __pycache__/
 *.pyc
