@@ -127,6 +127,14 @@ def sine(freq, dur):
     return _harmonic_sum(freq, dur, [1.0])
 
 
+def pulse(freq, dur, duty=0.5, n_harm=None):
+    """Band-limited pulse via its Fourier series. duty sets the timbre:
+    0.5 = square (hollow), 0.25/0.125 = brighter/nasal (the classic pulse lead)."""
+    n_harm = n_harm or int(SR / 2 / np.mean(np.atleast_1d(freq)))
+    amps = [(2.0 / (k * np.pi)) * np.sin(k * np.pi * duty) for k in range(1, n_harm + 1)]
+    return _harmonic_sum(freq, dur, amps)
+
+
 def supersaw(freq, dur, voices=7, detune_cents=12.0):
     """Several detuned saws summed — the classic fat string/pad oscillator.
     Spread of slight pitch offsets creates slow beating = movement."""

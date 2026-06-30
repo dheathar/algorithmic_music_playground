@@ -18,7 +18,8 @@
     "ratio": 2.0,
     "index": 200.0,
     "voices": 1,
-    "detune": 8.0
+    "detune": 8.0,
+    "duty": 0.5
   },
   "filter": {
     "type": "lowpass",

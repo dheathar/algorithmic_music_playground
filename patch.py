@@ -39,12 +39,13 @@ def validate_patch(d):
     otype = osc_in.get("type") if osc_in.get("type") in ("additive", "fm", "wave", "stardust", "ping") else "wave"
     harms = osc_in.get("harmonics") if isinstance(osc_in.get("harmonics"), list) else [1.0]
     harms = [_clamp(h, 0, 1, 0) for h in harms[:16]] or [1.0]
-    wave = osc_in.get("wave") if osc_in.get("wave") in ("saw", "square", "sine", "triangle") else "saw"
+    wave = osc_in.get("wave") if osc_in.get("wave") in ("saw", "square", "sine", "triangle", "pulse") else "saw"
     osc = {"type": otype, "harmonics": harms, "wave": wave,
            "ratio": _clamp(osc_in.get("ratio", 2.0), 0.25, 16, 2.0),
            "index": _clamp(osc_in.get("index", 200), 0, 2000, 200),
            "voices": int(_clamp(osc_in.get("voices", 1), 1, 7, 1)),
-           "detune": _clamp(osc_in.get("detune", 8), 0, 30, 8)}
+           "detune": _clamp(osc_in.get("detune", 8), 0, 30, 8),
+           "duty": _clamp(osc_in.get("duty", 0.5), 0.05, 0.95, 0.5)}
     if otype == "stardust":
         osc["density"] = _clamp(osc_in.get("density", 7), 1, 40, 7)
         osc["lo"] = _clamp(osc_in.get("lo", 1500), 200, 8000, 1500)
@@ -126,10 +127,13 @@ def _osc(spec, freq, dur):
         return out * 0.45
     wave = spec.get('wave', 'saw')
     voices = int(spec.get('voices', 1))
+    duty = float(spec.get('duty', 0.5))
     one = {'saw': S.saw, 'square': S.square, 'sine': S.sine}
     def osc1(f):
         if wave == 'triangle':
             return S.additive(f, dur, TRIANGLE)
+        if wave == 'pulse':                       # variable pulse width (PWM timbres)
+            return S.pulse(f, dur, duty)
         return one.get(wave, S.saw)(f, dur)
     if voices > 1:
         det = float(spec.get('detune', 8.0))

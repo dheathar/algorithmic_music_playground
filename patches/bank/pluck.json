@@ -9,32 +9,32 @@
     "wave": "pulse",
     "ratio": 2.0,
     "index": 200.0,
-    "voices": 2,
-    "detune": 9.0,
-    "duty": 0.3
+    "voices": 1,
+    "detune": 8.0,
+    "duty": 0.35
   },
   "filter": {
     "type": "lowpass",
-    "cutoff": 2600.0,
+    "cutoff": 3000.0,
     "q": 2.0,
-    "env_amt": 0
+    "env_amt": 1.0
   },
   "env": {
-    "a": 0.01,
-    "d": 0.08,
-    "s": 0.7,
-    "r": 0.15
+    "a": 0.002,
+    "d": 0.15,
+    "s": 0,
+    "r": 0.1
   },
   "lfo": {
-    "target": "filter",
-    "rate": 0.3,
-    "depth": 0.2
+    "target": "none",
+    "rate": 5.0,
+    "depth": 0
   },
   "fx": {
-    "reverb": 0.3,
-    "delay": 0,
+    "reverb": 0.35,
+    "delay": 0.25,
     "delay_time": 0.3,
-    "width": 0.4,
+    "width": 0.5,
     "drive": 1.0
   },
   "dur": 3.0,

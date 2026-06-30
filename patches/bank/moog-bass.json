@@ -6,36 +6,36 @@
     "harmonics": [
       1
     ],
-    "wave": "pulse",
+    "wave": "saw",
     "ratio": 2.0,
     "index": 200.0,
-    "voices": 2,
-    "detune": 9.0,
-    "duty": 0.3
+    "voices": 1,
+    "detune": 5.0,
+    "duty": 0.5
   },
   "filter": {
     "type": "lowpass",
-    "cutoff": 2600.0,
+    "cutoff": 600.0,
     "q": 2.0,
-    "env_amt": 0
+    "env_amt": 0.9
   },
   "env": {
-    "a": 0.01,
-    "d": 0.08,
-    "s": 0.7,
-    "r": 0.15
+    "a": 0.005,
+    "d": 0.18,
+    "s": 0.5,
+    "r": 0.1
   },
   "lfo": {
-    "target": "filter",
-    "rate": 0.3,
-    "depth": 0.2
+    "target": "none",
+    "rate": 5.0,
+    "depth": 0
   },
   "fx": {
-    "reverb": 0.3,
+    "reverb": 0.1,
     "delay": 0,
     "delay_time": 0.3,
-    "width": 0.4,
-    "drive": 1.0
+    "width": 0.25,
+    "drive": 1.4
   },
   "dur": 3.0,
   "note": "A3"
