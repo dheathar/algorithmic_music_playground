@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excivilization — the blueprint</title>
+<meta name="description" content="The design schema for Excivilization: the movements across 2,800 years, their sounds, and the glue (the eternal drone + the fear↔wisdom spine) — an overview of the creation in progress.">
+<style>
+  :root{
+    --bg:#0A0C18;--panel:#12152A;--panel2:#0E1124;--line:#272C4C;--line2:#1B1F3A;
+    --text:#E7E9F3;--muted:#9298B8;--faint:#5A6088;--amber:#F4A659;--phosphor:#57E3C2;--phosphor-dim:#2E8C77;--violet:#9B8CFF;--rose:#E3859B;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--body:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(1100px 560px at 82% -10%,rgba(155,140,255,.08),transparent 60%),
+      radial-gradient(900px 460px at -10% 8%,rgba(87,227,194,.06),transparent 55%),var(--bg);
+    color:var(--text);font-family:var(--body);line-height:1.6;padding-bottom:100px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+  a{color:var(--phosphor)}
+  .top{position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);background:linear-gradient(180deg,rgba(10,12,24,.92),rgba(10,12,24,.6));border-bottom:1px solid var(--line2)}
+  .top .wrap{display:flex;align-items:center;gap:16px;padding:12px 22px}
+  .top a.home{font-family:var(--mono);font-size:12px;color:var(--faint);text-decoration:none}
+  .top a.home:hover{color:var(--phosphor)} .top .spacer{flex:1}
+  .top .st{font-family:var(--mono);font-size:11px;color:var(--amber)}
+
+  header.hero{padding:50px 0 6px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--phosphor-dim)}
+  h1{font-size:clamp(32px,6vw,58px);letter-spacing:-.02em;margin:.26em 0 .2em;font-weight:800}
+  h1 .em{color:var(--amber)}
+  .thesis{font-size:clamp(16px,2.2vw,19px);color:var(--muted);max-width:70ch}
+  .thesis i{color:var(--text);font-style:italic}
+
+  h2{font-size:13px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin:42px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
+
+  /* glue chart */
+  .chartwrap{overflow-x:auto;border:1px solid var(--line2);border-radius:14px;background:var(--panel2);padding:10px}
+  svg{display:block;width:100%;min-width:760px;height:auto}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px;color:var(--muted);margin:10px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:18px;height:3px;border-radius:2px;display:inline-block}
+
+  /* movement timeline */
+  .rail{display:flex;gap:14px;overflow-x:auto;padding:6px 2px 14px}
+  .mv{flex:0 0 280px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--panel),var(--panel2));padding:16px;display:flex;flex-direction:column;gap:8px}
+  .mv .hd{display:flex;align-items:baseline;gap:8px;justify-content:space-between}
+  .mv .n{font-family:var(--mono);font-size:11px;color:var(--violet)}
+  .mv .badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:999px;white-space:nowrap}
+  .mv .badge.sketched{color:var(--bg);background:var(--phosphor)}
+  .mv .badge.planned{color:var(--faint);border:1px solid var(--line)}
+  .mv .ttl{font-size:19px;font-weight:750}
+  .mv .mood{color:var(--amber);font-size:13px}
+  .mv .row{font-size:13px;color:var(--muted)}
+  .mv .row b{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);display:block}
+  .mv audio{width:100%;height:34px;margin-top:4px}
+
+  .glue-list,.sketches{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .g{border:1px solid var(--line2);border-left:3px solid var(--phosphor-dim);border-radius:0 12px 12px 0;background:var(--panel2);padding:12px 15px}
+  .g h4{margin:0 0 4px;font-size:14px} .g p{margin:0;color:var(--muted);font-size:13.5px}
+  .sk{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px}
+  .sk .t{font-weight:700;margin-bottom:2px} .sk .d{color:var(--muted);font-size:13px;margin-bottom:6px}
+  .sk audio{width:100%;height:36px}
+  .spine{color:var(--muted);max-width:80ch} .spine b{color:var(--text)}
+  footer{padding:40px 0;color:var(--faint);font-family:var(--mono);font-size:12px;border-top:1px solid var(--line2);margin-top:34px}
+  footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="wrap">
+  <a class="home" href="index.html">← Signal Lab</a>
+  <span class="spacer"></span>
+  <span class="st">design in progress · sculpting movement by movement</span>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Signal Lab · the blueprint</div>
+  <h1><span class="em">Ex</span>civilization</h1>
+  <p class="thesis">A civilization as a piece of music — Greece across 2,800 years. The thesis:
+  <i>the civilization is a melody, and history is everything that tries (and fails) to erase it.</i>
+  One theme is born, and every empire that conquers Greece ends up speaking Greek.</p>
+  <p style="margin-top:16px"><a href="viz-excivilization.html" style="font-family:var(--mono);font-size:13px;color:var(--phosphor);text-decoration:none;border:1px solid var(--phosphor-dim);border-radius:8px;padding:8px 14px;display:inline-block">▶ Watch the visualization →</a></p>
+</div></header>
+
+<main class="wrap">
+  <h2>The glue — two threads across the ages</h2>
+  <div class="chartwrap"><svg id="glue" viewBox="0 0 1000 280" preserveAspectRatio="xMidYMid meet"></svg></div>
+  <div class="legend">
+    <span><i style="background:var(--amber)"></i> the eternal drone (one D, unbroken)</span>
+    <span><i style="background:var(--rose)"></i> fear (the unknown)</span>
+    <span><i style="background:var(--phosphor)"></i> wisdom (experience)</span>
+    <span><i style="background:var(--violet)"></i> the theme recurs</span>
+  </div>
+  <p class="spine" style="margin-top:14px"><b>The spine:</b> the newborn's purity turns to fear, unaware of what lies beyond; across the ages the fear grows — but it is outweighed by the experience and wisdom the civilization accumulates. Fear is never erased; wisdom holds it in balance.</p>
+
+  <h2>The movements</h2>
+  <div class="rail" id="rail"></div>
+
+  <h2>What binds it</h2>
+  <div class="glue-list" id="glue-list"></div>
+
+  <h2>Sketches so far (the sound)</h2>
+  <div class="sketches" id="sketches"></div>
+
+  <h2>The process</h2>
+  <p class="spine">Seed (a civilization) → concept (the melody that outlives empires) → research each era's real music → design the glue → <b>sculpt each movement by ear, together</b> → render, listen, converge → catalogue. Full design in <a href="GREECE-PLAN.md">GREECE-PLAN.md</a>.</p>
+</main>
+
+<footer><div class="wrap">Excivilization · a work in progress · Signal Lab</div></footer>
+
+<script>
+const MOV = [
+  {n:"I",  t:"Genesis", mood:"the newborn — pure, then fear", era:"before the city",
+   mode:"pure Pythagorean", inst:"pure sines · void drone · ♭2 dread · the fifth is born",
+   theme:"the eternal D is born", status:"sketched", audio:"genesis.mp3", fear:0.50, wis:0.15},
+  {n:"II", t:"Archaic", mood:"wise & epic", era:"the Golden Age",
+   mode:"Greek Dorian", inst:"lyre · syrinx · aulos · open-fifth drone",
+   theme:"the theme stated, noble & broad", status:"planned", fear:0.45, wis:0.70},
+  {n:"III",t:"Rome — the Captive Victor", mood:"conquest → surrender", era:"Roman Empire",
+   mode:"Roman order → Dorian", inst:"war drum · brass · the hydraulis (Greek organ)",
+   theme:"the organ ends up playing the Greek theme", status:"planned", fear:0.60, wis:0.65},
+  {n:"IV", t:"Byzantium — Gold & Ison", mood:"sacred, vast", era:"Eastern Roman",
+   mode:"Byzantine (double-harmonic)", inst:"ison drone · chant (vox) · bell · 11s reverb",
+   theme:"transfigured into liturgical chant", status:"planned", fear:0.50, wis:0.80},
+  {n:"V",  t:"The Long Night — Ottoman", mood:"underground, enduring", era:"Ottoman rule",
+   mode:"Hijaz + quarter-tones", inst:"ney · dem drone · hidden baglama",
+   theme:"in makam, ornamented, melancholy", status:"planned", fear:0.70, wis:0.70},
+  {n:"VI", t:"Fire — Occupation & Civil War", mood:"the wound", era:"1941–49",
+   mode:"Hijaz vs minor (fractured)", inst:"mechanized dissonance · defiant bouzouki",
+   theme:"fractures against itself", status:"planned", fear:0.95, wis:0.60},
+  {n:"VII",t:"Today — What Remains", mood:"bittersweet survival", era:"now",
+   mode:"the modes return", inst:"bouzouki · bass · the ancient drone",
+   theme:"whole again → Seikilos: 'while you live, shine'", status:"planned", fear:0.55, wis:0.85},
+];
+const GLUE = [
+  ["The eternal drone","One tonic D sounds continuously from movement I to VII and never stops — it only changes clothes (lyre → organ → ison → ney → bass). One note holds the whole civilization."],
+  ["The theme = the oldest song","The recurring motif is drawn from the Seikilos epitaph; reborn in each era's mode, never destroyed. It opens and closes the suite."],
+  ["Shared modal DNA","Greek modes → Byzantine octoechos → Ottoman makam → rebétiko dromoi are the same inheritance. The scale family itself is the glue — historically true."],
+  ["Microtonal memory","The quarter-tones of antiquity reappear as the Ottoman makam quarter-tones — the same blood, 2,000 years apart."],
+  ["Fear ↔ wisdom","Fear grows from the newborn's unawareness; wisdom, accumulated across the ages, outweighs it. Each movement is a different ratio of the two."],
+];
+const SK = [
+  {t:"The eternal drone (the glue)", d:"One D through all six era-clothes, unbroken.", a:"drone_glue.mp3"},
+  {t:"Movement I — Genesis", d:"Purity → fear → the seed of wisdom (the fifth is born).", a:"genesis.mp3"},
+];
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// timeline cards
+document.getElementById('rail').innerHTML = MOV.map(m=>`
+  <div class="mv">
+    <div class="hd"><span class="n">${m.n} · ${esc(m.era)}</span><span class="badge ${m.status}">${m.status}</span></div>
+    <div class="ttl">${esc(m.t)}</div>
+    <div class="mood">${esc(m.mood)}</div>
+    <div class="row"><b>mode / tuning</b>${esc(m.mode)}</div>
+    <div class="row"><b>sounds</b>${esc(m.inst)}</div>
+    <div class="row"><b>the theme</b>${esc(m.theme)}</div>
+    ${m.audio?`<audio controls preload="none" src="${esc(m.audio)}"></audio>`:''}
+  </div>`).join('');
+document.getElementById('glue-list').innerHTML = GLUE.map(g=>`<div class="g"><h4>${esc(g[0])}</h4><p>${esc(g[1])}</p></div>`).join('');
+document.getElementById('sketches').innerHTML = SK.map(s=>`<div class="sk"><div class="t">${esc(s.t)}</div><div class="d">${esc(s.d)}</div><audio controls preload="none" src="${esc(s.a)}"></audio></div>`).join('');
+
+// glue chart (SVG): drone line + fear/wisdom curves + theme dots across the movements
+(function(){
+  const W=1000,H=280, n=MOV.length, padX=60, padTop=40, padBot=60;
+  const x=i=>padX+(W-2*padX)*(i/(n-1));
+  const y=v=>padTop+(H-padTop-padBot)*(1-v);   // v 0..1 -> bottom..top
+  const path=(key,col)=>{
+    const pts=MOV.map((m,i)=>`${x(i).toFixed(0)},${y(m[key]).toFixed(0)}`).join(' ');
+    return `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round" opacity="0.9"/>`+
+           MOV.map((m,i)=>`<circle cx="${x(i).toFixed(0)}" cy="${y(m[key]).toFixed(0)}" r="3.5" fill="${col}"/>`).join('');
+  };
+  const droneY=H-padBot+22;
+  let s='';
+  // vertical separators + labels
+  s+=MOV.map((m,i)=>`<line x1="${x(i)}" y1="${padTop-14}" x2="${x(i)}" y2="${H-padBot+8}" stroke="#1B1F3A" stroke-width="1"/>`
+     +`<text x="${x(i)}" y="${padTop-20}" fill="#9298B8" font-family="ui-monospace,monospace" font-size="11" text-anchor="middle">${m.n}</text>`
+     +`<text x="${x(i)}" y="${H-padBot+44}" fill="#5A6088" font-family="ui-monospace,monospace" font-size="10" text-anchor="middle">${esc(m.t.split(' ')[0].replace('—',''))}</text>`).join('');
+  // the eternal drone — flat unbroken line
+  s+=`<line x1="${padX}" y1="${droneY}" x2="${W-padX}" y2="${droneY}" stroke="#F4A659" stroke-width="3"/>`;
+  s+=`<text x="${padX}" y="${droneY-8}" fill="#F4A659" font-family="ui-monospace,monospace" font-size="10">the eternal D — unbroken</text>`;
+  // theme dots near the top (recurs everywhere)
+  s+=MOV.map((m,i)=>`<circle cx="${x(i)}" cy="${padTop+4}" r="3" fill="#9B8CFF"/>`).join('');
+  s+=MOV.map((m,i)=>i?`<line x1="${x(i-1)}" y1="${padTop+4}" x2="${x(i)}" y2="${padTop+4}" stroke="#9B8CFF" stroke-width="1" stroke-dasharray="2 4" opacity="0.6"/>`:'').join('');
+  // fear + wisdom curves
+  s+=path('fear','#E3859B');
+  s+=path('wis','#57E3C2');
+  document.getElementById('glue').innerHTML=s;
+})();
+</script>
+</body>
+</html>

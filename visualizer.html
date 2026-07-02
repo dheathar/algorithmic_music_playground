@@ -116,6 +116,9 @@
     <option value="3x3">3 × 3</option>
     <option value="4x4">4 × 4</option>
     <option value="stems">▦ per-organ (stems)</option>
+    <optgroup label="✦ Signal Lab scenes">
+      <option value="scene:greek-maxims">✦ Greek Maxims (typewriter &amp; wind)</option>
+    </optgroup>
   </select>
   <button id="shuffle">⇄ shuffle all</button>
   <label class="chk"><input type="checkbox" id="cycle" checked> auto-cycle</label>
@@ -138,6 +141,8 @@
 
 <script src="vendor/butterchurn.min.js"></script>
 <script src="vendor/butterchurnPresets.min.js"></script>
+<script src="greekfont.js"></script>
+<script src="scenes.js"></script>
 <script>
 const $ = id => document.getElementById(id), grid = $('grid');
 const LAYOUTS = { '1x1':[1,1], '2x2':[2,2], '1x4':[1,4], '4x1':[4,1], '2x3':[2,3], '3x3':[3,3], '4x4':[4,4] };
@@ -191,6 +196,7 @@ const CUES = {
 };
 let curFile = null, trackStart = 0, trackDur = 1, lastCueIdx = -1;
 let stemMode = false, stemSrcs = [], stemGains = [];
+let analyser = null, sceneFreq = null, sceneMode = false, sceneInst = null, sceneCanvas = null, sceneCtx = null, sceneRAF = 0;
 
 // per-organ stems: each cell plays AND visualizes one organ (keyed by mix filename)
 const STEMS = {
@@ -250,6 +256,8 @@ async function playTrack(file){
   const buf = await loadBuf(file);
   src = AC.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(AC.destination); src.start();
   curFile = file; trackStart = AC.currentTime; trackDur = buf.duration; lastCueIdx = -1;   // for the guide
+  if(!analyser){ analyser = AC.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0.82; sceneFreq = new Uint8Array(analyser.frequencyBinCount); }
+  try{ src.connect(analyser); }catch(e){}                              // shared analyser for hand-built scenes
   cells.forEach(c => { try{ c.viz.connectAudio(src); }catch(e){} });   // every window hears the same source
 }
 
@@ -307,7 +315,7 @@ function resizeAll(){
   cells.forEach(cell=>{ if(!cell.viz) return; const r=cell.canvas.getBoundingClientRect();
     cell.viz.setRendererSize(Math.max(2,r.width|0), Math.max(2,r.height|0)); });
 }
-addEventListener('resize', ()=> requestAnimationFrame(resizeAll));
+addEventListener('resize', ()=> { requestAnimationFrame(resizeAll); if(sceneMode) sizeScene(); });
 
 function shuffleAll(){ cells.forEach(c=>{ if(c.viz){ c.locked=false; setPreset(c, rand(), 1.5, false); } }); }
 function startCycle(){ clearInterval(cycler);
@@ -423,6 +431,41 @@ function exitStemMode(){
   stemSrcs.forEach(s => { try{ s.stop(); }catch(e){} }); stemSrcs = [];
 }
 
+// ---- hand-built Canvas scenes (from scenes.js) as a full-screen library entry ----
+function sizeScene(){
+  if(!sceneCanvas) return;
+  const dpr = Math.min(devicePixelRatio||1, 2);
+  sceneCanvas.width = innerWidth*dpr; sceneCanvas.height = innerHeight*dpr;
+  sceneCtx.setTransform(dpr,0,0,dpr,0,0);
+}
+function enterSceneMode(key){
+  if(!window.SCENES || !SCENES[key]){ $('warn').textContent = 'scene not found'; return; }
+  sceneMode = true; grid.style.display = 'none';
+  if(!sceneCanvas){ sceneCanvas = document.createElement('canvas');
+    sceneCanvas.style.cssText = 'position:fixed;inset:0;z-index:2;background:#05060c'; document.body.appendChild(sceneCanvas);
+    sceneCtx = sceneCanvas.getContext('2d'); }
+  sceneCanvas.style.display = 'block'; sizeScene();
+  sceneInst = SCENES[key].create();
+  cancelAnimationFrame(sceneRAF); sceneLoop();
+}
+function exitSceneMode(){
+  sceneMode = false; cancelAnimationFrame(sceneRAF);
+  if(sceneCanvas) sceneCanvas.style.display = 'none';
+  grid.style.display = '';
+}
+function sceneLoop(){
+  if(!sceneMode) return;
+  sceneRAF = requestAnimationFrame(sceneLoop);
+  if(!analyser){ return; }
+  analyser.getByteFrequencyData(sceneFreq);
+  const nb=(lo,hi)=>{ let s=0; for(let i=lo;i<hi;i++) s+=sceneFreq[i]; return s/((hi-lo)*255); };
+  const pos = trackDur ? ((AC.currentTime - trackStart) % trackDur) : 0;
+  const F = { W:innerWidth, H:innerHeight, t:AC.currentTime, pos, dur:trackDur,
+    bass:nb(1,8), low:nb(8,24), lomid:nb(24,80), mid:nb(80,200), hi:nb(200,500), freq:sceneFreq };
+  try{ sceneInst.draw(sceneCtx, F); }catch(e){}
+  updateCue();
+}
+
 function loop(){ requestAnimationFrame(loop); updateCue(); cells.forEach(c=>{ if(c.viz) try{ c.viz.render(); }catch(e){} }); }
 
 async function begin(){
@@ -442,9 +485,12 @@ async function begin(){
 $('play').onclick = begin;
 $('layout').onchange = async e => {
   if(!started) return;
-  if(e.target.value === 'stems'){ await enterStemMode($('track').value); return; }
+  const v = e.target.value;
+  if(v.startsWith('scene:')){ if(stemMode) exitStemMode(); enterSceneMode(v.slice(6)); return; }
+  if(sceneMode) exitSceneMode();
+  if(v === 'stems'){ await enterStemMode($('track').value); return; }
   if(stemMode){ exitStemMode(); await playTrack($('track').value); }
-  buildGrid(e.target.value);
+  buildGrid(v);
 };
 $('track').onchange = async e => {
   if(stemMode) await enterStemMode(e.target.value);          // reload that piece's organs

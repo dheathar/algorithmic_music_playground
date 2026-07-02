@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excivilization — visualization</title>
+<meta name="description" content="A Greek philosophical maxim is typed in stone, then the music's wind scatters it to dust — everything flows. Built on the lab's shared viz-core + scenes engine.">
+</head>
+<body>
+<script src="viz-core.js"></script>
+<script src="greekfont.js"></script>
+<script src="scenes.js"></script>
+<script>
+const scene = SCENES['greek-maxims'].create();
+Viz.run({
+  title: '<em>Ex</em>civilization',
+  subtitle: 'A Greek maxim is typed in stone — then the music’s wind blows it to dust. Πάντα ῥεῖ: everything flows.',
+  back: { href: 'excivilization.html', label: '← Excivilization' },
+  tracks: [
+    { value: 'genesis.mp3', label: 'Movement I — Genesis' },
+    { value: 'drone_glue.mp3', label: 'The eternal drone' },
+  ],
+  readout: () => scene.read(),
+  scene,
+});
+</script>
+</body>
+</html>
